@@ -1,0 +1,145 @@
+import { Button } from './ui/button';
+import { Card } from './ui/card';
+import { FileText, Layers, Clock, CheckCircle2 } from 'lucide-react';
+import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+
+interface CandidateDashboardProps {
+  onSignOut: () => void;
+  onStartRecordedInterview?: () => void;
+  onStartLiveInterview?: () => void;
+  recordedInterviewCompleted?: boolean;
+  liveInterviewCompleted?: boolean;
+  onStartTechnicalAssessment?: () => void;
+  technicalAssessmentCompleted?: boolean;
+}
+
+export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStartLiveInterview, recordedInterviewCompleted, liveInterviewCompleted, onStartTechnicalAssessment, technicalAssessmentCompleted }: CandidateDashboardProps) {
+  const assessments = [
+    {
+      id: 1,
+      title: 'Software engineering technical assessment',
+      description: 'Evaluate your technical skills and problem-solving abilities with coding challenges',
+      type: 'assessment',
+      questions: 15,
+      expectedTime: '45 minutes'
+    },
+    {
+      id: 2,
+      title: 'Software engineering live interview',
+      description: 'Real-time interview session with technical experts to assess your skills',
+      type: 'interview',
+      parts: 1,
+      expectedTime: '60 minutes'
+    },
+    {
+      id: 3,
+      title: 'Software engineering recorded interview',
+      description: 'Record your responses to pre-set questions at your own convenience',
+      type: 'interview',
+      parts: 5,
+      expectedTime: '30 minutes'
+    }
+  ];
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
+      {/* Header */}
+      <header className="px-12 py-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <img src={logo} alt="ERAMATCH - A Smarter Recruitment System" className="h-12" />
+          </div>
+          <div className="flex items-center gap-4">
+            <Button 
+              className="rounded-full px-6 transition-colors duration-200 border"
+              style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#EF4444';
+                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.borderColor = '#EF4444';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = '#EDF0F8';
+                e.currentTarget.style.color = '#EF4444';
+                e.currentTarget.style.borderColor = '#EF4444';
+              }}
+              onClick={onSignOut}
+            >
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="px-12 py-8">
+        <h2 className="text-gray-700 mb-8 text-2xl font-semibold">Available assessments</h2>
+
+        <div className="space-y-6">
+          {assessments.map((assessment) => (
+            <Card key={assessment.id} className="p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between gap-6">
+                <div className="flex-1">
+                  <h3 className="text-gray-700 mb-2">{assessment.title}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">
+                    {assessment.description}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-6">
+                  {assessment.type === 'assessment' ? (
+                    <div className="flex items-center gap-2 text-gray-600 text-sm">
+                      <FileText className="w-4 h-4" />
+                      <span>{assessment.questions}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-gray-600 text-sm">
+                      <Layers className="w-4 h-4" />
+                      <span>{assessment.parts}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 text-gray-600 text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>{assessment.expectedTime}</span>
+                  </div>
+
+                  {/* Check completion status and render appropriate button */}
+                  {(recordedInterviewCompleted && assessment.type === 'interview' && assessment.parts === 5) ||
+                   (liveInterviewCompleted && assessment.type === 'interview' && assessment.parts === 1) ||
+                   (technicalAssessmentCompleted && assessment.type === 'assessment') ? (
+                    <div className="flex items-center gap-3">
+                      <Button
+                        className="rounded-full px-6 whitespace-nowrap w-44 bg-gray-300 cursor-not-allowed"
+                        disabled
+                      >
+                        Completed
+                      </Button>
+                      <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                    </div>
+                  ) : (
+                    <Button
+                      className="text-white rounded-full px-6 whitespace-nowrap w-44"
+                      style={{ backgroundColor: '#6366F1' }}
+                      onClick={
+                        assessment.type === 'interview' && assessment.parts === 5
+                          ? onStartRecordedInterview
+                          : assessment.type === 'interview' && assessment.parts === 1
+                          ? onStartLiveInterview
+                          : assessment.type === 'assessment'
+                          ? onStartTechnicalAssessment
+                          : undefined
+                      }
+                    >
+                      {assessment.type === 'assessment' ? 'Start Assessment' : 'Start Interview'}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}

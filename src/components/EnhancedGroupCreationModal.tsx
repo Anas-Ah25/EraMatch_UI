@@ -1,0 +1,371 @@
+import { useState } from 'react';
+import { X, Users, Sparkles, Calendar, Send, Video, TrendingUp, Edit } from 'lucide-react';
+
+interface EnhancedGroupCreationModalProps {
+  selectedCount: number;
+  onClose: () => void;
+  onCreate: (groupData: any) => void;
+  filterSummary?: string[];
+  onEditFilters?: () => void;
+}
+
+export function EnhancedGroupCreationModal({ 
+  selectedCount, 
+  onClose, 
+  onCreate,
+  filterSummary = [],
+  onEditFilters
+}: EnhancedGroupCreationModalProps) {
+  const [groupName, setGroupName] = useState(`Filtered: ${new Date().toLocaleDateString()}`);
+  const [description, setDescription] = useState('');
+  const [assignedRecruiter, setAssignedRecruiter] = useState('');
+  const [pipelineTemplate, setPipelineTemplate] = useState('standard');
+  const [immediateActions, setImmediateActions] = useState({
+    sendAssessment: false,
+    scheduleAssessment: false,
+    scheduleDate: '',
+    setupAIInterview: false,
+    aiInterviewType: 'immediate',
+    runSemanticRanking: false,
+    topN: 5
+  });
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+
+  const recruiters = [
+    'John Doe - Senior Recruiter',
+    'Jane Smith - Technical Recruiter',
+    'Mike Johnson - Lead Recruiter',
+    'Sarah Williams - HR Manager'
+  ];
+
+  const pipelineTemplates = [
+    { value: 'standard', label: 'Standard Pipeline', description: 'Assessment → Interview → Review → Offer' },
+    { value: 'technical', label: 'Technical Pipeline', description: 'Technical Assessment → Technical Interview → Team Interview → Offer' },
+    { value: 'fast-track', label: 'Fast Track', description: 'Quick Assessment → Interview → Offer' },
+    { value: 'custom', label: 'Custom Pipeline', description: 'Define your own stages' }
+  ];
+
+  const handleCreate = () => {
+    if (!groupName.trim()) return;
+    onCreate({
+      groupName,
+      description,
+      assignedRecruiter,
+      pipelineTemplate,
+      immediateActions,
+      saveAsTemplate
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div 
+        className="bg-white rounded-[16px] w-full max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
+        style={{ animationDuration: '200ms' }}
+      >
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-[#e5e7eb]">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-[40px] h-[40px] rounded-[10px] bg-[#6366f1] flex items-center justify-center">
+                <Users size={20} className="text-white" />
+              </div>
+              <h2 className="text-[#111827]">Create Candidate Group</h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-[36px] h-[36px] flex items-center justify-center rounded-[8px] hover:bg-[#f3f4f6] transition-colors"
+            >
+              <X size={20} className="text-[#6b7280]" />
+            </button>
+          </div>
+          <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+            Organize {selectedCount} selected candidate{selectedCount > 1 ? 's' : ''} into a managed group
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto px-8 py-6 space-y-6">
+          {/* Filter Summary */}
+          {filterSummary.length > 0 && (
+            <div className="bg-[#f9fafb] rounded-[8px] p-4 border border-[#e5e7eb]">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-[6px] h-[6px] rounded-full bg-[#6366f1]" />
+                  <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
+                    Applied Filters
+                  </span>
+                </div>
+                {onEditFilters && (
+                  <button
+                    onClick={onEditFilters}
+                    className="flex items-center gap-1 font-['Arimo',sans-serif] text-[12px] text-[#6366f1] hover:underline"
+                  >
+                    <Edit size={12} />
+                    Edit filters
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {filterSummary.map((filter, index) => (
+                  <span
+                    key={index}
+                    className="px-[10px] py-[4px] bg-white rounded-[6px] font-['Arimo',sans-serif] text-[12px] text-[#6b7280] border border-[#e5e7eb]"
+                  >
+                    {filter}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Group Name */}
+          <div>
+            <label className="block font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-2">
+              Group Name <span className="text-[#ef4444]">*</span>
+            </label>
+            <input
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="e.g., Senior React Developers Q1 2025"
+              className="w-full h-[44px] px-[14px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-2">
+              Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Optional notes about this group..."
+              rows={3}
+              className="w-full px-[14px] py-[10px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] resize-none focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
+            />
+          </div>
+
+          {/* Assign Recruiter */}
+          <div>
+            <label className="block font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-2">
+              Assign Recruiter
+            </label>
+            <select
+              value={assignedRecruiter}
+              onChange={(e) => setAssignedRecruiter(e.target.value)}
+              className="w-full h-[44px] px-[14px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent bg-white"
+            >
+              <option value="">Select a recruiter...</option>
+              {recruiters.map((recruiter, index) => (
+                <option key={index} value={recruiter}>
+                  {recruiter}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Pipeline Template */}
+          <div>
+            <label className="block font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-3">
+              Select Pipeline Template
+            </label>
+            <div className="space-y-2">
+              {pipelineTemplates.map((template) => (
+                <label
+                  key={template.value}
+                  className={`flex items-start p-[14px] rounded-[8px] border-2 cursor-pointer transition-colors ${
+                    pipelineTemplate === template.value
+                      ? 'border-[#6366f1] bg-[#f5f3ff]'
+                      : 'border-[#e5e7eb] hover:border-[#d1d5db]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="pipeline"
+                    value={template.value}
+                    checked={pipelineTemplate === template.value}
+                    onChange={(e) => setPipelineTemplate(e.target.value)}
+                    className="mt-[3px] w-[18px] h-[18px] text-[#6366f1] cursor-pointer"
+                  />
+                  <div className="ml-3 flex-1">
+                    <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-1">
+                      {template.label}
+                    </div>
+                    <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
+                      {template.description}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Immediate Actions */}
+          <div>
+            <label className="block font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-3">
+              Immediate Actions (Optional)
+            </label>
+            <div className="space-y-3 bg-[#f9fafb] rounded-[8px] p-[16px] border border-[#e5e7eb]">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={immediateActions.sendAssessment}
+                  onChange={(e) => setImmediateActions({ ...immediateActions, sendAssessment: e.target.checked })}
+                  className="w-[18px] h-[18px] rounded border-[#d1d5db] text-[#6366f1] cursor-pointer"
+                />
+                <Send size={16} className="text-[#6b7280]" />
+                <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                  Send Assessment Now
+                </span>
+              </label>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={immediateActions.scheduleAssessment}
+                    onChange={(e) => setImmediateActions({ ...immediateActions, scheduleAssessment: e.target.checked })}
+                    className="w-[18px] h-[18px] rounded border-[#d1d5db] text-[#6366f1] cursor-pointer"
+                  />
+                  <Calendar size={16} className="text-[#6b7280]" />
+                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                    Schedule Assessment
+                  </span>
+                </label>
+                {immediateActions.scheduleAssessment && (
+                  <input
+                    type="datetime-local"
+                    value={immediateActions.scheduleDate}
+                    onChange={(e) => setImmediateActions({ ...immediateActions, scheduleDate: e.target.value })}
+                    className="w-full h-[36px] px-[12px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] mt-2 ml-[37px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
+                  />
+                )}
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={immediateActions.setupAIInterview}
+                    onChange={(e) => setImmediateActions({ ...immediateActions, setupAIInterview: e.target.checked })}
+                    className="w-[18px] h-[18px] rounded border-[#d1d5db] text-[#6366f1] cursor-pointer"
+                  />
+                  <Video size={16} className="text-[#6b7280]" />
+                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                    Setup AI Interview
+                  </span>
+                </label>
+                {immediateActions.setupAIInterview && (
+                  <div className="flex gap-2 mt-2 ml-[37px]">
+                    <button
+                      onClick={() => setImmediateActions({ ...immediateActions, aiInterviewType: 'immediate' })}
+                      className={`flex-1 h-[32px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${
+                        immediateActions.aiInterviewType === 'immediate'
+                          ? 'bg-[#6366f1] text-white'
+                          : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'
+                      }`}
+                    >
+                      Immediate
+                    </button>
+                    <button
+                      onClick={() => setImmediateActions({ ...immediateActions, aiInterviewType: 'schedule' })}
+                      className={`flex-1 h-[32px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${
+                        immediateActions.aiInterviewType === 'schedule'
+                          ? 'bg-[#6366f1] text-white'
+                          : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'
+                      }`}
+                    >
+                      Schedule
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={immediateActions.runSemanticRanking}
+                    onChange={(e) => setImmediateActions({ ...immediateActions, runSemanticRanking: e.target.checked })}
+                    className="w-[18px] h-[18px] rounded border-[#d1d5db] text-[#6366f1] cursor-pointer"
+                  />
+                  <Sparkles size={16} className="text-[#6366f1]" />
+                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                    Run Semantic Ranking Inside Group
+                  </span>
+                </label>
+                {immediateActions.runSemanticRanking && (
+                  <div className="mt-2 ml-[37px]">
+                    <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-1">
+                      Rank top N candidates:
+                    </label>
+                    <select
+                      value={immediateActions.topN}
+                      onChange={(e) => setImmediateActions({ ...immediateActions, topN: parseInt(e.target.value) })}
+                      className="w-full h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent bg-white"
+                    >
+                      <option value={3}>Top 3</option>
+                      <option value={5}>Top 5</option>
+                      <option value={10}>Top 10</option>
+                      <option value={selectedCount}>All</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Save as Template */}
+          <div className="border-t border-[#e5e7eb] pt-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={saveAsTemplate}
+                onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                className="w-[16px] h-[16px] rounded border-[#d1d5db] text-[#6366f1] cursor-pointer"
+              />
+              <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
+                Save as template for future use
+              </span>
+            </label>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-4 border-t border-[#e5e7eb] flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 h-[44px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={!groupName.trim()}
+            className="flex-1 h-[44px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] disabled:bg-[#e5e7eb] disabled:cursor-not-allowed font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
+          >
+            Create Group
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes scaleIn {
+          from {
+            transform: scale(0.95);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        .animate-scaleIn {
+          animation: scaleIn ease-out;
+        }
+      `}</style>
+    </div>
+  );
+}
