@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Switch } from './ui/switch';
 import { Question } from './CreateAssessmentPage';
-import { SimpleGroupCreationModal } from './SimpleGroupCreationModal';
+import { GroupCreationPage } from './GroupCreationPage';
 
 interface Candidate {
   id: number;
@@ -77,6 +77,7 @@ export function PositionDetailView({
   const [showZipUploadModal, setShowZipUploadModal] = useState(false);
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
+  const [showGroupCreationPage, setShowGroupCreationPage] = useState(false);
 
   // Assessment management - use savedAssessments from props
   const assessments = savedAssessments;
@@ -455,110 +456,129 @@ export function PositionDetailView({
 
         {/* Groups Tab Content */}
         {activeTab === 'groups' && (
-          <div className="w-full">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-['Arimo',sans-serif] text-[20px] text-black">
-                Candidate Groups
-              </h2>
-              <button 
-                onClick={() => setShowGroupCreationModal(true)}
-                className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] transition-colors"
-              >
-                <Plus size={18} className="text-white" strokeWidth={2} />
-                <span className="font-['Arimo',sans-serif] text-[14px] text-white">
-                  Create Group
-                </span>
-              </button>
-            </div>
-
-            {groups.length === 0 ? (
-              <div className="bg-white rounded-[12px] p-12 text-center shadow-sm">
-                <div className="w-[64px] h-[64px] rounded-full bg-[#f3f4f6] flex items-center justify-center mx-auto mb-4">
-                  <Users size={28} className="text-[#6b7280]" />
-                </div>
-                <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-2">
-                  No Groups Created Yet
-                </h3>
-                <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] mb-6 max-w-[400px] mx-auto">
-                  Create candidate groups to organize and track subsets of candidates through your recruitment pipeline.
-                </p>
-                <button 
-                  onClick={() => setShowGroupCreationModal(true)}
-                  className="h-[44px] px-[24px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-                >
-                  Create Your First Group
-                </button>
+          <>
+            {showGroupCreationPage ? (
+              <div className="fixed inset-0 bg-[#edf0f8] z-50">
+                <GroupCreationPage
+                  positionTitle={positionTitle}
+                  onCancel={() => setShowGroupCreationPage(false)}
+                  onCreate={(groupData) => {
+                    console.log('Group created:', groupData);
+                    setShowGroupCreationPage(false);
+                    // Navigate to group settings page
+                    if (onViewGroup) {
+                      onViewGroup(`group-${Date.now()}`);
+                    }
+                  }}
+                />
               </div>
             ) : (
-              <div className="space-y-4">
-                {groups.map((group) => (
-                  <div key={group.id} className="bg-white rounded-[12px] p-5 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-['Arimo',sans-serif] text-[17px] text-black">
-                            {group.name}
-                          </h3>
-                          <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
-                            group.status === 'Live' ? 'bg-[#dcfce7] text-[#10b981]' :
-                            group.status === 'Paused' ? 'bg-[#fef3c7] text-[#f59e0b]' :
-                            'bg-[#f3f4f6] text-[#6b7280]'
-                          }`}>
-                            {group.status}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                          <span>{group.candidateCount} candidates</span>
-                          <span>•</span>
-                          <span>Assigned to {group.recruiter}</span>
-                          <span>•</span>
-                          <span>Stage: {group.stage}</span>
-                          <span>•</span>
-                          <span>Updated {group.lastUpdated}</span>
-                        </div>
-                      </div>
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="font-['Arimo',sans-serif] text-[20px] text-black">
+                    Candidate Groups
+                  </h2>
+                  <button 
+                    onClick={() => setShowGroupCreationPage(true)}
+                    className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] transition-colors"
+                  >
+                    <Plus size={18} className="text-white" strokeWidth={2} />
+                    <span className="font-['Arimo',sans-serif] text-[14px] text-white">
+                      Create Group
+                    </span>
+                  </button>
+                </div>
+
+                {groups.length === 0 ? (
+                  <div className="bg-white rounded-[12px] p-12 text-center shadow-sm">
+                    <div className="w-[64px] h-[64px] rounded-full bg-[#f3f4f6] flex items-center justify-center mx-auto mb-4">
+                      <Users size={28} className="text-[#6b7280]" />
                     </div>
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                          Progress
-                        </span>
-                        <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-                          {group.progress}%
-                        </span>
-                      </div>
-                      <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-[#6366f1] transition-all"
-                          style={{ width: `${group.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => onViewGroup && onViewGroup(group.id)}
-                        className="h-[36px] px-[16px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[13px] text-white transition-colors"
-                      >
-                        Open
-                      </button>
-                      <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[13px] text-[#374151] transition-colors">
-                        Rename
-                      </button>
-                      <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[13px] text-[#374151] transition-colors">
-                        Duplicate
-                      </button>
-                      <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[13px] text-[#374151] transition-colors">
-                        Export
-                      </button>
-                      <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#fef2f2] hover:border-[#ef4444] font-['Arimo',sans-serif] text-[13px] text-[#ef4444] transition-colors ml-auto">
-                        Archive
-                      </button>
-                    </div>
+                    <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-2">
+                      No Groups Created Yet
+                    </h3>
+                    <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] mb-6 max-w-[400px] mx-auto">
+                      Create candidate groups to organize and track subsets of candidates through your recruitment pipeline.
+                    </p>
+                    <button 
+                      onClick={() => setShowGroupCreationPage(true)}
+                      className="h-[44px] px-[24px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
+                    >
+                      Create Your First Group
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-4">
+                    {groups.map((group) => (
+                      <div key={group.id} className="bg-white rounded-[12px] p-5 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h3 className="font-['Arimo',sans-serif] text-[17px] text-black">
+                                {group.name}
+                              </h3>
+                              <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
+                                group.status === 'Live' ? 'bg-[#dcfce7] text-[#10b981]' :
+                                group.status === 'Paused' ? 'bg-[#fef3c7] text-[#f59e0b]' :
+                                'bg-[#f3f4f6] text-[#6b7280]'
+                              }`}>
+                                {group.status}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4 font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                              <span>{group.candidateCount} candidates</span>
+                              <span>•</span>
+                              <span>Assigned to {group.recruiter}</span>
+                              <span>•</span>
+                              <span>Stage: {group.stage}</span>
+                              <span>•</span>
+                              <span>Updated {group.lastUpdated}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                              Progress
+                            </span>
+                            <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
+                              {group.progress}%
+                            </span>
+                          </div>
+                          <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-[#6366f1] transition-all"
+                              style={{ width: `${group.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => onViewGroup && onViewGroup(group.id)}
+                            className="h-[36px] px-[16px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[13px] text-white transition-colors"
+                          >
+                            Open
+                          </button>
+                          <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[13px] text-[#374151] transition-colors">
+                            Rename
+                          </button>
+                          <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[13px] text-[#374151] transition-colors">
+                            Duplicate
+                          </button>
+                          <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[13px] text-[#374151] transition-colors">
+                            Export
+                          </button>
+                          <button className="h-[36px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#fef2f2] hover:border-[#ef4444] font-['Arimo',sans-serif] text-[13px] text-[#ef4444] transition-colors ml-auto">
+                            Archive
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* Insights Tab Content */}

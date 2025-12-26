@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus } from 'lucide-react';
+import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModuleDetailAssessment } from './ModuleDetailAssessment';
 import { ModuleDetailAIInterview } from './ModuleDetailAIInterview';
@@ -79,6 +79,9 @@ export function EnhancedGroupOverviewV2({
   const [showFlaggedBatch, setShowFlaggedBatch] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showAIInterviewSettingsModal, setShowAIInterviewSettingsModal] = useState(false);
+  
+  // Role switching state
+  const [userRole, setUserRole] = useState<'recruiter' | 'technical'>('recruiter');
 
   // Mock pipeline data
   const pipelineSteps: PipelineStep[] = [
@@ -395,32 +398,78 @@ export function EnhancedGroupOverviewV2({
           </div>
         )}
 
-        {/* Group Settings Section */}
+        {/* Role Switcher & Group Settings Section */}
         <div className="mt-6 bg-white rounded-[12px] border border-[#e5e7eb] p-4">
-          <h3 className="font-['Arimo',sans-serif] text-[15px] text-[#111827] mb-3">Group Settings</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-['Arimo',sans-serif] text-[15px] text-[#111827]">Group Settings</h3>
+            
+            {/* Role Switcher Toggle */}
+            <div className="flex items-center gap-3">
+              <span className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
+                View as:
+              </span>
+              <div className="flex items-center gap-1 p-[4px] bg-[#f3f4f6] rounded-[8px]">
+                <button
+                  onClick={() => setUserRole('recruiter')}
+                  className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-all ${
+                    userRole === 'recruiter'
+                      ? 'bg-white text-[#6366f1] shadow-sm'
+                      : 'text-[#6b7280] hover:text-[#374151]'
+                  }`}
+                >
+                  <Users size={14} />
+                  Normal Recruiter
+                </button>
+                <button
+                  onClick={() => setUserRole('technical')}
+                  className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-all ${
+                    userRole === 'technical'
+                      ? 'bg-white text-[#10b981] shadow-sm'
+                      : 'text-[#6b7280] hover:text-[#374151]'
+                  }`}
+                >
+                  <Shield size={14} />
+                  Technical Recruiter
+                </button>
+              </div>
+            </div>
+          </div>
+          
           <div className="flex gap-3">
-            <button
-              onClick={() => {
-                if (onCreateAssessment) {
-                  onCreateAssessment();
-                }
-              }}
-              className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
-            >
-              <Plus size={16} className="text-[#6b7280]" />
-              <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                Add Assessment
-              </span>
-            </button>
-            <button
-              onClick={() => setShowAIInterviewSettingsModal(true)}
-              className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
-            >
-              <Activity size={16} className="text-[#6b7280]" />
-              <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                AI Interview Settings
-              </span>
-            </button>
+            {userRole === 'technical' && (
+              <>
+                <button
+                  onClick={() => {
+                    if (onCreateAssessment) {
+                      onCreateAssessment();
+                    }
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm"
+                >
+                  <Plus size={16} />
+                  <span className="font-['Arimo',sans-serif] text-[14px]">
+                    Add Tech Assessment
+                  </span>
+                </button>
+                <button
+                  onClick={() => setShowAIInterviewSettingsModal(true)}
+                  className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm"
+                >
+                  <Activity size={16} />
+                  <span className="font-['Arimo',sans-serif] text-[14px]">
+                    AI Interview Settings
+                  </span>
+                </button>
+              </>
+            )}
+            {userRole === 'recruiter' && (
+              <div className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb]">
+                <Shield size={16} className="text-[#6b7280]" />
+                <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                  Switch to Technical Recruiter to add assessments and AI interview settings
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </div>

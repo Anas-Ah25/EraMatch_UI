@@ -47,6 +47,7 @@ export default function App() {
   const [selectedPosition, setSelectedPosition] = useState<{ projectTitle: string; positionTitle: string } | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupName, setSelectedGroupName] = useState<string>('Senior React Developers Q1 2025');
   const [recordedInterviewCompleted, setRecordedInterviewCompleted] = useState(false);
   const [liveInterviewCompleted, setLiveInterviewCompleted] = useState(false);
   const [technicalAssessmentCompleted, setTechnicalAssessmentCompleted] = useState(false);
@@ -312,6 +313,7 @@ export default function App() {
               }}
               onCreateGroup={(candidateIds, groupData) => {
                 setSelectedGroupId(`group-${Date.now()}`);
+                setSelectedGroupName(groupData?.name || 'New Candidate Group');
                 setCurrentPage('group-overview');
               }}
               onViewGroup={(groupId) => {
@@ -322,8 +324,8 @@ export default function App() {
           ) : currentPage === 'group-overview' ? (
             <EnhancedGroupOverviewV2
               groupId={selectedGroupId || ''}
-              groupName="Senior React Developers Q1 2025"
-              description="High-performing candidates filtered by React expertise and 5+ years experience"
+              groupName={selectedGroupName}
+              description="High-performing candidates filtered by advanced criteria"
               assignedRecruiter="John Doe - Senior Recruiter"
               candidateIds={[1, 2, 3, 4, 5, 6, 7, 8]}
               onBack={() => setCurrentPage('position-dashboard')}
