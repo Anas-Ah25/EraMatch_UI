@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, Sparkles, Filter, X, ChevronDown, Check, User, MapPin, Briefcase, Star, ArrowUpDown, Users, Sliders } from 'lucide-react';
+import { Search, Sparkles, Filter, X, ChevronDown, Check, User, MapPin, Briefcase, Star, ArrowUpDown, Users, Sliders, ChevronLeft } from 'lucide-react';
 import { Switch } from './ui/switch';
 import { Badge } from './ui/badge';
 import { AdvancedFilterDrawer } from './AdvancedFilterDrawer';
@@ -172,6 +172,15 @@ export function GroupCreationPage({
     <div className="h-full w-full bg-[#edf0f8] flex flex-col">
       {/* Top Section - Discovery Engine */}
       <div className="bg-white border-b border-[#e5e7eb] px-8 py-6">
+        {/* Back Button */}
+        <button
+          onClick={onCancel}
+          className="flex items-center gap-2 mb-4 font-['Arimo',sans-serif] text-[14px] text-[#6366f1] hover:underline"
+        >
+          <ChevronLeft size={16} />
+          Back to Position Dashboard
+        </button>
+        
         <div className="mb-6">
           <h2 className="text-[#111827] mb-1">
             Create Candidate Group

@@ -48,6 +48,7 @@ export default function App() {
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string>('Senior React Developers Q1 2025');
+  const [previousPage, setPreviousPage] = useState<string>('projects'); // Track previous page for group navigation
   const [recordedInterviewCompleted, setRecordedInterviewCompleted] = useState(false);
   const [liveInterviewCompleted, setLiveInterviewCompleted] = useState(false);
   const [technicalAssessmentCompleted, setTechnicalAssessmentCompleted] = useState(false);
@@ -314,10 +315,12 @@ export default function App() {
               onCreateGroup={(candidateIds, groupData) => {
                 setSelectedGroupId(`group-${Date.now()}`);
                 setSelectedGroupName(groupData?.name || 'New Candidate Group');
+                setPreviousPage('position-dashboard'); // Save current page
                 setCurrentPage('group-overview');
               }}
               onViewGroup={(groupId) => {
                 setSelectedGroupId(groupId);
+                setPreviousPage('position-dashboard'); // Save current page
                 setCurrentPage('group-overview');
               }}
             />
@@ -328,7 +331,7 @@ export default function App() {
               description="High-performing candidates filtered by advanced criteria"
               assignedRecruiter="John Doe - Senior Recruiter"
               candidateIds={[1, 2, 3, 4, 5, 6, 7, 8]}
-              onBack={() => setCurrentPage('position-dashboard')}
+              onBack={() => setCurrentPage(previousPage as any)} // Use saved previous page
               onViewCandidate={(candidateId) => {
                 setSelectedCandidateId(candidateId);
                 setCurrentPage('candidate-profile');
@@ -414,6 +417,7 @@ export default function App() {
               }}
               onViewGroup={(groupId) => {
                 setSelectedGroupId(groupId);
+                setPreviousPage('projects'); // Save that we came from projects page
                 setCurrentPage('group-overview');
               }}
               pendingAssessment={pendingAssessment}

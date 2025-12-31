@@ -12,15 +12,38 @@ interface JobPosition {
   status: 'Open' | 'Interview' | 'Closed' | 'On Hold';
 }
 
+interface Project {
+  id: number;
+  projectName: string;
+  positionsCount: number;
+  applicantsCount: number;
+  subGroupsCount: number;
+  openDate: string;
+}
+
+interface PositionGroup {
+  id: number;
+  groupName: string;
+  positionTitle: string;
+  candidatesCount: number;
+  status: 'Active' | 'Processing' | 'Completed' | 'On Hold';
+  createdDate: string;
+}
+
 interface AdminDashboardProps {
   onSignOut: () => void;
 }
 
+type ViewMode = 'dashboard' | 'projects' | 'positions' | 'groups' | 'insights';
+
 export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  const [showInsightsPanel, setShowInsightsPanel] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
   const [selectedPosition, setSelectedPosition] = useState<JobPosition | null>(null);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedPositionForGroups, setSelectedPositionForGroups] = useState<JobPosition | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<PositionGroup | null>(null);
 
   const jobPositions: JobPosition[] = [
     {
@@ -88,6 +111,78 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
     }
   ];
 
+  // Mock Projects Data
+  const projects: Project[] = [
+    {
+      id: 1,
+      projectName: 'Q1 Engineering Expansion',
+      positionsCount: 3,
+      applicantsCount: 111,
+      subGroupsCount: 8,
+      openDate: '2025-01-05'
+    },
+    {
+      id: 2,
+      projectName: 'Product Team Growth',
+      positionsCount: 2,
+      applicantsCount: 51,
+      subGroupsCount: 4,
+      openDate: '2025-01-12'
+    },
+    {
+      id: 3,
+      projectName: 'Design & UX Hiring',
+      positionsCount: 1,
+      applicantsCount: 19,
+      subGroupsCount: 2,
+      openDate: '2025-01-20'
+    },
+    {
+      id: 4,
+      projectName: 'Marketing Initiative',
+      positionsCount: 1,
+      applicantsCount: 0,
+      subGroupsCount: 0,
+      openDate: '2024-12-10'
+    }
+  ];
+
+  // Mock Position Groups Data
+  const positionGroups: PositionGroup[] = [
+    {
+      id: 1,
+      groupName: 'Senior React Developers Q1 2025',
+      positionTitle: 'Senior React Developer',
+      candidatesCount: 15,
+      status: 'Active',
+      createdDate: '2025-01-15'
+    },
+    {
+      id: 2,
+      groupName: 'React Mid-Level Candidates',
+      positionTitle: 'Senior React Developer',
+      candidatesCount: 12,
+      status: 'Processing',
+      createdDate: '2025-01-18'
+    },
+    {
+      id: 3,
+      groupName: 'High Performers - Final Round',
+      positionTitle: 'Senior React Developer',
+      candidatesCount: 8,
+      status: 'Active',
+      createdDate: '2025-01-22'
+    },
+    {
+      id: 4,
+      groupName: 'Alternative Candidates Pool',
+      positionTitle: 'Senior React Developer',
+      candidatesCount: 10,
+      status: 'On Hold',
+      createdDate: '2025-01-25'
+    }
+  ];
+
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -130,17 +225,17 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
   const maxCount = Math.max(...pipelineData.map(d => d.count));
 
   // If viewing insights, show full page insights view
-  if (showInsightsPanel && selectedPosition) {
+  if (viewMode === 'insights' && selectedPosition) {
     return (
       <div className="px-12 py-8">
         {/* Header with Back Button */}
         <div className="mb-8">
           <button
-            onClick={() => setShowInsightsPanel(false)}
+            onClick={() => setViewMode('groups')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
           >
             <ArrowLeft size={20} />
-            <span className="font-['Arimo',sans-serif] text-[14px]">Back to Dashboard</span>
+            <span className="font-['Arimo',sans-serif] text-[14px]">Back to Groups</span>
           </button>
           <div>
             <h1 className="text-gray-900 text-3xl mb-2">Position Insights</h1>
@@ -419,7 +514,7 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
           <Button
             variant="outline"
             className="rounded-full px-8 py-6"
-            onClick={() => setShowInsightsPanel(false)}
+            onClick={() => setViewMode('dashboard')}
           >
             Back to Dashboard
           </Button>
@@ -523,130 +618,368 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
         </div>
       </div>
 
-      {/* Job Positions Table */}
-      <div className="bg-white rounded-3xl p-6 shadow-sm">
-        <div className="mb-6">
-          <h3 className="text-gray-900 mb-2">Job Positions</h3>
-          <p className="text-gray-500 text-sm">Manage and monitor all open positions across departments</p>
-        </div>
+      {/* Show different tables based on view mode */}
+      {viewMode === 'dashboard' && (
+        /* Opened Projects Table */
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="mb-6">
+            <h3 className="text-gray-900 mb-2">Opened Projects</h3>
+            <p className="text-gray-500 text-sm">All active recruitment projects across the organization</p>
+          </div>
 
-        <div className="bg-white rounded-[12px] border border-[#e5e7eb] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-[#f9fafb] border-b border-[#e5e7eb]">
-                <tr>
-                  <th className="text-left p-4">
-                    <button
-                      onClick={() => handleSort('jobTitle')}
-                      className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
-                    >
-                      Job Title
-                      <ArrowUpDown size={14} />
-                    </button>
-                  </th>
-                  <th className="text-left p-4">
-                    <button
-                      onClick={() => handleSort('department')}
-                      className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
-                    >
-                      Department
-                      <ArrowUpDown size={14} />
-                    </button>
-                  </th>
-                  <th className="text-left p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Assigned HR
-                    </span>
-                  </th>
-                  <th className="text-left p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Assigned Technical Recruiter
-                    </span>
-                  </th>
-                  <th className="text-left p-4">
-                    <button
-                      onClick={() => handleSort('candidatesCount')}
-                      className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
-                    >
-                      Candidates Count
-                      <ArrowUpDown size={14} />
-                    </button>
-                  </th>
-                  <th className="text-left p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Status
-                    </span>
-                  </th>
-                  <th className="text-left p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Actions
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobPositions.map((position, index) => (
-                  <tr
-                    key={position.id}
-                    className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors ${
-                      index === jobPositions.length - 1 ? 'border-b-0' : ''
-                    }`}
-                  >
-                    <td className="p-4">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                        {position.jobTitle}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                        {position.department}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                        {position.assignedHR}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                        {position.assignedTechnicalRecruiter}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                        {position.candidatesCount}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full font-['Arimo',sans-serif] text-[12px] ${getStatusBadgeColor(
-                          position.status
-                        )}`}
-                      >
-                        {position.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
+          <div className="bg-white rounded-[12px] border border-[#e5e7eb] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <tr>
+                    <th className="text-left p-4">
                       <button
-                        className="flex items-center gap-2 h-[32px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
-                        onClick={() => {
-                          setSelectedPosition(position);
-                          setShowInsightsPanel(true);
-                        }}
+                        onClick={() => handleSort('projectName')}
+                        className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
                       >
-                        <Eye size={16} className="text-[#6366f1]" />
-                        <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-                          View Insights
-                        </span>
+                        Project Name
+                        <ArrowUpDown size={14} />
                       </button>
-                    </td>
+                    </th>
+                    <th className="text-left p-4">
+                      <button
+                        onClick={() => handleSort('positionsCount')}
+                        className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
+                      >
+                        Number of Positions
+                        <ArrowUpDown size={14} />
+                      </button>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Number of Applicants
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Number of Sub Groups
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Project Open Date
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Actions
+                      </span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {projects.map((project, index) => (
+                    <tr
+                      key={project.id}
+                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${
+                        index === projects.length - 1 ? 'border-b-0' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedProject(project);
+                        setViewMode('positions');
+                      }}
+                    >
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                          {project.projectName}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {project.positionsCount}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                          {project.applicantsCount}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {project.subGroupsCount}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {new Date(project.openDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <button
+                          className="flex items-center gap-2 h-[32px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProject(project);
+                            setViewMode('positions');
+                          }}
+                        >
+                          <Eye size={16} className="text-[#6366f1]" />
+                          <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
+                            View Positions
+                          </span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {viewMode === 'positions' && selectedProject && (
+        /* Job Positions Table (without Department column) */
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="mb-6 flex items-center gap-3">
+            <button
+              onClick={() => setViewMode('dashboard')}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h3 className="text-gray-900 mb-1">Project Positions: {selectedProject.projectName}</h3>
+              <p className="text-gray-500 text-sm">Positions within this project</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[12px] border border-[#e5e7eb] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <tr>
+                    <th className="text-left p-4">
+                      <button
+                        onClick={() => handleSort('jobTitle')}
+                        className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
+                      >
+                        Job Title
+                        <ArrowUpDown size={14} />
+                      </button>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Assigned HR
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Assigned Technical Recruiter
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <button
+                        onClick={() => handleSort('candidatesCount')}
+                        className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
+                      >
+                        Candidates Count
+                        <ArrowUpDown size={14} />
+                      </button>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Status
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Actions
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {jobPositions.slice(0, selectedProject.positionsCount).map((position, index) => (
+                    <tr
+                      key={position.id}
+                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${
+                        index === selectedProject.positionsCount - 1 ? 'border-b-0' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedPositionForGroups(position);
+                        setViewMode('groups');
+                      }}
+                    >
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                          {position.jobTitle}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {position.assignedHR}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {position.assignedTechnicalRecruiter}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                          {position.candidatesCount}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full font-['Arimo',sans-serif] text-[12px] ${getStatusBadgeColor(
+                            position.status
+                          )}`}
+                        >
+                          {position.status}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <button
+                          className="flex items-center gap-2 h-[32px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPositionForGroups(position);
+                            setViewMode('groups');
+                          }}
+                        >
+                          <Eye size={16} className="text-[#6366f1]" />
+                          <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
+                            View Groups
+                          </span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'groups' && selectedPositionForGroups && (
+        /* Position Groups Table */
+        <div className="bg-white rounded-3xl p-6 shadow-sm">
+          <div className="mb-6 flex items-center gap-3">
+            <button
+              onClick={() => setViewMode('positions')}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h3 className="text-gray-900 mb-1">Position Groups: {selectedPositionForGroups.jobTitle}</h3>
+              <p className="text-gray-500 text-sm">Candidate groups for this position</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[12px] border border-[#e5e7eb] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-[#f9fafb] border-b border-[#e5e7eb]">
+                  <tr>
+                    <th className="text-left p-4">
+                      <button
+                        onClick={() => handleSort('groupName')}
+                        className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
+                      >
+                        Group Name
+                        <ArrowUpDown size={14} />
+                      </button>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Position Title
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <button
+                        onClick={() => handleSort('candidatesCount')}
+                        className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6b7280] hover:text-[#111827]"
+                      >
+                        Candidates Count
+                        <ArrowUpDown size={14} />
+                      </button>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Status
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Created Date
+                      </span>
+                    </th>
+                    <th className="text-left p-4">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                        Actions
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {positionGroups.map((group, index) => (
+                    <tr
+                      key={group.id}
+                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors ${
+                        index === positionGroups.length - 1 ? 'border-b-0' : ''
+                      }`}
+                    >
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                          {group.groupName}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {group.positionTitle}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                          {group.candidatesCount}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`inline-block px-3 py-1 rounded-full font-['Arimo',sans-serif] text-[12px] ${getStatusBadgeColor(
+                            group.status
+                          )}`}
+                        >
+                          {group.status}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {new Date(group.createdDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <button
+                          className="flex items-center gap-2 h-[32px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
+                          onClick={() => {
+                            setSelectedPosition(selectedPositionForGroups);
+                            setSelectedGroup(group);
+                            setViewMode('insights');
+                          }}
+                        >
+                          <Eye size={16} className="text-[#6366f1]" />
+                          <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
+                            View Insights
+                          </span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

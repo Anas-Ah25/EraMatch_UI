@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield } from 'lucide-react';
+import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ModuleDetailAssessment } from './ModuleDetailAssessment';
 import { ModuleDetailAIInterview } from './ModuleDetailAIInterview';
 import { SuspectReviewPage } from './SuspectReviewPage';
+import { CreateAdvancedAssessment } from './CreateAdvancedAssessment';
+import { StageResultsDashboard } from './StageResultsDashboard';
+import { ModuleMonitoringDashboard } from './ModuleMonitoringDashboard';
+import { StartStageModal } from './StartStageModal';
 
 interface EnhancedGroupOverviewV2Props {
   groupId: string;
@@ -18,12 +22,50 @@ interface EnhancedGroupOverviewV2Props {
   onCreateAssessment?: () => void;
 }
 
+type StageState = 'active' | 'closed' | 'review-mode' | 'not-started';
+
 interface PipelineStep {
   id: string;
   name: string;
   completed: number;
   total: number;
   pending: number;
+  state: StageState;
+  startDate?: Date;
+  expectedEndDate?: Date;
+  actualEndDate?: Date;
+}
+
+interface TechnicalAcceptanceCriteria {
+  minimumTechnicalScore: number;
+  allowedIntegrityRisk: 'none' | 'low' | 'medium';
+  requiredVerdict: 'pass' | 'conditional' | 'any';
+}
+
+interface CandidateComment {
+  id: string;
+  candidateId: number;
+  author: 'hr' | 'technical';
+  authorName: string;
+  text: string;
+  timestamp: Date;
+}
+
+interface CandidateVerdict {
+  candidateId: number;
+  verdict: 'pass' | 'fail' | 'conditional';
+  comment?: string;
+  timestamp: Date;
+}
+
+interface ActivityLogEntry {
+  id: string;
+  type: 'stage-start' | 'stage-close' | 'criteria-defined' | 'comment-added' | 'candidate-progressed' | 'override-applied';
+  actor: string;
+  actorRole: 'hr' | 'technical';
+  description: string;
+  timestamp: Date;
+  metadata?: any;
 }
 
 interface CandidateStatus {
@@ -39,6 +81,10 @@ interface CandidateStatus {
   aiInterviewScore: number;
   flags: string[];
   currentStage: string;
+  technicalVerdict?: 'pass' | 'fail' | 'conditional';
+  meetsCriteria?: boolean;
+  progressionState?: 'selected' | 'rejected' | 'on-hold' | 'archived' | 'active';
+  overrideApplied?: boolean;
 }
 
 export function EnhancedGroupOverviewV2({
@@ -53,15 +99,14 @@ export function EnhancedGroupOverviewV2({
   onOpenRecordedAISetup,
   onCreateAssessment
 }: EnhancedGroupOverviewV2Props) {
+  // Existing modals
   const [showRankModal, setShowRankModal] = useState(false);
   const [showTopNModal, setShowTopNModal] = useState(false);
   const [showAutoScheduleModal, setShowAutoScheduleModal] = useState(false);
   const [showSendAssessmentModal, setShowSendAssessmentModal] = useState(false);
   const [showMoveStageModal, setShowMoveStageModal] = useState(false);
   const [showRuleBuilderModal, setShowRuleBuilderModal] = useState(false);
-  const [selectedStep, setSelectedStep] = useState<string | null>(null);
-  const [isRunningPipeline, setIsRunningPipeline] = useState(false);
-  const [pipelineProgress, setPipelineProgress] = useState(0);
+  const [showAIInterviewSettingsModal, setShowAIInterviewSettingsModal] = useState(false);
   
   // New state for enhancements
   const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
@@ -74,26 +119,75 @@ export function EnhancedGroupOverviewV2({
     aiInterviewStatus: [] as string[],
     scoreRange: [0, 100] as [number, number],
     flagsFilter: 'all' as 'all' | 'integrity' | 'suspicious',
+    meetsCriteria: 'all' as 'all' | 'yes' | 'no',
+    hasHRComment: false,
+    hasTechnicalComment: false
   });
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showFlaggedBatch, setShowFlaggedBatch] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [showAIInterviewSettingsModal, setShowAIInterviewSettingsModal] = useState(false);
   
   // Role switching state
   const [userRole, setUserRole] = useState<'recruiter' | 'technical'>('recruiter');
+  
+  // Assessment creation state
+  const [showAssessmentCreation, setShowAssessmentCreation] = useState(false);
+  const [groupAssessments, setGroupAssessments] = useState<any[]>([]);
 
-  // Mock pipeline data
-  const pipelineSteps: PipelineStep[] = [
-    { id: 'assessment', name: 'Assessment', completed: 6, total: 8, pending: 2 },
-    { id: 'ai-interview', name: 'AI Interview', completed: 4, total: 8, pending: 4 },
-    { id: 'live-interview', name: 'Live Interview', completed: 2, total: 8, pending: 6 },
-    { id: 'review', name: 'Review', completed: 1, total: 8, pending: 7 },
-    { id: 'offer', name: 'Offer', completed: 0, total: 8, pending: 8 }
-  ];
+  // NEW: Stage-gated state
+  const [currentStage, setCurrentStage] = useState<string>('assessment');
+  const [stageState, setStageState] = useState<StageState>('not-started');
+  const [stageConfigLocked, setStageConfigLocked] = useState(false);
+  
+  // NEW: Technical Acceptance Criteria
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState<TechnicalAcceptanceCriteria>({
+    minimumTechnicalScore: 70,
+    allowedIntegrityRisk: 'low',
+    requiredVerdict: 'pass'
+  });
+  const [showCriteriaEditor, setShowCriteriaEditor] = useState(false);
 
-  // Mock candidate status data
-  const candidateStatuses: CandidateStatus[] = [
+  // NEW: Bidirectional commenting
+  const [candidateComments, setCandidateComments] = useState<CandidateComment[]>([]);
+  const [showCommentModal, setShowCommentModal] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState('');
+
+  // NEW: Technical verdicts
+  const [technicalVerdicts, setTechnicalVerdicts] = useState<CandidateVerdict[]>([]);
+  const [showVerdictModal, setShowVerdictModal] = useState<number | null>(null);
+
+  // NEW: Activity log
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([
+    {
+      id: 'log-1',
+      type: 'criteria-defined',
+      actor: 'System',
+      actorRole: 'technical',
+      description: 'Initial acceptance criteria set',
+      timestamp: new Date(Date.now() - 86400000),
+    }
+  ]);
+  const [showActivityLog, setShowActivityLog] = useState(false);
+
+  // NEW: Overrides tracking
+  const [candidateOverrides, setCandidateOverrides] = useState<Set<number>>(new Set());
+
+  // NEW: Modal states for results and monitoring
+  const [showStartStageModal, setShowStartStageModal] = useState(false);
+  const [showStageResults, setShowStageResults] = useState(false);
+  const [showModuleMonitoring, setShowModuleMonitoring] = useState<'assessment' | 'ai-interview' | null>(null);
+
+  // Mock pipeline data with stage states
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([
+    { id: 'assessment', name: 'Assessment', completed: 6, total: 8, pending: 2, state: 'not-started' },
+    { id: 'ai-interview', name: 'AI Interview', completed: 4, total: 8, pending: 4, state: 'not-started' },
+    { id: 'live-interview', name: 'Live Interview', completed: 2, total: 8, pending: 6, state: 'not-started' },
+    { id: 'review', name: 'Review', completed: 1, total: 8, pending: 7, state: 'not-started' },
+    { id: 'offer', name: 'Offer', completed: 0, total: 8, pending: 8, state: 'not-started' }
+  ]);
+
+  // Mock candidate status data with new fields
+  const [candidateStatuses, setCandidateStatuses] = useState<CandidateStatus[]>([
     {
       id: 1,
       name: 'Sarah Chen',
@@ -106,7 +200,10 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 92,
       aiInterviewScore: 88,
       flags: [],
-      currentStage: 'Offer'
+      currentStage: 'Offer',
+      technicalVerdict: 'pass',
+      meetsCriteria: true,
+      progressionState: 'active'
     },
     {
       id: 2,
@@ -120,7 +217,10 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 85,
       aiInterviewScore: 82,
       flags: [],
-      currentStage: 'Live Interview'
+      currentStage: 'Live Interview',
+      technicalVerdict: 'pass',
+      meetsCriteria: true,
+      progressionState: 'active'
     },
     {
       id: 3,
@@ -134,7 +234,10 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 88,
       aiInterviewScore: 90,
       flags: [],
-      currentStage: 'AI Interview'
+      currentStage: 'AI Interview',
+      technicalVerdict: 'pass',
+      meetsCriteria: true,
+      progressionState: 'active'
     },
     {
       id: 4,
@@ -148,7 +251,10 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 78,
       aiInterviewScore: 0,
       flags: ['Suspicious Activity', 'Tab Switch'],
-      currentStage: 'Assessment'
+      currentStage: 'Assessment',
+      technicalVerdict: 'conditional',
+      meetsCriteria: true,
+      progressionState: 'active'
     },
     {
       id: 5,
@@ -162,7 +268,10 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 95,
       aiInterviewScore: 0,
       flags: [],
-      currentStage: 'Assessment'
+      currentStage: 'Assessment',
+      technicalVerdict: 'pass',
+      meetsCriteria: true,
+      progressionState: 'active'
     },
     {
       id: 6,
@@ -176,7 +285,10 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 81,
       aiInterviewScore: 79,
       flags: [],
-      currentStage: 'AI Interview'
+      currentStage: 'AI Interview',
+      technicalVerdict: 'pass',
+      meetsCriteria: true,
+      progressionState: 'active'
     },
     {
       id: 7,
@@ -190,72 +302,258 @@ export function EnhancedGroupOverviewV2({
       assessmentScore: 0,
       aiInterviewScore: 0,
       flags: [],
-      currentStage: 'Assessment'
+      currentStage: 'Assessment',
+      technicalVerdict: undefined,
+      meetsCriteria: undefined,
+      progressionState: 'active'
     },
     {
       id: 8,
       name: 'Alex Johnson',
       avatar: 'AJ',
-      assessment: 'pending',
+      assessment: 'completed',
       aiInterview: 'not-started',
       liveInterview: 'not-started',
       review: 'not-started',
       offer: 'not-started',
-      assessmentScore: 0,
+      assessmentScore: 65,
       aiInterviewScore: 0,
       flags: [],
-      currentStage: 'Assessment'
+      currentStage: 'Assessment',
+      technicalVerdict: 'fail',
+      meetsCriteria: false,
+      progressionState: 'active'
     }
-  ];
-
-  // Filter candidates based on active filters
-  const getFilteredCandidates = () => {
-    let filtered = [...candidateStatuses];
-    
-    // KPI filter
-    if (activeKPIFilter === 'integrity') {
-      filtered = filtered.filter(c => c.flags.length > 0);
-    }
-    
-    // Step filter
-    if (selectedStep) {
-      const stepMap: Record<string, string> = {
-        'assessment': 'Assessment',
-        'ai-interview': 'AI Interview',
-        'live-interview': 'Live Interview',
-        'review': 'Review',
-        'offer': 'Offer'
-      };
-      filtered = filtered.filter(c => c.currentStage === stepMap[selectedStep]);
-    }
-    
-    return filtered;
-  };
-
-  const filteredCandidates = getFilteredCandidates();
-
-  const toggleSelectCandidate = (id: number) => {
-    setSelectedCandidates(prev =>
-      prev.includes(id) ? prev.filter(cId => cId !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedCandidates.length === filteredCandidates.length) {
-      setSelectedCandidates([]);
-    } else {
-      setSelectedCandidates(filteredCandidates.map(c => c.id));
-    }
-  };
+  ]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleBulkAction = (action: string) => {
-    showToast(`${action} applied to ${selectedCandidates.length} candidates`);
+  const addActivityLog = (entry: Omit<ActivityLogEntry, 'id' | 'timestamp'>) => {
+    const newEntry: ActivityLogEntry = {
+      ...entry,
+      id: `log-${Date.now()}`,
+      timestamp: new Date()
+    };
+    setActivityLog(prev => [newEntry, ...prev]);
+  };
+
+  // Stage-aware action handlers
+  const handleStartStage = () => {
+    setShowStartStageModal(true);
+  };
+
+  const handleConfirmStartStage = (startDate: Date, expectedEndDate: Date) => {
+    const steps = [...pipelineSteps];
+    const currentStepIndex = steps.findIndex(s => s.id === currentStage);
+    if (currentStepIndex !== -1) {
+      steps[currentStepIndex].state = 'active';
+      steps[currentStepIndex].startDate = startDate;
+      steps[currentStepIndex].expectedEndDate = expectedEndDate;
+      setPipelineSteps(steps);
+      setStageState('active');
+      setStageConfigLocked(true);
+      setShowStartStageModal(false);
+      showToast(`${steps[currentStepIndex].name} stage started`);
+      addActivityLog({
+        type: 'stage-start',
+        actor: assignedRecruiter,
+        actorRole: userRole === 'technical' ? 'technical' : 'hr',
+        description: `Started ${steps[currentStepIndex].name} stage (${startDate.toLocaleDateString()} - ${expectedEndDate.toLocaleDateString()})`
+      });
+    }
+  };
+
+  const handleCloseStage = () => {
+    const steps = [...pipelineSteps];
+    const currentStepIndex = steps.findIndex(s => s.id === currentStage);
+    if (currentStepIndex !== -1) {
+      steps[currentStepIndex].state = 'closed';
+      steps[currentStepIndex].actualEndDate = new Date();
+      setPipelineSteps(steps);
+      setStageState('closed');
+      showToast(`${steps[currentStepIndex].name} stage closed - Review results`);
+      addActivityLog({
+        type: 'stage-close',
+        actor: assignedRecruiter,
+        actorRole: userRole === 'technical' ? 'technical' : 'hr',
+        description: `Closed ${steps[currentStepIndex].name} stage`
+      });
+      // Show results dashboard after closing
+      setShowStageResults(true);
+    }
+  };
+
+  const handleEnterReviewMode = () => {
+    setShowStageResults(false); // Close results dashboard
+    setStageState('review-mode');
+    showToast('Entered review mode - You can now select candidates to proceed');
+    addActivityLog({
+      type: 'stage-start',
+      actor: assignedRecruiter,
+      actorRole: 'hr',
+      description: 'Entered review mode for candidate selection'
+    });
+  };
+
+  const handleProceedSelected = () => {
+    if (selectedCandidates.length === 0) {
+      alert('Please select at least one candidate to proceed');
+      return;
+    }
+
+    // Update candidate states
+    const updatedCandidates = candidateStatuses.map(candidate => {
+      if (selectedCandidates.includes(candidate.id)) {
+        return { ...candidate, progressionState: 'selected' as const };
+      } else if (candidate.progressionState === 'active') {
+        // Mark non-selected as needs decision
+        return candidate;
+      }
+      return candidate;
+    });
+
+    setCandidateStatuses(updatedCandidates);
+    
+    // Move to next stage
+    const currentStepIndex = pipelineSteps.findIndex(s => s.id === currentStage);
+    if (currentStepIndex < pipelineSteps.length - 1) {
+      const nextStage = pipelineSteps[currentStepIndex + 1];
+      setCurrentStage(nextStage.id);
+      setStageState('not-started');
+      setStageConfigLocked(false);
+    }
+
+    showToast(`${selectedCandidates.length} candidates progressed to next stage`);
+    addActivityLog({
+      type: 'candidate-progressed',
+      actor: assignedRecruiter,
+      actorRole: 'hr',
+      description: `Progressed ${selectedCandidates.length} candidates to next stage`,
+      metadata: { candidateIds: selectedCandidates }
+    });
+
     setSelectedCandidates([]);
+  };
+
+  const handleMarkCandidateState = (candidateId: number, state: 'rejected' | 'on-hold' | 'archived') => {
+    const updatedCandidates = candidateStatuses.map(c =>
+      c.id === candidateId ? { ...c, progressionState: state } : c
+    );
+    setCandidateStatuses(updatedCandidates);
+    showToast(`Candidate marked as ${state}`);
+    addActivityLog({
+      type: 'candidate-progressed',
+      actor: assignedRecruiter,
+      actorRole: 'hr',
+      description: `Marked candidate as ${state}`,
+      metadata: { candidateId, state }
+    });
+  };
+
+  const handleSaveCriteria = () => {
+    setShowCriteriaEditor(false);
+    showToast('Technical acceptance criteria updated');
+    addActivityLog({
+      type: 'criteria-defined',
+      actor: assignedRecruiter,
+      actorRole: 'technical',
+      description: 'Updated technical acceptance criteria',
+      metadata: acceptanceCriteria
+    });
+
+    // Recalculate meetsCriteria for all candidates
+    const updatedCandidates = candidateStatuses.map(candidate => {
+      const meetsScore = candidate.assessmentScore >= acceptanceCriteria.minimumTechnicalScore;
+      const meetsIntegrity = candidate.flags.length === 0 || acceptanceCriteria.allowedIntegrityRisk !== 'none';
+      const meetsVerdict = 
+        acceptanceCriteria.requiredVerdict === 'any' ||
+        (acceptanceCriteria.requiredVerdict === 'pass' && candidate.technicalVerdict === 'pass') ||
+        (acceptanceCriteria.requiredVerdict === 'conditional' && (candidate.technicalVerdict === 'pass' || candidate.technicalVerdict === 'conditional'));
+      
+      return {
+        ...candidate,
+        meetsCriteria: meetsScore && meetsIntegrity && meetsVerdict
+      };
+    });
+    setCandidateStatuses(updatedCandidates);
+  };
+
+  const handleAddComment = (candidateId: number) => {
+    if (!commentText.trim()) return;
+
+    const newComment: CandidateComment = {
+      id: `comment-${Date.now()}`,
+      candidateId,
+      author: userRole === 'technical' ? 'technical' : 'hr',
+      authorName: assignedRecruiter,
+      text: commentText,
+      timestamp: new Date()
+    };
+
+    setCandidateComments(prev => [...prev, newComment]);
+    setCommentText('');
+    setShowCommentModal(null);
+    showToast('Comment added');
+    addActivityLog({
+      type: 'comment-added',
+      actor: assignedRecruiter,
+      actorRole: userRole === 'technical' ? 'technical' : 'hr',
+      description: `Added comment for candidate`,
+      metadata: { candidateId }
+    });
+  };
+
+  const handleSetVerdict = (candidateId: number, verdict: 'pass' | 'fail' | 'conditional') => {
+    const updatedCandidates = candidateStatuses.map(c =>
+      c.id === candidateId ? { ...c, technicalVerdict: verdict } : c
+    );
+    setCandidateStatuses(updatedCandidates);
+    setShowVerdictModal(null);
+    showToast(`Technical verdict set to ${verdict}`);
+  };
+
+  const handleOverride = (candidateId: number) => {
+    setCandidateOverrides(prev => new Set([...prev, candidateId]));
+    const updatedCandidates = candidateStatuses.map(c =>
+      c.id === candidateId ? { ...c, overrideApplied: true, meetsCriteria: true } : c
+    );
+    setCandidateStatuses(updatedCandidates);
+    showToast('Override applied - candidate now meets criteria');
+    addActivityLog({
+      type: 'override-applied',
+      actor: assignedRecruiter,
+      actorRole: 'hr',
+      description: 'Applied criteria override for candidate',
+      metadata: { candidateId }
+    });
+  };
+
+  const handleSaveAssessment = (assessment: any) => {
+    const newAssessment = {
+      ...assessment,
+      id: `assessment-${Date.now()}`,
+      groupId,
+      createdAt: new Date().toISOString(),
+      createdBy: assignedRecruiter,
+      status: 'draft'
+    };
+    
+    setGroupAssessments([...groupAssessments, newAssessment]);
+    setShowAssessmentCreation(false);
+    showToast(`Assessment "${assessment.config.title}" created successfully!`);
+  };
+
+  const handleToggleCandidateSelection = (candidateId: number) => {
+    if (stageState !== 'review-mode') return;
+    
+    setSelectedCandidates(prev =>
+      prev.includes(candidateId)
+        ? prev.filter(id => id !== candidateId)
+        : [...prev, candidateId]
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -271,18 +569,99 @@ export function EnhancedGroupOverviewV2({
     }
   };
 
-  const handleRunPipeline = async () => {
-    setIsRunningPipeline(true);
-    setPipelineProgress(0);
-    
-    for (let i = 0; i <= 100; i += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      setPipelineProgress(i);
-    }
-    
-    setIsRunningPipeline(false);
-    showToast('Pipeline execution completed!');
+  const getCandidateComments = (candidateId: number) => {
+    return candidateComments.filter(c => c.candidateId === candidateId);
   };
+
+  const getStageActionButton = () => {
+    const currentStepData = pipelineSteps.find(s => s.id === currentStage);
+    if (!currentStepData) return null;
+
+    if (stageState === 'not-started') {
+      return (
+        <button
+          onClick={handleStartStage}
+          className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#10b981] hover:bg-[#059669] text-white transition-colors"
+        >
+          <Play size={16} />
+          <span className="font-['Arimo',sans-serif] text-[14px]">
+            Start Current Stage
+          </span>
+        </button>
+      );
+    }
+
+    if (stageState === 'active') {
+      return (
+        <button
+          onClick={handleCloseStage}
+          className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#ef4444] hover:bg-[#dc2626] text-white transition-colors"
+        >
+          <XCircle size={16} />
+          <span className="font-['Arimo',sans-serif] text-[14px]">
+            Close Stage
+          </span>
+        </button>
+      );
+    }
+
+    if (stageState === 'closed') {
+      return (
+        <button
+          onClick={() => setShowStageResults(true)}
+          className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] text-white transition-colors"
+        >
+          <BarChart3 size={16} />
+          <span className="font-['Arimo',sans-serif] text-[14px]">
+            View Stage Results
+          </span>
+        </button>
+      );
+    }
+
+    if (stageState === 'review-mode') {
+      return (
+        <button
+          onClick={handleProceedSelected}
+          disabled={selectedCandidates.length === 0}
+          className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] disabled:bg-[#e5e7eb] disabled:text-[#9ca3af] text-white transition-colors"
+        >
+          <CheckCircle size={16} />
+          <span className="font-['Arimo',sans-serif] text-[14px]">
+            Proceed Selected Candidates ({selectedCandidates.length})
+          </span>
+        </button>
+      );
+    }
+
+    return null;
+  };
+
+  const getStageStateBadge = () => {
+    const badges = {
+      'not-started': { text: 'Not Started', color: 'bg-gray-200 text-gray-700' },
+      'active': { text: 'Active', color: 'bg-emerald-100 text-emerald-700' },
+      'closed': { text: 'Closed', color: 'bg-amber-100 text-amber-700' },
+      'review-mode': { text: 'Review Mode', color: 'bg-purple-100 text-purple-700' }
+    };
+
+    const badge = badges[stageState];
+    return (
+      <span className={`px-[12px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[13px] ${badge.color}`}>
+        {badge.text}
+      </span>
+    );
+  };
+
+  // If creating a technical assessment
+  if (showAssessmentCreation) {
+    return (
+      <CreateAdvancedAssessment
+        onBack={() => setShowAssessmentCreation(false)}
+        onSave={handleSaveAssessment}
+      />
+    );
+  }
 
   // If showing suspect review for a candidate
   if (showSuspectReview !== null) {
@@ -321,12 +700,7 @@ export function EnhancedGroupOverviewV2({
               <span className="px-[12px] py-[4px] bg-[#ede9fe] text-[#6366f1] rounded-[6px] font-['Arimo',sans-serif] text-[13px]">
                 {candidateStatuses.length} Candidates
               </span>
-              <div className="flex items-center gap-1">
-                <div className="w-[8px] h-[8px] rounded-full bg-[#10b981] animate-pulse" />
-                <span className="font-['Arimo',sans-serif] text-[12px] text-[#10b981]">
-                  Live
-                </span>
-              </div>
+              {getStageStateBadge()}
               {candidateStatuses.filter(c => c.flags.length > 0).length > 0 && (
                 <button
                   onClick={() => setShowFlaggedBatch(true)}
@@ -354,20 +728,14 @@ export function EnhancedGroupOverviewV2({
           </div>
           
           <div className="flex gap-2">
-            <button
-              onClick={handleRunPipeline}
-              disabled={isRunningPipeline}
-              className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] disabled:bg-[#e5e7eb] text-white transition-colors"
+            {getStageActionButton()}
+            <button 
+              onClick={() => setShowActivityLog(true)}
+              className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
             >
-              <Play size={16} />
-              <span className="font-['Arimo',sans-serif] text-[14px]">
-                {isRunningPipeline ? 'Running...' : 'Run Pipeline'}
-              </span>
-            </button>
-            <button className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors">
-              <Edit size={16} className="text-[#6b7280]" />
+              <FileText size={16} className="text-[#6b7280]" />
               <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                Edit
+                Activity Log
               </span>
             </button>
             <button className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors">
@@ -379,29 +747,87 @@ export function EnhancedGroupOverviewV2({
           </div>
         </div>
 
-        {isRunningPipeline && (
-          <div className="mt-4 bg-[#f9fafb] rounded-[8px] p-4 border border-[#e5e7eb]">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
-                Pipeline execution in progress...
-              </span>
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#6366f1]">
-                {pipelineProgress}%
-              </span>
-            </div>
-            <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
+        {/* Pipeline Progress with Stage States */}
+        <div className="mt-6 grid grid-cols-5 gap-4">
+          {pipelineSteps.map((step, index) => {
+            const isCurrentStage = step.id === currentStage;
+            const isPastStage = pipelineSteps.findIndex(s => s.id === currentStage) > index;
+            const isFutureStage = pipelineSteps.findIndex(s => s.id === currentStage) < index;
+            
+            return (
               <div
-                className="h-full bg-[#6366f1] transition-all duration-200"
-                style={{ width: `${pipelineProgress}%` }}
-              />
-            </div>
-          </div>
-        )}
+                key={step.id}
+                className={`p-4 rounded-[12px] border-2 transition-all ${
+                  isCurrentStage
+                    ? 'border-[#6366f1] bg-[#f5f3ff]'
+                    : isPastStage
+                    ? 'border-[#e5e7eb] bg-white opacity-60'
+                    : 'border-[#e5e7eb] bg-white opacity-40'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`font-['Arimo',sans-serif] text-[13px] ${
+                    isCurrentStage ? 'text-[#6366f1] font-semibold' : 'text-[#6b7280]'
+                  }`}>
+                    {step.name}
+                  </span>
+                  {step.state !== 'not-started' && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                      step.state === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                      step.state === 'closed' ? 'bg-amber-100 text-amber-700' :
+                      step.state === 'review-mode' ? 'bg-purple-100 text-purple-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {step.state.replace('-', ' ')}
+                    </span>
+                  )}
+                  {isFutureStage && (
+                    <Lock size={12} className="text-gray-400" />
+                  )}
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-[20px] ${
+                    isCurrentStage ? 'text-[#6366f1]' : 'text-[#111827]'
+                  }`}>
+                    {step.completed}
+                  </span>
+                  <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                    / {step.total}
+                  </span>
+                </div>
+                {!isFutureStage && (
+                  <div className="mt-2 h-[4px] bg-[#e5e7eb] rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${
+                        isCurrentStage ? 'bg-[#6366f1]' : 'bg-[#10b981]'
+                      } transition-all`}
+                      style={{ width: `${(step.completed / step.total) * 100}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-        {/* Role Switcher & Group Settings Section */}
+        {/* Stage Configuration Section */}
         <div className="mt-6 bg-white rounded-[12px] border border-[#e5e7eb] p-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-['Arimo',sans-serif] text-[15px] text-[#111827]">Group Settings</h3>
+            <div className="flex items-center gap-3">
+              <h3 className="font-['Arimo',sans-serif] text-[15px] text-[#111827]">
+                Stage Configuration
+              </h3>
+              <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-[6px] font-['Arimo',sans-serif] text-[11px] text-emerald-800 flex items-center gap-1">
+                <Shield size={12} />
+                Defined by Technical Recruiter
+              </span>
+              {stageConfigLocked && (
+                <span className="px-3 py-1 bg-amber-50 border border-amber-200 rounded-[6px] font-['Arimo',sans-serif] text-[11px] text-amber-800 flex items-center gap-1">
+                  <Lock size={12} />
+                  Locked (Stage Active)
+                </span>
+              )}
+            </div>
             
             {/* Role Switcher Toggle */}
             <div className="flex items-center gap-3">
@@ -418,7 +844,7 @@ export function EnhancedGroupOverviewV2({
                   }`}
                 >
                   <Users size={14} />
-                  Normal Recruiter
+                  HR Recruiter
                 </button>
                 <button
                   onClick={() => setUserRole('technical')}
@@ -435,657 +861,847 @@ export function EnhancedGroupOverviewV2({
             </div>
           </div>
           
-          <div className="flex gap-3">
+          <div className="space-y-3">
+            {/* Module Monitoring Dashboard - Technical Recruiter Only */}
             {userRole === 'technical' && (
-              <>
+              <div className="flex gap-3">
                 <button
-                  onClick={() => {
-                    if (onCreateAssessment) {
-                      onCreateAssessment();
-                    }
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm"
+                  onClick={() => setShowModuleMonitoring('assessment')}
+                  className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] hover:from-[#5558e3] hover:to-[#7c3aed] text-white transition-colors shadow-sm"
                 >
-                  <Plus size={16} />
+                  <BarChart3 size={16} />
                   <span className="font-['Arimo',sans-serif] text-[14px]">
-                    Add Tech Assessment
+                    Monitor Assessment Results
                   </span>
                 </button>
                 <button
-                  onClick={() => setShowAIInterviewSettingsModal(true)}
-                  className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm"
+                  onClick={() => setShowModuleMonitoring('ai-interview')}
+                  className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] hover:from-[#5558e3] hover:to-[#7c3aed] text-white transition-colors shadow-sm"
                 >
-                  <Activity size={16} />
+                  <BarChart3 size={16} />
                   <span className="font-['Arimo',sans-serif] text-[14px]">
-                    AI Interview Settings
+                    Monitor AI Interview Results
                   </span>
                 </button>
-              </>
-            )}
-            {userRole === 'recruiter' && (
-              <div className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb]">
-                <Shield size={16} className="text-[#6b7280]" />
-                <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Switch to Technical Recruiter to add assessments and AI interview settings
-                </span>
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {/* Action Toolbar */}
-      <div className="bg-white border-b border-[#e5e7eb] px-8 py-4">
-        <div className="grid grid-cols-4 gap-3">
-          <button
-            onClick={() => setShowRankModal(true)}
-            className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-[#f5f3ff] hover:bg-[#ede9fe] border border-[#e5e7eb] transition-colors"
-          >
-            <Sparkles size={16} className="text-[#6366f1]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#6366f1]">
-              Semantic Match
-            </span>
-          </button>
-          <button
-            onClick={() => setShowTopNModal(true)}
-            className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-[#f5f3ff] hover:bg-[#ede9fe] border border-[#e5e7eb] transition-colors"
-          >
-            <TrendingUp size={16} className="text-[#6366f1]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#6366f1]">
-              Rank Candidates
-            </span>
-          </button>
-          <button
-            onClick={() => setShowSendAssessmentModal(true)}
-            className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-white hover:bg-[#f9fafb] border border-[#e5e7eb] transition-colors"
-          >
-            <Send size={16} className="text-[#6b7280]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-              Send Assessments
-            </span>
-          </button>
-          <button
-            onClick={() => setShowAutoScheduleModal(true)}
-            className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-white hover:bg-[#f9fafb] border border-[#e5e7eb] transition-colors"
-          >
-            <Calendar size={16} className="text-[#6b7280]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-              Schedule AI Interviews
-            </span>
-          </button>
-          <button className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-white hover:bg-[#f9fafb] border border-[#e5e7eb] transition-colors">
-            <Calendar size={16} className="text-[#6b7280]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-              Schedule Live Interviews
-            </span>
-          </button>
-          <button
-            onClick={() => setShowMoveStageModal(true)}
-            className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-white hover:bg-[#f9fafb] border border-[#e5e7eb] transition-colors"
-          >
-            <Play size={16} className="text-[#6b7280]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-              Move to Next Stage
-            </span>
-          </button>
-          <button className="flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] bg-white hover:bg-[#f9fafb] border border-[#e5e7eb] transition-colors">
-            <Download size={16} className="text-[#6b7280]" />
-            <span className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-              Export
-            </span>
-          </button>
-          <button
-            onClick={() => setShowModuleFilters(!showModuleFilters)}
-            className={`flex items-center gap-2 h-[40px] px-[14px] rounded-[8px] border transition-colors ${
-              showModuleFilters
-                ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
-                : 'bg-white hover:bg-[#f9fafb] border-[#e5e7eb] text-[#111827]'
-            }`}
-          >
-            <Filter size={16} />
-            <span className="font-['Arimo',sans-serif] text-[13px]">
-              Module Filters
-            </span>
-            <ChevronDown size={14} className={`transition-transform ${showModuleFilters ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
-
-        {/* Module Filters Dropdown */}
-        <AnimatePresence>
-          {showModuleFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="mt-4 p-4 bg-[#f9fafb] rounded-[12px] border border-[#e5e7eb]">
-                <div className="grid grid-cols-4 gap-4">
-                  <div>
-                    <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
-                      Assessment Status
-                    </label>
-                    <div className="space-y-2">
-                      {['Passed', 'Failed', 'Pending', 'Flagged'].map(status => (
-                        <label key={status} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="w-[16px] h-[16px] rounded border-[#e5e7eb] text-[#6366f1]"
-                          />
-                          <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
-                            {status}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
-                      AI Interview Status
-                    </label>
-                    <div className="space-y-2">
-                      {['Passed', 'Failed', 'Pending', 'Flagged'].map(status => (
-                        <label key={status} className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="w-[16px] h-[16px] rounded border-[#e5e7eb] text-[#6366f1]"
-                          />
-                          <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
-                            {status}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
-                      Score Range
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      className="w-full"
-                    />
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="font-['Arimo',sans-serif] text-[11px] text-[#6b7280]">0</span>
-                      <span className="font-['Arimo',sans-serif] text-[11px] text-[#6b7280]">100</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
-                      Flags Filter
-                    </label>
-                    <select className="w-full h-[36px] px-[12px] rounded-[8px] border border-[#e5e7eb] bg-white font-['Arimo',sans-serif] text-[13px]">
-                      <option value="all">All Candidates</option>
-                      <option value="integrity">Integrity Issues</option>
-                      <option value="suspicious">Suspicious Activity</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex items-center justify-end gap-2 mt-4">
+            {/* Configuration Buttons */}
+            <div className="flex gap-3">
+              {userRole === 'technical' && (
+                <>
                   <button
-                    onClick={() => setShowModuleFilters(false)}
-                    className="h-[32px] px-[14px] rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[12px] text-[#111827] transition-colors"
+                    onClick={() => {
+                      if (stageConfigLocked) {
+                        showToast('Cannot modify configuration - stage is active');
+                        return;
+                      }
+                      setShowAssessmentCreation(true);
+                    }}
+                    disabled={stageConfigLocked}
+                    className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Clear Filters
+                    <Plus size={16} />
+                    <span className="font-['Arimo',sans-serif] text-[14px]">
+                      Add Tech Assessment
+                    </span>
                   </button>
                   <button
-                    onClick={() => setShowModuleFilters(false)}
-                    className="h-[32px] px-[14px] rounded-[6px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[12px] text-white transition-colors"
+                    onClick={() => {
+                      if (stageConfigLocked) {
+                        showToast('Cannot modify configuration - stage is active');
+                        return;
+                      }
+                      setShowAIInterviewSettingsModal(true);
+                    }}
+                    disabled={stageConfigLocked}
+                    className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Apply Filters
+                    <Activity size={16} />
+                    <span className="font-['Arimo',sans-serif] text-[14px]">
+                      AI Interview Settings
+                    </span>
                   </button>
+                </>
+              )}
+              {userRole === 'recruiter' && (
+                <div className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-[#f9fafb] border border-[#e5e7eb]">
+                  <Shield size={16} className="text-[#6b7280]" />
+                  <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                    Switch to Technical Recruiter to configure assessments and interviews
+                  </span>
                 </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* KPI Cards (Clickable) */}
-      <div className="px-8 py-6">
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <button
-            onClick={() => setActiveKPIFilter(activeKPIFilter === 'assessments' ? null : 'assessments')}
-            className={`bg-white rounded-[12px] border p-5 text-left transition-all ${
-              activeKPIFilter === 'assessments'
-                ? 'border-[#6366f1] ring-2 ring-[#6366f1]/20'
-                : 'border-[#e5e7eb] hover:border-[#6366f1]'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                Assessments Completed
-              </span>
-              <CheckCircle size={18} className="text-[#10b981]" />
+              )}
             </div>
-            <div className="text-[#111827] text-[28px] mb-1">
-              6/8
-            </div>
-            <div className="w-full h-[4px] bg-[#e5e7eb] rounded-full overflow-hidden">
-              <div className="h-full bg-[#10b981]" style={{ width: '75%' }} />
-            </div>
-          </button>
-
-          <button
-            onClick={() => setActiveKPIFilter(activeKPIFilter === 'interviews' ? null : 'interviews')}
-            className={`bg-white rounded-[12px] border p-5 text-left transition-all ${
-              activeKPIFilter === 'interviews'
-                ? 'border-[#6366f1] ring-2 ring-[#6366f1]/20'
-                : 'border-[#e5e7eb] hover:border-[#6366f1]'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                Interviews Scheduled
-              </span>
-              <Calendar size={18} className="text-[#6366f1]" />
-            </div>
-            <div className="text-[#111827] text-[28px] mb-1">
-              4/8
-            </div>
-            <div className="w-full h-[4px] bg-[#e5e7eb] rounded-full overflow-hidden">
-              <div className="h-full bg-[#6366f1]" style={{ width: '50%' }} />
-            </div>
-          </button>
-
-          <button
-            onClick={() => setActiveKPIFilter(activeKPIFilter === 'score' ? null : 'score')}
-            className={`bg-white rounded-[12px] border p-5 text-left transition-all ${
-              activeKPIFilter === 'score'
-                ? 'border-[#6366f1] ring-2 ring-[#6366f1]/20'
-                : 'border-[#e5e7eb] hover:border-[#6366f1]'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                Average Score
-              </span>
-              <TrendingUp size={18} className="text-[#10b981]" />
-            </div>
-            <div className="text-[#111827] text-[28px] mb-1">
-              86.2
-            </div>
-            <span className="font-['Arimo',sans-serif] text-[12px] text-[#10b981]">
-              +4.3 from average
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveKPIFilter(activeKPIFilter === 'integrity' ? null : 'integrity')}
-            className={`bg-white rounded-[12px] border p-5 text-left transition-all ${
-              activeKPIFilter === 'integrity'
-                ? 'border-[#ef4444] ring-2 ring-[#ef4444]/20'
-                : 'border-[#e5e7eb] hover:border-[#ef4444]'
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                Integrity Issues
-              </span>
-              <AlertCircle size={18} className="text-[#ef4444]" />
-            </div>
-            <div className="text-[#111827] text-[28px] mb-1">
-              1
-            </div>
-            <span className="font-['Arimo',sans-serif] text-[12px] text-[#ef4444]">
-              Requires attention
-            </span>
-          </button>
-        </div>
-
-        {/* Active Filter Indicator */}
-        {(activeKPIFilter || selectedStep) && (
-          <div className="bg-[#f5f3ff] border border-[#e5e7eb] rounded-[8px] p-3 mb-6 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter size={14} className="text-[#6366f1]" />
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
-                Active filter: {activeKPIFilter || selectedStep} • Showing {filteredCandidates.length} candidates
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                setActiveKPIFilter(null);
-                setSelectedStep(null);
-              }}
-              className="flex items-center gap-1 font-['Arimo',sans-serif] text-[13px] text-[#6366f1] hover:underline"
-            >
-              Clear filter
-              <X size={14} />
-            </button>
           </div>
-        )}
 
-        {/* Pipeline Timeline (Clickable Steps) */}
-        <div className="bg-white rounded-[12px] border border-[#e5e7eb] p-6 mb-6">
-          <h3 className="text-[#111827] text-[16px] mb-5">Pipeline Progress</h3>
-          <div className="flex items-center justify-between gap-4">
-            {pipelineSteps.map((step, index) => (
-              <div key={step.id} className="flex-1">
-                <button
-                  onClick={() => setSelectedStep(selectedStep === step.id ? null : step.id)}
-                  className="w-full group"
-                >
-                  <div className="relative mb-3">
-                    <div className="flex justify-center">
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={`w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                          selectedStep === step.id
-                            ? 'ring-4 ring-[#6366f1]/30'
-                            : ''
-                        } ${
-                          step.completed === step.total
-                            ? 'bg-[#10b981]'
-                            : step.completed > 0
-                            ? 'bg-[#6366f1]'
-                            : 'bg-[#f3f4f6]'
-                        }`}
-                      >
-                        <div className="text-center">
-                          <div className="text-white text-[18px]">
-                            {step.completed}
+          {/* Display Created Assessments (Technical Recruiter Only) */}
+          {userRole === 'technical' && (
+            <div className="mt-4">
+              {groupAssessments.length > 0 ? (
+                <div className="space-y-2">
+                  <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280] mb-2">
+                    Created Assessments ({groupAssessments.length})
+                  </h4>
+                  {groupAssessments.map((assessment) => (
+                    <div
+                      key={assessment.id}
+                      className="p-3 bg-[#f9fafb] rounded-[8px] border border-[#e5e7eb] hover:border-[#10b981] transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                              {assessment.config.title}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                              assessment.status === 'draft' ? 'bg-gray-200 text-gray-700' :
+                              assessment.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
+                              'bg-blue-100 text-blue-700'
+                            }`}>
+                              {assessment.status}
+                            </span>
                           </div>
-                          <div className={`text-[11px] ${step.completed > 0 ? 'text-white/80' : 'text-[#6b7280]'}`}>
-                            of {step.total}
+                          <div className="flex items-center gap-3 text-[12px] text-[#6b7280]">
+                            <span>{assessment.sections.length} sections</span>
+                            <span>•</span>
+                            <span>{assessment.config.duration} min</span>
+                            <span>•</span>
+                            <span>{assessment.config.difficulty}</span>
                           </div>
                         </div>
-                      </motion.div>
-                    </div>
-                    {index < pipelineSteps.length - 1 && (
-                      <div className="absolute top-[32px] left-[calc(50%+32px)] w-[calc(100%-32px)] h-[2px] bg-[#e5e7eb]">
-                        <div
-                          className="h-full bg-[#6366f1] transition-all"
-                          style={{ width: `${(step.completed / step.total) * 100}%` }}
-                        />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              showToast('Edit assessment feature coming soon');
+                            }}
+                            disabled={stageConfigLocked}
+                            className="h-[28px] px-[12px] rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors text-[12px] text-[#374151] disabled:opacity-50"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              showToast('Assessment ready to be sent to candidates');
+                            }}
+                            className="h-[28px] px-[12px] rounded-[6px] bg-[#10b981] hover:bg-[#059669] text-white transition-colors text-[12px]"
+                          >
+                            Send
+                          </button>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="font-['Arimo',sans-serif] text-[13px] text-[#111827] mb-1">
-                      {step.name}
                     </div>
-                    <div className="font-['Arimo',sans-serif] text-[11px] text-[#6b7280]">
-                      {step.pending} pending
-                    </div>
-                    <div className="mt-2 w-full h-[4px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-[#6366f1] transition-all"
-                        style={{ width: `${(step.completed / step.total) * 100}%` }}
-                      />
-                    </div>
-                  </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-[8px]">
+                  <p className="font-['Arimo',sans-serif] text-[13px] text-emerald-800">
+                    💡 No assessments created yet. Click "Add Tech Assessment" above to create your first assessment with MCQ, Essay, and Coding questions.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Technical Acceptance Criteria - Technical Recruiter Only */}
+          {userRole === 'technical' && (
+            <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-['Arimo',sans-serif] text-[14px] text-[#111827] font-semibold flex items-center gap-2">
+                  <CheckSquare size={16} className="text-[#10b981]" />
+                  Technical Acceptance Criteria
+                </h4>
+                <button
+                  onClick={() => setShowCriteriaEditor(!showCriteriaEditor)}
+                  disabled={stageConfigLocked}
+                  className="flex items-center gap-1 px-3 py-1 rounded-[6px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors text-[13px] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Edit size={14} />
+                  Edit Criteria
                 </button>
               </div>
-            ))}
-          </div>
-        </div>
+              
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-[8px]">
+                  <div className="text-[11px] text-blue-700 mb-1">Minimum Technical Score</div>
+                  <div className="text-[18px] font-semibold text-blue-900">{acceptanceCriteria.minimumTechnicalScore}%</div>
+                </div>
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-[8px]">
+                  <div className="text-[11px] text-purple-700 mb-1">Allowed Integrity Risk</div>
+                  <div className="text-[18px] font-semibold text-purple-900 capitalize">{acceptanceCriteria.allowedIntegrityRisk}</div>
+                </div>
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[8px]">
+                  <div className="text-[11px] text-emerald-700 mb-1">Required Verdict</div>
+                  <div className="text-[18px] font-semibold text-emerald-900 capitalize">{acceptanceCriteria.requiredVerdict}</div>
+                </div>
+              </div>
 
-        {/* Candidate Matrix with Enhancements */}
-        <div className="bg-white rounded-[12px] border border-[#e5e7eb] overflow-hidden">
-          <div className="px-6 py-4 border-b border-[#e5e7eb] flex items-center justify-between">
-            <h3 className="text-[#111827] text-[16px]">Candidate Progress Matrix</h3>
-            {selectedCandidates.length > 0 && (
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#6366f1]">
-                {selectedCandidates.length} selected
-              </span>
-            )}
+              {showCriteriaEditor && (
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-[8px] space-y-3">
+                  <div>
+                    <label className="block text-[13px] text-[#374151] mb-2">
+                      Minimum Technical Score (%)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={acceptanceCriteria.minimumTechnicalScore}
+                      onChange={(e) => setAcceptanceCriteria({
+                        ...acceptanceCriteria,
+                        minimumTechnicalScore: parseInt(e.target.value) || 0
+                      })}
+                      className="w-full h-[36px] px-3 rounded-[6px] border border-[#e5e7eb] text-[14px]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[13px] text-[#374151] mb-2">
+                      Allowed Integrity Risk
+                    </label>
+                    <select
+                      value={acceptanceCriteria.allowedIntegrityRisk}
+                      onChange={(e) => setAcceptanceCriteria({
+                        ...acceptanceCriteria,
+                        allowedIntegrityRisk: e.target.value as 'none' | 'low' | 'medium'
+                      })}
+                      className="w-full h-[36px] px-3 rounded-[6px] border border-[#e5e7eb] text-[14px]"
+                    >
+                      <option value="none">None</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[13px] text-[#374151] mb-2">
+                      Required Technical Verdict
+                    </label>
+                    <select
+                      value={acceptanceCriteria.requiredVerdict}
+                      onChange={(e) => setAcceptanceCriteria({
+                        ...acceptanceCriteria,
+                        requiredVerdict: e.target.value as 'pass' | 'conditional' | 'any'
+                      })}
+                      className="w-full h-[36px] px-3 rounded-[6px] border border-[#e5e7eb] text-[14px]"
+                    >
+                      <option value="pass">Pass Only</option>
+                      <option value="conditional">Pass or Conditional</option>
+                      <option value="any">Any</option>
+                    </select>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      onClick={() => setShowCriteriaEditor(false)}
+                      className="px-4 py-2 rounded-[6px] border border-[#e5e7eb] text-[13px] hover:bg-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveCriteria}
+                      className="px-4 py-2 rounded-[6px] bg-[#10b981] hover:bg-[#059669] text-white text-[13px] transition-colors"
+                    >
+                      Save Criteria
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="px-8 py-6">
+        {/* Candidate Progress Matrix */}
+        <div className="bg-white rounded-[16px] border border-[#e5e7eb] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#e5e7eb]">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[#111827]">Candidate Progress Matrix</h2>
+              <div className="flex items-center gap-2">
+                {stageState === 'review-mode' && userRole === 'recruiter' && selectedCandidates.length > 0 && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-700 text-[13px] rounded-[6px]">
+                    {selectedCandidates.length} selected
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowModuleFilters(!showModuleFilters)}
+                  className={`flex items-center gap-2 h-[36px] px-[14px] rounded-[8px] border transition-colors ${
+                    showModuleFilters
+                      ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
+                      : 'bg-white hover:bg-[#f9fafb] border-[#e5e7eb] text-[#111827]'
+                  }`}
+                >
+                  <Filter size={16} />
+                  <span className="font-['Arimo',sans-serif] text-[13px]">
+                    Filters
+                  </span>
+                  <ChevronDown size={14} className={`transition-transform ${showModuleFilters ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* Enhanced Filters */}
+            <AnimatePresence>
+              {showModuleFilters && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 p-4 bg-[#f9fafb] rounded-[12px] border border-[#e5e7eb]">
+                    <div className="grid grid-cols-4 gap-4">
+                      <div>
+                        <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
+                          Meets Criteria
+                        </label>
+                        <select
+                          value={moduleFilters.meetsCriteria}
+                          onChange={(e) => setModuleFilters({
+                            ...moduleFilters,
+                            meetsCriteria: e.target.value as 'all' | 'yes' | 'no'
+                          })}
+                          className="w-full h-[32px] px-2 rounded-[6px] border border-[#e5e7eb] bg-white text-[13px]"
+                        >
+                          <option value="all">All</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
+                          Flags
+                        </label>
+                        <select
+                          value={moduleFilters.flagsFilter}
+                          onChange={(e) => setModuleFilters({
+                            ...moduleFilters,
+                            flagsFilter: e.target.value as 'all' | 'integrity' | 'suspicious'
+                          })}
+                          className="w-full h-[32px] px-2 rounded-[6px] border border-[#e5e7eb] bg-white text-[13px]"
+                        >
+                          <option value="all">All</option>
+                          <option value="integrity">With Flags</option>
+                          <option value="suspicious">Suspicious Only</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={moduleFilters.hasHRComment}
+                            onChange={(e) => setModuleFilters({
+                              ...moduleFilters,
+                              hasHRComment: e.target.checked
+                            })}
+                            className="w-4 h-4 rounded border-gray-300 text-[#6366f1]"
+                          />
+                          <span className="text-[13px] text-[#374151]">Has HR Comment</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={moduleFilters.hasTechnicalComment}
+                            onChange={(e) => setModuleFilters({
+                              ...moduleFilters,
+                              hasTechnicalComment: e.target.checked
+                            })}
+                            className="w-4 h-4 rounded border-gray-300 text-[#6366f1]"
+                          />
+                          <span className="text-[13px] text-[#374151]">Has Technical Comment</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
+          {/* Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-[#f9fafb] border-b border-[#e5e7eb]">
                 <tr>
-                  <th className="text-left p-4 w-[50px]">
-                    <input
-                      type="checkbox"
-                      checked={selectedCandidates.length === filteredCandidates.length && filteredCandidates.length > 0}
-                      onChange={toggleSelectAll}
-                      className="w-[18px] h-[18px] rounded border-[#e5e7eb] text-[#6366f1]"
-                    />
+                  {/* Show checkbox column only for HR in review mode */}
+                  {userRole === 'recruiter' && stageState === 'review-mode' && (
+                    <th className="p-4 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedCandidates.length === candidateStatuses.filter(c => c.progressionState === 'active').length && candidateStatuses.filter(c => c.progressionState === 'active').length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCandidates(candidateStatuses.filter(c => c.progressionState === 'active').map(c => c.id));
+                          } else {
+                            setSelectedCandidates([]);
+                          }
+                        }}
+                        className="w-4 h-4 rounded border-gray-300 text-[#6366f1]"
+                      />
+                    </th>
+                  )}
+                  <th className="p-4 text-left">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Candidate</span>
                   </th>
-                  <th className="text-left p-4 w-[240px]">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Candidate
-                    </span>
+                  <th className="p-4 text-center">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Assessment</span>
                   </th>
-                  <th className="text-center p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Assessment
-                    </span>
+                  <th className="p-4 text-center">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">AI Interview</span>
                   </th>
-                  <th className="text-center p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      AI Interview
-                    </span>
+                  <th className="p-4 text-center">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Meets Criteria</span>
                   </th>
-                  <th className="text-center p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Live Interview
-                    </span>
+                  {userRole === 'technical' && (
+                    <th className="p-4 text-center">
+                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Verdict</span>
+                    </th>
+                  )}
+                  <th className="p-4 text-center">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Comments</span>
                   </th>
-                  <th className="text-center p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Review
-                    </span>
+                  <th className="p-4 text-center">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Status</span>
                   </th>
-                  <th className="text-center p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Offer
-                    </span>
-                  </th>
-                  <th className="text-left p-4">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Current Stage
-                    </span>
-                  </th>
-                  <th className="text-center p-4 w-[80px]">
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                      Actions
-                    </span>
+                  <th className="p-4 text-center">
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">Actions</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredCandidates.map((candidate) => (
-                  <tr
-                    key={candidate.id}
-                    className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] group transition-colors"
-                  >
-                    <td className="p-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedCandidates.includes(candidate.id)}
-                        onChange={() => toggleSelectCandidate(candidate.id)}
-                        className="w-[18px] h-[18px] rounded border-[#e5e7eb] text-[#6366f1]"
-                      />
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-[36px] h-[36px] rounded-full bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] flex items-center justify-center flex-shrink-0">
-                          <span className="font-['Arimo',sans-serif] text-[13px] text-white">
-                            {candidate.avatar}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827] truncate">
-                            {candidate.name}
-                          </div>
-                          {candidate.flags.length > 0 && (
-                            <button
-                              onClick={() => setShowSuspectReview(candidate.id)}
-                              className="flex items-center gap-1 mt-1 hover:underline"
-                            >
-                              <AlertCircle size={12} className="text-[#ef4444]" />
-                              <span className="font-['Arimo',sans-serif] text-[11px] text-[#ef4444]">
-                                {candidate.flags.length} flag{candidate.flags.length > 1 ? 's' : ''}
+                {candidateStatuses
+                  .filter(candidate => {
+                    // Apply filters
+                    if (moduleFilters.meetsCriteria !== 'all') {
+                      if (moduleFilters.meetsCriteria === 'yes' && !candidate.meetsCriteria) return false;
+                      if (moduleFilters.meetsCriteria === 'no' && candidate.meetsCriteria) return false;
+                    }
+                    if (moduleFilters.flagsFilter !== 'all') {
+                      if (moduleFilters.flagsFilter === 'integrity' && candidate.flags.length === 0) return false;
+                    }
+                    if (moduleFilters.hasHRComment) {
+                      const comments = getCandidateComments(candidate.id);
+                      if (!comments.some(c => c.author === 'hr')) return false;
+                    }
+                    if (moduleFilters.hasTechnicalComment) {
+                      const comments = getCandidateComments(candidate.id);
+                      if (!comments.some(c => c.author === 'technical')) return false;
+                    }
+                    return true;
+                  })
+                  .map((candidate) => {
+                    const comments = getCandidateComments(candidate.id);
+                    return (
+                      <tr key={candidate.id} className="border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                        {/* Selection checkbox - HR only in review mode */}
+                        {userRole === 'recruiter' && stageState === 'review-mode' && (
+                          <td className="p-4">
+                            {candidate.progressionState === 'active' && (
+                              <input
+                                type="checkbox"
+                                checked={selectedCandidates.includes(candidate.id)}
+                                onChange={() => handleToggleCandidateSelection(candidate.id)}
+                                className="w-4 h-4 rounded border-gray-300 text-[#6366f1]"
+                              />
+                            )}
+                          </td>
+                        )}
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-[40px] h-[40px] rounded-full bg-[#ede9fe] flex items-center justify-center">
+                              <span className="font-['Arimo',sans-serif] text-[14px] text-[#6366f1]">
+                                {candidate.avatar}
                               </span>
-                            </button>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => onViewCandidate(candidate.id)}
+                                  className="font-['Arimo',sans-serif] text-[14px] text-[#111827] hover:text-[#6366f1] hover:underline"
+                                >
+                                  {candidate.name}
+                                </button>
+                                {candidate.overrideApplied && (
+                                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] rounded-full flex items-center gap-1">
+                                    <AlertTriangle size={10} />
+                                    Override
+                                  </span>
+                                )}
+                              </div>
+                              {candidate.flags.length > 0 && (
+                                <div className="flex items-center gap-1 mt-1">
+                                  {candidate.flags.map((flag, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="px-2 py-0.5 bg-red-100 text-red-700 text-[10px] rounded-full"
+                                    >
+                                      {flag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => candidate.assessmentScore > 0 && setShowModuleDetail({ type: 'assessment', candidateId: candidate.id })}
+                            className={`flex flex-col items-center gap-1 mx-auto ${candidate.assessmentScore > 0 ? 'hover:bg-[#f9fafb] rounded-[6px] p-2 transition-colors' : ''}`}
+                          >
+                            {getStatusIcon(candidate.assessment)}
+                            {candidate.assessmentScore > 0 && (
+                              <span className="font-['Arimo',sans-serif] text-[11px] text-[#6366f1] hover:underline">
+                                {candidate.assessmentScore}%
+                              </span>
+                            )}
+                          </button>
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => candidate.aiInterviewScore > 0 && setShowModuleDetail({ type: 'ai-interview', candidateId: candidate.id })}
+                            className={`flex flex-col items-center gap-1 mx-auto ${candidate.aiInterviewScore > 0 ? 'hover:bg-[#f9fafb] rounded-[6px] p-2 transition-colors' : ''}`}
+                          >
+                            {getStatusIcon(candidate.aiInterview)}
+                            {candidate.aiInterviewScore > 0 && (
+                              <span className="font-['Arimo',sans-serif] text-[11px] text-[#6366f1] hover:underline">
+                                {candidate.aiInterviewScore}%
+                              </span>
+                            )}
+                          </button>
+                        </td>
+                        <td className="p-4 text-center">
+                          {candidate.meetsCriteria !== undefined ? (
+                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-medium ${
+                              candidate.meetsCriteria
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {candidate.meetsCriteria ? (
+                                <><CheckCircle size={12} /> Yes</>
+                              ) : (
+                                <><XCircle size={12} /> No</>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-[#9ca3af] text-[12px]">Pending</span>
                           )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-center">
-                      <button
-                        onClick={() => candidate.assessmentScore > 0 && setShowModuleDetail({ type: 'assessment', candidateId: candidate.id })}
-                        className={`flex flex-col items-center gap-1 mx-auto ${candidate.assessmentScore > 0 ? 'hover:bg-[#f9fafb] rounded-[6px] p-2 transition-colors' : ''}`}
-                      >
-                        {getStatusIcon(candidate.assessment)}
-                        {candidate.assessmentScore > 0 && (
-                          <span className="font-['Arimo',sans-serif] text-[11px] text-[#6366f1] hover:underline">
-                            {candidate.assessmentScore}%
-                          </span>
+                        </td>
+                        {userRole === 'technical' && (
+                          <td className="p-4 text-center">
+                            <button
+                              onClick={() => setShowVerdictModal(candidate.id)}
+                              className={`px-3 py-1 rounded-full text-[12px] font-medium ${
+                                candidate.technicalVerdict === 'pass'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : candidate.technicalVerdict === 'fail'
+                                  ? 'bg-red-100 text-red-700'
+                                  : candidate.technicalVerdict === 'conditional'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-gray-100 text-gray-600 border border-dashed'
+                              }`}
+                            >
+                              {candidate.technicalVerdict ? candidate.technicalVerdict : 'Set Verdict'}
+                            </button>
+                          </td>
                         )}
-                      </button>
-                    </td>
-                    <td className="p-4 text-center">
-                      <button
-                        onClick={() => candidate.aiInterviewScore > 0 && setShowModuleDetail({ type: 'ai-interview', candidateId: candidate.id })}
-                        className={`flex flex-col items-center gap-1 mx-auto ${candidate.aiInterviewScore > 0 ? 'hover:bg-[#f9fafb] rounded-[6px] p-2 transition-colors' : ''}`}
-                      >
-                        {getStatusIcon(candidate.aiInterview)}
-                        {candidate.aiInterviewScore > 0 && (
-                          <span className="font-['Arimo',sans-serif] text-[11px] text-[#6366f1] hover:underline">
-                            {candidate.aiInterviewScore}%
-                          </span>
-                        )}
-                      </button>
-                    </td>
-                    <td className="p-4 text-center">
-                      {getStatusIcon(candidate.liveInterview)}
-                    </td>
-                    <td className="p-4 text-center">
-                      {getStatusIcon(candidate.review)}
-                    </td>
-                    <td className="p-4 text-center">
-                      {getStatusIcon(candidate.offer)}
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
-                        candidate.currentStage === 'Offer'
-                          ? 'bg-[#dcfce7] text-[#10b981]'
-                          : candidate.currentStage === 'Live Interview'
-                          ? 'bg-[#dbeafe] text-[#3b82f6]'
-                          : 'bg-[#f3f4f6] text-[#6b7280]'
-                      }`}>
-                        {candidate.currentStage}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      <div className="relative inline-block">
-                        <button
-                          className="w-[32px] h-[32px] flex items-center justify-center rounded-[6px] hover:bg-[#f9fafb] transition-colors"
-                        >
-                          <MoreVertical size={16} className="text-[#6b7280]" />
-                        </button>
-                        {/* Dropdown menu would go here */}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => setShowCommentModal(candidate.id)}
+                            className="flex items-center gap-1 mx-auto px-3 py-1 rounded-[6px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors"
+                          >
+                            <MessageSquare size={14} className="text-[#6b7280]" />
+                            <span className="text-[12px] text-[#374151]">
+                              {comments.length > 0 ? comments.length : 'Add'}
+                            </span>
+                          </button>
+                        </td>
+                        <td className="p-4 text-center">
+                          {candidate.progressionState && candidate.progressionState !== 'active' ? (
+                            <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${
+                              candidate.progressionState === 'selected'
+                                ? 'bg-blue-100 text-blue-700'
+                                : candidate.progressionState === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : candidate.progressionState === 'on-hold'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {candidate.progressionState.replace('-', ' ')}
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 rounded-full text-[12px] font-medium bg-emerald-100 text-emerald-700">
+                              Active
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center justify-center gap-2">
+                            {userRole === 'recruiter' && stageState === 'review-mode' && !candidate.meetsCriteria && !candidate.overrideApplied && (
+                              <button
+                                onClick={() => handleOverride(candidate.id)}
+                                className="p-2 rounded-[6px] border border-orange-300 bg-orange-50 hover:bg-orange-100 transition-colors"
+                                title="Override criteria"
+                              >
+                                <AlertTriangle size={14} className="text-orange-600" />
+                              </button>
+                            )}
+                            {userRole === 'technical' && (
+                              <button
+                                onClick={() => {
+                                  if (candidate.flags.length > 0) {
+                                    setShowSuspectReview(candidate.id);
+                                  } else {
+                                    showToast('No integrity flags for this candidate');
+                                  }
+                                }}
+                                disabled={candidate.flags.length === 0}
+                                className="p-2 rounded-[6px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              >
+                                <Flag size={14} className="text-[#6b7280]" />
+                              </button>
+                            )}
+                            {userRole === 'recruiter' && candidate.progressionState === 'active' && (
+                              <div className="relative group">
+                                <button className="p-2 rounded-[6px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors">
+                                  <MoreVertical size={14} className="text-[#6b7280]" />
+                                </button>
+                                <div className="absolute right-0 mt-1 w-[160px] bg-white border border-[#e5e7eb] rounded-[8px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                  <button
+                                    onClick={() => handleMarkCandidateState(candidate.id, 'rejected')}
+                                    className="w-full px-4 py-2 text-left text-[13px] hover:bg-[#f9fafb] flex items-center gap-2 text-red-600"
+                                  >
+                                    <Ban size={14} />
+                                    Mark Rejected
+                                  </button>
+                                  <button
+                                    onClick={() => handleMarkCandidateState(candidate.id, 'on-hold')}
+                                    className="w-full px-4 py-2 text-left text-[13px] hover:bg-[#f9fafb] flex items-center gap-2 text-amber-600"
+                                  >
+                                    <Clock size={14} />
+                                    Mark On Hold
+                                  </button>
+                                  <button
+                                    onClick={() => handleMarkCandidateState(candidate.id, 'archived')}
+                                    className="w-full px-4 py-2 text-left text-[13px] hover:bg-[#f9fafb] flex items-center gap-2 text-gray-600"
+                                  >
+                                    <Archive size={14} />
+                                    Archive
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
         </div>
-
-        {/* Activity Log */}
-        <div className="bg-white rounded-[12px] border border-[#e5e7eb] p-6 mt-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity size={18} className="text-[#6366f1]" />
-            <h3 className="text-[#111827] text-[16px]">Recent Activity</h3>
-          </div>
-          <div className="space-y-3">
-            {[
-              { time: '2 mins ago', action: 'Sarah Chen completed Live Interview', user: 'John Doe' },
-              { time: '15 mins ago', action: 'Assessment sent to Sophie Anderson', user: 'System' },
-              { time: '1 hour ago', action: 'Emma Thompson scheduled for Live Interview', user: 'Jane Smith' },
-              { time: '2 hours ago', action: 'Group created with 8 candidates', user: 'John Doe' }
-            ].map((activity, index) => (
-              <div key={index} className="flex items-start gap-3 pb-3 border-b border-[#e5e7eb] last:border-0">
-                <div className="w-[6px] h-[6px] rounded-full bg-[#6366f1] mt-2" />
-                <div className="flex-1">
-                  <div className="font-['Arimo',sans-serif] text-[13px] text-[#111827]">
-                    {activity.action}
-                  </div>
-                  <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mt-1">
-                    {activity.time} • by {activity.user}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
 
-      {/* Floating Bulk Action Bar */}
-      <AnimatePresence>
-        {selectedCandidates.length > 0 && (
-          <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40"
-          >
-            <div className="bg-[#111827] rounded-[16px] shadow-2xl px-8 py-4 flex items-center gap-4">
-              <span className="font-['Arimo',sans-serif] text-[14px] text-white">
-                {selectedCandidates.length} candidate{selectedCandidates.length > 1 ? 's' : ''} selected
-              </span>
-              <div className="w-[1px] h-[24px] bg-white/20" />
-              <button
-                onClick={() => {
-                  setShowSendAssessmentModal(true);
-                }}
-                className="h-[36px] px-[16px] rounded-[8px] bg-white/10 hover:bg-white/20 font-['Arimo',sans-serif] text-[13px] text-white transition-colors"
-              >
-                Send Assessment
-              </button>
-              <button
-                onClick={() => {
-                  setShowAutoScheduleModal(true);
-                }}
-                className="h-[36px] px-[16px] rounded-[8px] bg-white/10 hover:bg-white/20 font-['Arimo',sans-serif] text-[13px] text-white transition-colors"
-              >
-                Schedule Interview
-              </button>
-              <button
-                onClick={() => {
-                  setShowMoveStageModal(true);
-                }}
-                className="h-[36px] px-[16px] rounded-[8px] bg-[#10b981] hover:bg-[#059669] font-['Arimo',sans-serif] text-[13px] text-white transition-colors"
-              >
-                Move to Next Stage
-              </button>
-              <button
-                onClick={() => setSelectedCandidates([])}
-                className="w-[36px] h-[36px] flex items-center justify-center rounded-[8px] hover:bg-white/10 transition-colors"
-              >
-                <X size={18} className="text-white" />
-              </button>
+      {/* Comment Modal */}
+      {showCommentModal !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[16px] shadow-2xl max-w-2xl w-full">
+            <div className="px-8 py-6 border-b border-[#e5e7eb]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[#111827]">
+                  Comments for {candidateStatuses.find(c => c.id === showCommentModal)?.name}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowCommentModal(null);
+                    setCommentText('');
+                  }}
+                  className="w-10 h-10 rounded-[8px] flex items-center justify-center hover:bg-[#f9fafb] transition-colors"
+                >
+                  <X size={20} className="text-[#6b7280]" />
+                </button>
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Toast Notification */}
-      <AnimatePresence>
-        {toastMessage && (
-          <motion.div
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -100, opacity: 0 }}
-            className="fixed top-8 right-8 z-50"
-          >
-            <div className="bg-[#111827] text-white px-6 py-4 rounded-[12px] shadow-2xl flex items-center gap-3">
-              <CheckCircle size={20} className="text-[#10b981]" />
-              <span className="font-['Arimo',sans-serif] text-[14px]">
-                {toastMessage}
-              </span>
+            <div className="p-8">
+              {/* Existing comments */}
+              <div className="mb-6 space-y-3 max-h-[300px] overflow-y-auto">
+                {getCandidateComments(showCommentModal).length > 0 ? (
+                  getCandidateComments(showCommentModal).map((comment) => (
+                    <div
+                      key={comment.id}
+                      className={`p-4 rounded-[12px] border ${
+                        comment.author === 'technical'
+                          ? 'bg-emerald-50 border-emerald-200'
+                          : 'bg-blue-50 border-blue-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
+                          comment.author === 'technical'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {comment.author === 'technical' ? (
+                            <><Shield size={10} className="inline mr-1" />Technical</>
+                          ) : (
+                            <><Users size={10} className="inline mr-1" />HR</>
+                          )}
+                        </span>
+                        <span className="text-[12px] text-[#6b7280]">
+                          {comment.timestamp.toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-[14px] text-[#374151]">{comment.text}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-[14px] text-[#6b7280] py-8">
+                    No comments yet. Add the first comment below.
+                  </p>
+                )}
+              </div>
+
+              {/* Add new comment */}
+              <div>
+                <label className="block text-[13px] text-[#374151] mb-2">
+                  Add Comment ({userRole === 'technical' ? 'Technical Recruiter' : 'HR Recruiter'})
+                </label>
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Enter your comment..."
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-[8px] border border-[#e5e7eb] text-[14px] resize-none focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
+                />
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            <div className="px-8 py-4 border-t border-[#e5e7eb] flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowCommentModal(null);
+                  setCommentText('');
+                }}
+                className="px-6 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px] hover:bg-[#f9fafb] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleAddComment(showCommentModal)}
+                disabled={!commentText.trim()}
+                className="px-6 py-2 rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] text-white text-[14px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Comment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Verdict Modal - Technical Recruiter Only */}
+      {showVerdictModal !== null && userRole === 'technical' && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[16px] shadow-2xl max-w-md w-full p-8">
+            <h3 className="text-[#111827] mb-4">
+              Set Technical Verdict for {candidateStatuses.find(c => c.id === showVerdictModal)?.name}
+            </h3>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleSetVerdict(showVerdictModal, 'pass')}
+                className="w-full p-4 rounded-[8px] border-2 border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-medium transition-colors"
+              >
+                Pass
+              </button>
+              <button
+                onClick={() => handleSetVerdict(showVerdictModal, 'conditional')}
+                className="w-full p-4 rounded-[8px] border-2 border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 font-medium transition-colors"
+              >
+                Conditional
+              </button>
+              <button
+                onClick={() => handleSetVerdict(showVerdictModal, 'fail')}
+                className="w-full p-4 rounded-[8px] border-2 border-red-300 bg-red-50 hover:bg-red-100 text-red-900 font-medium transition-colors"
+              >
+                Fail
+              </button>
+            </div>
+            <button
+              onClick={() => setShowVerdictModal(null)}
+              className="mt-6 w-full px-6 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px] hover:bg-[#f9fafb] transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Activity Log Modal */}
+      {showActivityLog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-[16px] shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="px-8 py-6 border-b border-[#e5e7eb]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-[#111827]">Activity & Decision Log</h3>
+                <button
+                  onClick={() => setShowActivityLog(false)}
+                  className="w-10 h-10 rounded-[8px] flex items-center justify-center hover:bg-[#f9fafb] transition-colors"
+                >
+                  <X size={20} className="text-[#6b7280]" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="space-y-4">
+                {activityLog.map((entry) => (
+                  <div key={entry.id} className="flex gap-4">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-[#f3f4f6] flex items-center justify-center">
+                      {entry.actorRole === 'technical' ? (
+                        <Shield size={16} className="text-[#10b981]" />
+                      ) : (
+                        <Users size={16} className="text-[#6366f1]" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[14px] text-[#111827] font-medium">
+                          {entry.actor}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          entry.actorRole === 'technical'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {entry.actorRole === 'technical' ? 'Technical' : 'HR'}
+                        </span>
+                        <span className="text-[12px] text-[#9ca3af]">
+                          {entry.timestamp.toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-[14px] text-[#6b7280]">{entry.description}</p>
+                      {entry.metadata && (
+                        <div className="mt-2 p-2 bg-gray-50 rounded-[6px] text-[12px] text-gray-600">
+                          <code>{JSON.stringify(entry.metadata, null, 2)}</code>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-8 py-4 border-t border-[#e5e7eb] flex justify-end">
+              <button
+                onClick={() => setShowActivityLog(false)}
+                className="px-6 py-2 rounded-[8px] border border-[#e5e7eb] text-[14px] hover:bg-[#f9fafb] transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Module Detail Modals */}
       <AnimatePresence>
@@ -1121,407 +1737,67 @@ export function EnhancedGroupOverviewV2({
         )}
       </AnimatePresence>
 
-      {/* Existing Modals... */}
-      {/* Rank Group Modal */}
-      {showRankModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 animate-scaleIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#111827] text-[18px]">Semantic Ranking</h3>
-              <button onClick={() => setShowRankModal(false)}>
-                <X size={20} className="text-[#6b7280]" />
-              </button>
-            </div>
-            <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-4">
-              Run semantic scorer across the group to reorder candidates based on relevance.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowRankModal(false)}
-                className="flex-1 h-[44px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowRankModal(false);
-                  showToast('Semantic ranking completed');
-                }}
-                className="flex-1 h-[44px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-              >
-                Run Ranking
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Start Stage Modal */}
+      {showStartStageModal && (
+        <StartStageModal
+          stageName={pipelineSteps.find(s => s.id === currentStage)?.name || ''}
+          onConfirm={handleConfirmStartStage}
+          onCancel={() => setShowStartStageModal(false)}
+        />
       )}
 
-      {/* Top N Modal */}
-      {showTopNModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 animate-scaleIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#111827] text-[18px]">Find Top N by Criteria</h3>
-              <button onClick={() => setShowTopNModal(false)}>
-                <X size={20} className="text-[#6b7280]" />
-              </button>
-            </div>
-            <div className="space-y-4 mb-4">
-              <input
-                type="text"
-                placeholder='e.g., "Top 3 leadership + cloud"'
-                className="w-full h-[44px] px-[14px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
-              />
-              <select className="w-full h-[44px] px-[14px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent bg-white">
-                <option>Top 3 candidates</option>
-                <option>Top 5 candidates</option>
-                <option>Top 10 candidates</option>
-              </select>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowTopNModal(false)}
-                className="flex-1 h-[44px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowTopNModal(false);
-                  showToast('Top candidates identified');
-                }}
-                className="flex-1 h-[44px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-              >
-                Find Top Candidates
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Stage Results Dashboard */}
+      {showStageResults && (
+        <StageResultsDashboard
+          stageName={pipelineSteps.find(s => s.id === currentStage)?.name || ''}
+          stageId={currentStage}
+          candidates={candidateStatuses}
+          onClose={() => setShowStageResults(false)}
+          onEnterReviewMode={handleEnterReviewMode}
+          startDate={pipelineSteps.find(s => s.id === currentStage)?.startDate || new Date()}
+          endDate={pipelineSteps.find(s => s.id === currentStage)?.actualEndDate || new Date()}
+        />
       )}
 
-      {/* Send Assessment Modal */}
-      {showSendAssessmentModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 animate-scaleIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#111827] text-[18px]">Send Assessments</h3>
-              <button onClick={() => setShowSendAssessmentModal(false)}>
-                <X size={20} className="text-[#6b7280]" />
-              </button>
-            </div>
-            <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-4">
-              Send assessments to {selectedCandidates.length > 0 ? `${selectedCandidates.length} selected candidates` : 'all candidates'}.
-            </p>
-            <select className="w-full h-[44px] px-[14px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] mb-4 bg-white">
-              <option>Technical Assessment - React</option>
-              <option>Technical Assessment - Full Stack</option>
-              <option>General Aptitude Test</option>
-            </select>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSendAssessmentModal(false)}
-                className="flex-1 h-[44px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowSendAssessmentModal(false);
-                  showToast(`Assessment sent to ${selectedCandidates.length > 0 ? selectedCandidates.length : candidateStatuses.length} candidates`);
-                  setSelectedCandidates([]);
-                }}
-                className="flex-1 h-[44px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-              >
-                Send Assessment
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Module Monitoring Dashboard */}
+      {showModuleMonitoring && (
+        <ModuleMonitoringDashboard
+          moduleType={showModuleMonitoring}
+          candidates={candidateStatuses}
+          onClose={() => setShowModuleMonitoring(null)}
+          onViewCandidate={(candidateId) => {
+            setShowModuleMonitoring(null);
+            onViewCandidate(candidateId);
+          }}
+          onAddVerdict={(candidateId) => {
+            setShowModuleMonitoring(null);
+            setShowVerdictModal(candidateId);
+          }}
+          onReviewFlags={(candidateId) => {
+            setShowModuleMonitoring(null);
+            setShowSuspectReview(candidateId);
+          }}
+        />
       )}
 
-      {/* Auto Schedule Modal */}
-      {showAutoScheduleModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 animate-scaleIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#111827] text-[18px]">Schedule AI Interviews</h3>
-              <button onClick={() => setShowAutoScheduleModal(false)}>
-                <X size={20} className="text-[#6b7280]" />
-              </button>
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="bg-[#111827] rounded-[16px] shadow-2xl px-8 py-4 flex items-center gap-3">
+              <CheckCircle size={20} className="text-[#10b981]" />
+              <span className="font-['Arimo',sans-serif] text-[14px] text-white">
+                {toastMessage}
+              </span>
             </div>
-            <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-4">
-              Auto-schedule interviews for {selectedCandidates.length > 0 ? `${selectedCandidates.length} selected candidates` : 'all candidates'}.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowAutoScheduleModal(false)}
-                className="flex-1 h-[44px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowAutoScheduleModal(false);
-                  showToast(`Interviews scheduled for ${selectedCandidates.length > 0 ? selectedCandidates.length : candidateStatuses.length} candidates`);
-                  setSelectedCandidates([]);
-                }}
-                className="flex-1 h-[44px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-              >
-                Schedule Interviews
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Move to Next Stage Modal with Rule Builder */}
-      {showMoveStageModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] p-6 animate-scaleIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#111827] text-[18px]">Move to Next Stage</h3>
-              <button onClick={() => setShowMoveStageModal(false)}>
-                <X size={20} className="text-[#6b7280]" />
-              </button>
-            </div>
-            <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-4">
-              Move {selectedCandidates.length > 0 ? `${selectedCandidates.length} selected candidates` : 'candidates'} to the next pipeline stage.
-            </p>
-
-            {/* Rule Builder */}
-            <div className="bg-[#f9fafb] border border-[#e5e7eb] rounded-[12px] p-4 mb-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                  Auto-Advance Rule
-                </h4>
-                <button
-                  onClick={() => setShowRuleBuilderModal(!showRuleBuilderModal)}
-                  className="font-['Arimo',sans-serif] text-[12px] text-[#6366f1] hover:underline"
-                >
-                  {showRuleBuilderModal ? 'Hide' : 'Edit Rule'}
-                </button>
-              </div>
-              
-              {showRuleBuilderModal && (
-                <div className="space-y-3">
-                  <div className="bg-white border border-[#e5e7eb] rounded-[8px] p-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">IF</span>
-                      <select className="h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] bg-white">
-                        <option>Assessment Score</option>
-                        <option>AI Interview Score</option>
-                        <option>Flags</option>
-                      </select>
-                      <select className="h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] bg-white">
-                        <option>&gt;=</option>
-                        <option>&gt;</option>
-                        <option>=</option>
-                        <option>&lt;</option>
-                        <option>&lt;=</option>
-                      </select>
-                      <input
-                        type="number"
-                        defaultValue="80"
-                        className="w-[80px] h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px]"
-                      />
-                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">AND</span>
-                      <select className="h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] bg-white">
-                        <option>Flags</option>
-                        <option>Assessment Score</option>
-                      </select>
-                      <select className="h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] bg-white">
-                        <option>== none</option>
-                        <option>&gt; 0</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="bg-white border border-[#e5e7eb] rounded-[8px] p-3">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">THEN Move to</span>
-                      <select className="h-[32px] px-[10px] rounded-[6px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[13px] bg-white">
-                        <option>AI Interview</option>
-                        <option>Live Interview</option>
-                        <option>Review</option>
-                        <option>Offer</option>
-                      </select>
-                    </div>
-                  </div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="w-[16px] h-[16px] rounded border-[#e5e7eb] text-[#6366f1]"
-                    />
-                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
-                      Save as auto-advance rule for this group
-                    </span>
-                  </label>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowMoveStageModal(false)}
-                className="flex-1 h-[44px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  setShowMoveStageModal(false);
-                  showToast(`${selectedCandidates.length || candidateStatuses.length} candidates will be advanced`);
-                  setSelectedCandidates([]);
-                }}
-                className="flex-1 h-[44px] rounded-[8px] bg-[#10b981] hover:bg-[#059669] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-              >
-                Move Candidates
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Flagged Batch Review Modal */}
-      {showFlaggedBatch && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[500px] p-6 animate-scaleIn">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#111827] text-[18px]">Flagged Candidates</h3>
-              <button onClick={() => setShowFlaggedBatch(false)}>
-                <X size={20} className="text-[#6b7280]" />
-              </button>
-            </div>
-            <div className="space-y-2 mb-4">
-              {candidateStatuses.filter(c => c.flags.length > 0).map(candidate => (
-                <button
-                  key={candidate.id}
-                  onClick={() => {
-                    setShowFlaggedBatch(false);
-                    setShowSuspectReview(candidate.id);
-                  }}
-                  className="w-full flex items-center justify-between p-4 border border-[#e5e7eb] rounded-[12px] hover:border-[#6366f1] hover:bg-[#f9fafb] transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-[36px] h-[36px] rounded-full bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] flex items-center justify-center">
-                      <span className="font-['Arimo',sans-serif] text-[13px] text-white">
-                        {candidate.avatar}
-                      </span>
-                    </div>
-                    <div className="text-left">
-                      <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                        {candidate.name}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <AlertCircle size={12} className="text-[#ef4444]" />
-                        <span className="font-['Arimo',sans-serif] text-[11px] text-[#ef4444]">
-                          {candidate.flags.length} flag{candidate.flags.length > 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <ChevronLeft size={16} className="text-[#6b7280] rotate-180" />
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowFlaggedBatch(false)}
-              className="w-full h-[40px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      <style>{`
-        @keyframes scaleIn {
-          from {
-            transform: scale(0.95);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        .animate-scaleIn {
-          animation: scaleIn 200ms ease-out;
-        }
-      `}</style>
-
-      {/* AI Interview Settings Modal */}
-      {showAIInterviewSettingsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[16px] w-full max-w-[600px] p-8">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-[#111827] text-[20px]">AI Interview Settings</h3>
-              <button
-                onClick={() => setShowAIInterviewSettingsModal(false)}
-                className="w-[32px] h-[32px] flex items-center justify-center rounded-[6px] hover:bg-[#f3f4f6] transition-colors"
-              >
-                <X size={18} className="text-[#6b7280]" />
-              </button>
-            </div>
-
-            <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-6">
-              Choose the type of AI interview to set up for this group
-            </p>
-
-            <div className="space-y-4">
-              <button
-                onClick={() => {
-                  setShowAIInterviewSettingsModal(false);
-                  if (onOpenRecordedAISetup) {
-                    onOpenRecordedAISetup();
-                  }
-                }}
-                className="w-full flex items-center gap-4 p-6 rounded-[12px] border-2 border-[#e5e7eb] hover:border-[#8b5cf6] hover:bg-[#f9fafb] transition-all text-left"
-              >
-                <div className="w-[56px] h-[56px] rounded-[10px] bg-[#f3e8ff] flex items-center justify-center flex-shrink-0">
-                  <Calendar size={28} className="text-[#8b5cf6]" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-['Arimo',sans-serif] text-[16px] text-[#111827] mb-1">
-                    Recorded Interview
-                  </h4>
-                  <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                    Asynchronous video responses analyzed by AI
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowAIInterviewSettingsModal(false);
-                  if (onOpenLiveAISetup) {
-                    onOpenLiveAISetup();
-                  }
-                }}
-                className="w-full flex items-center gap-4 p-6 rounded-[12px] border-2 border-[#e5e7eb] hover:border-[#6366f1] hover:bg-[#f9fafb] transition-all text-left"
-              >
-                <div className="w-[56px] h-[56px] rounded-[10px] bg-[#ede9fe] flex items-center justify-center flex-shrink-0">
-                  <Activity size={28} className="text-[#6366f1]" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-['Arimo',sans-serif] text-[16px] text-[#111827] mb-1">
-                    Live AI Interview
-                  </h4>
-                  <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                    Real-time AI-conducted interviews with dynamic questioning
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowAIInterviewSettingsModal(false)}
-              className="w-full h-[44px] rounded-[8px] border border-[#e5e7eb] hover:bg-[#f9fafb] font-['Arimo',sans-serif] text-[14px] text-[#374151] transition-colors mt-6"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
