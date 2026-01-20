@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Github, Linkedin, Mail, Phone, MapPin, Calendar, AlertTriangle, FileText, Video, BarChart3, Network, MessageSquare, Download, CheckCircle, XCircle, TrendingUp, Play, Clock, ThumbsUp, ThumbsDown, Activity, Eye, MessageCircle } from 'lucide-react';
+import { ChevronLeft, Github, Mail, Phone, MapPin, Calendar, AlertTriangle, FileText, Video, BarChart3, Network, MessageSquare, Download, CheckCircle, XCircle, TrendingUp, Play, Clock, ThumbsUp, ThumbsDown, Activity, Eye, MessageCircle } from 'lucide-react';
 import { KnowledgeGraph } from './KnowledgeGraph';
 import { EnhancedAssessmentReport } from './EnhancedAssessmentReport';
 import { EnhancedAIInterviewReport } from './EnhancedAIInterviewReport';
@@ -12,7 +12,7 @@ interface CandidateProfileProps {
   showFinalReport?: boolean;
 }
 
-type TabType = 'overview' | 'resume' | 'github' | 'linkedin' | 'assessment' | 'interview' | 'live-interview' | 'notes' | 'knowledge-graph' | 'final-report';
+type TabType = 'overview' | 'resume' | 'github' | 'assessment' | 'interview' | 'live-interview' | 'notes' | 'knowledge-graph' | 'final-report';
 
 export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, showFinalReport = false }: CandidateProfileProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -61,8 +61,7 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
       overall: 95,
       assessment: 95,
       aiInterview: 92,
-      github: 88,
-      linkedin: 95
+      github: 88
     },
     assessmentData: {
       completedAt: '2025-01-15',
@@ -92,7 +91,6 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
     { id: 'overview', label: 'Overview', icon: FileText },
     { id: 'resume', label: 'Resume', icon: FileText },
     { id: 'github', label: 'GitHub', icon: Github },
-    { id: 'linkedin', label: 'LinkedIn', icon: Linkedin },
     { id: 'assessment', label: 'Assessment', icon: BarChart3 },
     { id: 'interview', label: 'AI Interview', icon: Video },
     { id: 'live-interview', label: 'Live Interview', icon: Play },
@@ -267,34 +265,487 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
             )}
 
             {activeTab === 'resume' && (
-              <div>
+              <div className="space-y-6">
                 <h3 className="text-[#111827] mb-4">Parsed Resume Data</h3>
-                <div className="bg-[#f9fafb] rounded-[8px] p-6">
-                  <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                    Full resume parsing and detailed analysis will be displayed here.
+                
+                {/* Resume Summary */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-3">Professional Summary</h4>
+                  <p className="text-[#374151] text-sm leading-relaxed">
+                    Highly skilled Full Stack Developer with 8+ years of experience building scalable web applications. 
+                    Proven track record of leading development teams, architecting microservices, and delivering 
+                    high-quality software solutions. Expert in React, TypeScript, Node.js, and cloud technologies.
                   </p>
+                </div>
+
+                {/* Skills from Resume */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Technical Skills</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <div className="text-xs text-[#6b7280] mb-2">Frontend</div>
+                      <div className="space-y-1">
+                        <div className="text-sm text-[#111827]">React, TypeScript</div>
+                        <div className="text-sm text-[#111827]">Next.js, Vue.js</div>
+                        <div className="text-sm text-[#111827]">Tailwind CSS</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-[#6b7280] mb-2">Backend</div>
+                      <div className="space-y-1">
+                        <div className="text-sm text-[#111827]">Node.js, Express</div>
+                        <div className="text-sm text-[#111827]">PostgreSQL, MongoDB</div>
+                        <div className="text-sm text-[#111827]">GraphQL, REST APIs</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-[#6b7280] mb-2">DevOps</div>
+                      <div className="space-y-1">
+                        <div className="text-sm text-[#111827]">AWS, Docker</div>
+                        <div className="text-sm text-[#111827]">CI/CD, Jenkins</div>
+                        <div className="text-sm text-[#111827]">Kubernetes</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Work Experience from Resume */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Work Experience</h4>
+                  <div className="space-y-5">
+                    {candidate.workHistory.map((job, i) => (
+                      <div key={i} className="border-l-2 border-[#6366f1] pl-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <div className="font-medium text-[#111827] text-sm">{job.title}</div>
+                            <div className="text-[#6b7280] text-xs">{job.company}</div>
+                          </div>
+                          <div className="text-[#6b7280] text-xs">{job.duration}</div>
+                        </div>
+                        <p className="text-[#374151] text-sm">{job.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Education from Resume */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Education</h4>
+                  <div className="space-y-4">
+                    {candidate.education.map((edu, i) => (
+                      <div key={i}>
+                        <div className="font-medium text-[#111827] text-sm">{edu.degree}</div>
+                        <div className="text-[#6b7280] text-xs">{edu.school} • {edu.year}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Certifications */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Certifications</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm text-[#374151]">AWS Certified Solutions Architect</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600" />
+                      <span className="text-sm text-[#374151]">Professional Scrum Master (PSM I)</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
             {activeTab === 'github' && (
-              <div>
-                <h3 className="text-[#111827] mb-4">GitHub Activity</h3>
-                <div className="bg-[#f9fafb] rounded-[8px] p-6">
-                  <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                    GitHub repositories, contributions, and activity will be displayed here.
-                  </p>
+              <div className="space-y-6">
+                <h3 className="text-[#111827] mb-4">GitHub Profile Analysis</h3>
+                
+                {/* GitHub Stats Overview */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Github className="w-4 h-4 text-[#6b7280]" />
+                      <div className="text-xs text-[#6b7280]">Public Repos</div>
+                    </div>
+                    <div className="text-2xl font-semibold text-[#111827]">47</div>
+                  </div>
+                  <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Activity className="w-4 h-4 text-[#6b7280]" />
+                      <div className="text-xs text-[#6b7280]">Total Stars</div>
+                    </div>
+                    <div className="text-2xl font-semibold text-[#111827]">1,243</div>
+                  </div>
+                  <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="w-4 h-4 text-[#6b7280]" />
+                      <div className="text-xs text-[#6b7280]">Followers</div>
+                    </div>
+                    <div className="text-2xl font-semibold text-[#111827]">342</div>
+                  </div>
+                  <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Calendar className="w-4 h-4 text-[#6b7280]" />
+                      <div className="text-xs text-[#6b7280]">Contributions (2024)</div>
+                    </div>
+                    <div className="text-2xl font-semibold text-[#111827]">1,847</div>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {activeTab === 'linkedin' && (
-              <div>
-                <h3 className="text-[#111827] mb-4">LinkedIn Profile</h3>
-                <div className="bg-[#f9fafb] rounded-[8px] p-6">
-                  <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                    LinkedIn profile data and analysis will be displayed here.
-                  </p>
+                {/* Contribution Activity Graph */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Contribution Activity (Last 12 Months)</h4>
+                  <div className="space-y-2">
+                    {/* Simple contribution heat map */}
+                    <div className="flex items-center gap-1">
+                      <div className="text-xs text-[#6b7280] w-12">Mon</div>
+                      <div className="flex gap-1">
+                        {Array.from({ length: 52 }, (_, i) => (
+                          <div
+                            key={i}
+                            className="w-3 h-3 rounded-sm"
+                            style={{
+                              backgroundColor: 
+                                i % 7 === 0 ? '#ebedf0' :
+                                i % 5 === 0 ? '#9be9a8' :
+                                i % 3 === 0 ? '#40c463' :
+                                i % 2 === 0 ? '#30a14e' : '#216e39'
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="text-xs text-[#6b7280] w-12">Wed</div>
+                      <div className="flex gap-1">
+                        {Array.from({ length: 52 }, (_, i) => (
+                          <div
+                            key={i}
+                            className="w-3 h-3 rounded-sm"
+                            style={{
+                              backgroundColor: 
+                                i % 6 === 0 ? '#ebedf0' :
+                                i % 4 === 0 ? '#9be9a8' :
+                                i % 3 === 0 ? '#40c463' :
+                                i % 2 === 0 ? '#30a14e' : '#216e39'
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="text-xs text-[#6b7280] w-12">Fri</div>
+                      <div className="flex gap-1">
+                        {Array.from({ length: 52 }, (_, i) => (
+                          <div
+                            key={i}
+                            className="w-3 h-3 rounded-sm"
+                            style={{
+                              backgroundColor: 
+                                i % 5 === 0 ? '#ebedf0' :
+                                i % 4 === 0 ? '#9be9a8' :
+                                i % 3 === 0 ? '#40c463' :
+                                i % 2 === 0 ? '#30a14e' : '#216e39'
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-4 text-xs text-[#6b7280]">
+                    <span>Less</span>
+                    <div className="w-3 h-3 rounded-sm bg-[#ebedf0]" />
+                    <div className="w-3 h-3 rounded-sm bg-[#9be9a8]" />
+                    <div className="w-3 h-3 rounded-sm bg-[#40c463]" />
+                    <div className="w-3 h-3 rounded-sm bg-[#30a14e]" />
+                    <div className="w-3 h-3 rounded-sm bg-[#216e39]" />
+                    <span>More</span>
+                  </div>
+                </div>
+
+                {/* Language Breakdown */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Most Used Languages</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-[#3178c6]" />
+                          <span className="text-sm text-[#111827]">TypeScript</span>
+                        </div>
+                        <span className="text-sm text-[#6b7280]">42.3%</span>
+                      </div>
+                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#3178c6] rounded-full" style={{ width: '42.3%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-[#61dafb]" />
+                          <span className="text-sm text-[#111827]">JavaScript</span>
+                        </div>
+                        <span className="text-sm text-[#6b7280]">31.7%</span>
+                      </div>
+                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#61dafb] rounded-full" style={{ width: '31.7%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-[#3776ab]" />
+                          <span className="text-sm text-[#111827]">Python</span>
+                        </div>
+                        <span className="text-sm text-[#6b7280]">14.2%</span>
+                      </div>
+                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#3776ab] rounded-full" style={{ width: '14.2%' }} />
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-[#e34c26]" />
+                          <span className="text-sm text-[#111827]">HTML/CSS</span>
+                        </div>
+                        <span className="text-sm text-[#6b7280]">11.8%</span>
+                      </div>
+                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                        <div className="h-full bg-[#e34c26] rounded-full" style={{ width: '11.8%' }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Repositories */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Top Repositories</h4>
+                  <div className="space-y-4">
+                    {/* Repo 1 */}
+                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Github className="w-4 h-4 text-[#6366f1]" />
+                            <h5 className="text-sm font-medium text-[#6366f1]">react-microservices-boilerplate</h5>
+                          </div>
+                          <p className="text-xs text-[#6b7280] mb-3">
+                            Production-ready microservices architecture with React, TypeScript, and Docker. Includes API gateway, service mesh, and monitoring.
+                          </p>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full bg-[#3178c6]" />
+                              <span className="text-xs text-[#6b7280]">TypeScript</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Activity className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">487 stars</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">124 forks</span>
+                            </div>
+                            <span className="text-xs text-[#6b7280]">Updated 2 days ago</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Repo 2 */}
+                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Github className="w-4 h-4 text-[#6366f1]" />
+                            <h5 className="text-sm font-medium text-[#6366f1]">next-auth-rbac</h5>
+                          </div>
+                          <p className="text-xs text-[#6b7280] mb-3">
+                            Role-based access control library for Next.js applications. Supports multiple auth providers and fine-grained permissions.
+                          </p>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full bg-[#61dafb]" />
+                              <span className="text-xs text-[#6b7280]">JavaScript</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Activity className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">312 stars</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">78 forks</span>
+                            </div>
+                            <span className="text-xs text-[#6b7280]">Updated 1 week ago</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Repo 3 */}
+                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Github className="w-4 h-4 text-[#6366f1]" />
+                            <h5 className="text-sm font-medium text-[#6366f1]">graphql-query-optimizer</h5>
+                          </div>
+                          <p className="text-xs text-[#6b7280] mb-3">
+                            Automatic query optimization and batching for GraphQL APIs. Reduces N+1 queries and improves performance by up to 80%.
+                          </p>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full bg-[#3178c6]" />
+                              <span className="text-xs text-[#6b7280]">TypeScript</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Activity className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">256 stars</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">45 forks</span>
+                            </div>
+                            <span className="text-xs text-[#6b7280]">Updated 3 weeks ago</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Repo 4 */}
+                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Github className="w-4 h-4 text-[#6366f1]" />
+                            <h5 className="text-sm font-medium text-[#6366f1]">aws-cdk-patterns</h5>
+                          </div>
+                          <p className="text-xs text-[#6b7280] mb-3">
+                            Collection of AWS CDK patterns for common cloud architectures. Includes serverless, containerized, and event-driven patterns.
+                          </p>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full bg-[#3776ab]" />
+                              <span className="text-xs text-[#6b7280]">Python</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Activity className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">188 stars</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Eye className="w-3 h-3 text-[#6b7280]" />
+                              <span className="text-xs text-[#6b7280]">32 forks</span>
+                            </div>
+                            <span className="text-xs text-[#6b7280]">Updated 2 months ago</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Activity */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Recent Activity</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500 mt-2" />
+                      <div className="flex-1">
+                        <p className="text-sm text-[#111827] mb-1">
+                          Opened pull request <span className="text-[#6366f1] font-medium">#142</span> in <span className="font-medium">react-microservices-boilerplate</span>
+                        </p>
+                        <p className="text-xs text-[#6b7280]">Added health check endpoints for all services</p>
+                        <span className="text-xs text-[#9ca3af]">2 days ago</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-purple-500 mt-2" />
+                      <div className="flex-1">
+                        <p className="text-sm text-[#111827] mb-1">
+                          Merged pull request <span className="text-[#6366f1] font-medium">#138</span> in <span className="font-medium">next-auth-rbac</span>
+                        </p>
+                        <p className="text-xs text-[#6b7280]">Fix: Permission inheritance for nested roles</p>
+                        <span className="text-xs text-[#9ca3af]">5 days ago</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                      <div className="flex-1">
+                        <p className="text-sm text-[#111827] mb-1">
+                          Created repository <span className="font-medium">k8s-deployment-scripts</span>
+                        </p>
+                        <p className="text-xs text-[#6b7280]">Automated Kubernetes deployment utilities</p>
+                        <span className="text-xs text-[#9ca3af]">1 week ago</span>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-2 h-2 rounded-full bg-amber-500 mt-2" />
+                      <div className="flex-1">
+                        <p className="text-sm text-[#111827] mb-1">
+                          Reviewed and approved PR in <span className="font-medium">graphql-query-optimizer</span>
+                        </p>
+                        <p className="text-xs text-[#6b7280]">Performance improvements for batch queries</p>
+                        <span className="text-xs text-[#9ca3af]">2 weeks ago</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Code Quality Metrics */}
+                <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
+                  <h4 className="text-[#111827] text-sm font-medium mb-4">Code Quality Indicators</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-[#166534]">Avg. PR Review Time</span>
+                        <CheckCircle className="w-4 h-4 text-[#16a34a]" />
+                      </div>
+                      <div className="text-2xl font-semibold text-[#166534]">4.2 hrs</div>
+                      <p className="text-xs text-[#15803d] mt-1">Faster than 85% of developers</p>
+                    </div>
+                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-[#166534]">Code Documentation</span>
+                        <CheckCircle className="w-4 h-4 text-[#16a34a]" />
+                      </div>
+                      <div className="text-2xl font-semibold text-[#166534]">92%</div>
+                      <p className="text-xs text-[#15803d] mt-1">Excellent documentation coverage</p>
+                    </div>
+                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-[#166534]">Test Coverage</span>
+                        <CheckCircle className="w-4 h-4 text-[#16a34a]" />
+                      </div>
+                      <div className="text-2xl font-semibold text-[#166534]">88%</div>
+                      <p className="text-xs text-[#15803d] mt-1">Above industry standard (75%)</p>
+                    </div>
+                    <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm text-[#166534]">Code Review Quality</span>
+                        <CheckCircle className="w-4 h-4 text-[#16a34a]" />
+                      </div>
+                      <div className="text-2xl font-semibold text-[#166534]">4.8/5</div>
+                      <p className="text-xs text-[#15803d] mt-1">Highly valuable feedback</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Overall GitHub Score */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-indigo-900 font-semibold mb-2">Overall GitHub Score</h4>
+                      <p className="text-sm text-indigo-700">
+                        Based on code quality, contribution frequency, community engagement, and project impact
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-5xl font-bold text-indigo-600 mb-1">88</div>
+                      <div className="text-sm text-indigo-700">/ 100</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

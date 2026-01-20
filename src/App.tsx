@@ -1,18 +1,17 @@
 import { useState } from 'react';
-import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './components/Dashboard';
-import { ProjectsPage } from './components/ProjectsPage';
-import { ProjectDetailPage } from './components/ProjectDetailPage';
 import { CreateAssessmentPage, Question } from './components/CreateAssessmentPage';
 import { LandingPage } from './components/LandingPage';
-import { DesignsRedirectPage } from './components/DesignsRedirectPage';
-import { RoleSelectionPage } from './components/RoleSelectionPage';
 import { CandidateLoginPage } from './components/CandidateLoginPage';
+import { AdminLoginPage } from './components/AdminLoginPage';
+import { RecruiterLoginPage } from './components/RecruiterLoginPage';
+import { PaymentGatewayPage } from './components/PaymentGatewayPage';
 import { CandidateDashboard } from './components/CandidateDashboard';
 import { RecordedInterviewFlow } from './components/RecordedInterviewFlow';
 import { LiveInterviewFlow } from './components/LiveInterviewFlow';
 import { TechnicalAssessmentFlow } from './components/TechnicalAssessmentFlow';
-import { CandidateApplicationForm } from './components/CandidateApplicationForm';
+import { ModuleDetailAssessment } from './components/ModuleDetailAssessment';
+import { ModuleDetailAIInterview } from './components/ModuleDetailAIInterview';
+import { SkillClusteringWorkflow } from './components/SkillClusteringWorkflow';
 import { AdminSidebar } from './components/AdminSidebar';
 import { AdminDashboard } from './components/AdminDashboard';
 import { AdminOrganizationMembers } from './components/AdminOrganizationMembers';
@@ -20,19 +19,26 @@ import { AdminPendingRequests } from './components/AdminPendingRequests';
 import { AdminSettings } from './components/AdminSettings';
 import { AdminRecruiterDelegation } from './components/AdminRecruiterDelegation';
 import { AdminClosedPositions } from './components/AdminClosedPositions';
+import { AdminSuspiciousEvents } from './components/AdminSuspiciousEvents';
+import { AdminSuspectReviewPage } from './components/AdminSuspectReviewPage';
+import { Sidebar } from './components/Sidebar';
 import { Notifications } from './components/Notifications';
+import { Button } from './components/ui/button';
+import { AlertsNotifications } from './components/AlertsNotifications';
 import { PositionDashboard } from './components/PositionDashboard';
 import { EnhancedGroupOverviewV2 } from './components/EnhancedGroupOverviewV2';
-import { CandidateProfile } from './components/CandidateProfile';
-import { KnowledgeGraph } from './components/KnowledgeGraph';
-import { AlertsNotifications } from './components/AlertsNotifications';
 import { AIInterviewSetupLive } from './components/AIInterviewSetupLive';
 import { AIInterviewSetupRecorded } from './components/AIInterviewSetupRecorded';
 import { RecordedInterviewQuestionSetup } from './components/RecordedInterviewQuestionSetup';
-import { Button } from './components/ui/button';
-import { Bell } from 'lucide-react';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
-import imgImageEramatch from 'figma:asset/32b64e522a3b524affa7936547f1cc68d3dc74c8.png';
+import { CandidateProfile } from './components/CandidateProfile';
+import { KnowledgeGraph } from './components/KnowledgeGraph';
+import { Dashboard } from './components/Dashboard';
+import { CreateAIInterview } from './components/CreateAIInterview';
+import { QuestionBankPage } from './components/QuestionBankPage';
+import { CandidatesPage } from './components/CandidatesPage';
+import { ProjectsPage } from './components/ProjectsPage';
+import logo from './imports/image-eramatch.png';
+import imgImageEramatch from './imports/image-eramatch.png';
 
 interface Assessment {
   id: string;
@@ -42,7 +48,7 @@ interface Assessment {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'designs-redirect' | 'application-form' | 'role-selection' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'admin-dashboard' | 'admin-members' | 'admin-requests' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-requests' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-suspicious-events' | 'admin-suspect-review' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<{ projectTitle: string; positionTitle: string } | null>(null);
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
@@ -53,6 +59,23 @@ export default function App() {
   const [liveInterviewCompleted, setLiveInterviewCompleted] = useState(false);
   const [technicalAssessmentCompleted, setTechnicalAssessmentCompleted] = useState(false);
   const [pendingAssessment, setPendingAssessment] = useState<Assessment | null>(null);
+  const [recruiterType, setRecruiterType] = useState<'recruiter' | 'technical'>('recruiter');
+  const [selectedSuspiciousEvent, setSelectedSuspiciousEvent] = useState<{
+    eventId: string;
+    candidateId: number;
+    candidateName: string;
+    position: string;
+    group: string;
+    recruiterAssigned: string;
+    module: string;
+  } | null>(null);
+  const [selectedModuleDetail, setSelectedModuleDetail] = useState<{
+    type: 'assessment' | 'ai-interview';
+    candidateId: number;
+    candidateName: string;
+    score: number;
+    completedDate: string;
+  } | null>(null);
 
   const handleViewProject = (projectTitle: string) => {
     setSelectedProject(projectTitle);
@@ -63,41 +86,44 @@ export default function App() {
   if (currentPage === 'landing') {
     return (
       <LandingPage 
-        onGetStarted={() => setCurrentPage('designs-redirect')}
-        onViewDesigns={() => setCurrentPage('designs-redirect')}
+        onGetStarted={() => setCurrentPage('payment-gateway')}
+        onViewDesigns={() => setCurrentPage('payment-gateway')}
+        onAdminLogin={() => setCurrentPage('admin-login')}
+        onRecruiterLogin={() => setCurrentPage('recruiter-login')}
+        onCandidateView={() => setCurrentPage('candidate-login')}
       />
     );
   }
 
-  // If on designs redirect page, show only that page
-  if (currentPage === 'designs-redirect') {
+  // If on payment gateway page, show only that page
+  if (currentPage === 'payment-gateway') {
     return (
-      <DesignsRedirectPage 
+      <PaymentGatewayPage
         onBack={() => setCurrentPage('landing')}
-        onSelectAdmin={() => setCurrentPage('admin-dashboard')}
-        onSelectRecruiter={() => setCurrentPage('dashboard')}
-        onSelectCandidate={() => setCurrentPage('candidate-login')}
-        onSelectApplicationForm={() => setCurrentPage('application-form')}
+        onComplete={() => setCurrentPage('recruiter-login')}
       />
     );
   }
 
-  // If on application form page, show only that page
-  if (currentPage === 'application-form') {
+  // If on admin login page, show only that page
+  if (currentPage === 'admin-login') {
     return (
-      <CandidateApplicationForm 
-        onBack={() => setCurrentPage('designs-redirect')}
+      <AdminLoginPage
+        onBack={() => setCurrentPage('landing')}
+        onSignIn={() => setCurrentPage('admin-dashboard')}
       />
     );
   }
 
-  // If on role selection page, show only that page
-  if (currentPage === 'role-selection') {
+  // If on recruiter login page, show only that page
+  if (currentPage === 'recruiter-login') {
     return (
-      <RoleSelectionPage 
-        onSelectRecruiter={() => setCurrentPage('dashboard')} 
-        onSelectCandidate={() => setCurrentPage('candidate-login')}
-        onSelectAdmin={() => setCurrentPage('admin-dashboard')}
+      <RecruiterLoginPage
+        onBack={() => setCurrentPage('landing')}
+        onSignIn={(type) => {
+          setRecruiterType(type);
+          setCurrentPage('dashboard');
+        }}
       />
     );
   }
@@ -106,7 +132,7 @@ export default function App() {
   if (currentPage === 'candidate-login') {
     return (
       <CandidateLoginPage 
-        onBack={() => setCurrentPage('designs-redirect')} 
+        onBack={() => setCurrentPage('landing')} 
         onSignIn={() => setCurrentPage('candidate-dashboard')}
       />
     );
@@ -163,8 +189,70 @@ export default function App() {
     );
   }
 
+  // If on module detail pages, show them full-screen
+  if (currentPage === 'module-detail-assessment' && selectedModuleDetail) {
+    return (
+      <ModuleDetailAssessment
+        candidateId={selectedModuleDetail.candidateId}
+        candidateName={selectedModuleDetail.candidateName}
+        score={selectedModuleDetail.score}
+        completedDate={selectedModuleDetail.completedDate}
+        onClose={() => {
+          setSelectedModuleDetail(null);
+          setCurrentPage('group-overview');
+        }}
+        onMoveToNextStage={() => {
+          setSelectedModuleDetail(null);
+          setCurrentPage('group-overview');
+          // Toast will be shown by EnhancedGroupOverviewV2
+        }}
+      />
+    );
+  }
+
+  if (currentPage === 'module-detail-ai-interview' && selectedModuleDetail) {
+    return (
+      <ModuleDetailAIInterview
+        candidateId={selectedModuleDetail.candidateId}
+        candidateName={selectedModuleDetail.candidateName}
+        score={selectedModuleDetail.score}
+        completedDate={selectedModuleDetail.completedDate}
+        onClose={() => {
+          setSelectedModuleDetail(null);
+          setCurrentPage('group-overview');
+        }}
+        onMoveToNextStage={() => {
+          setSelectedModuleDetail(null);
+          setCurrentPage('group-overview');
+          // Toast will be shown by EnhancedGroupOverviewV2
+        }}
+      />
+    );
+  }
+
+  // If on skill clustering workflow, show it full-screen
+  if (currentPage === 'skill-clustering') {
+    const mockCandidates = [
+      { id: 1, name: 'John Smith', email: 'john.smith@example.com', position: 'Senior Frontend Developer', skills: [], overallScore: 92 },
+      { id: 2, name: 'Sarah Johnson', email: 'sarah.j@example.com', position: 'Full Stack Developer', skills: [], overallScore: 88 },
+      { id: 3, name: 'Michael Chen', email: 'm.chen@example.com', position: 'Frontend Engineer', skills: [], overallScore: 85 },
+    ];
+
+    return (
+      <SkillClusteringWorkflow
+        candidates={mockCandidates}
+        groupName={selectedGroupName}
+        onComplete={(clusters) => {
+          console.log('Clusters created:', clusters);
+          setCurrentPage('group-overview');
+        }}
+        onBack={() => setCurrentPage('group-overview')}
+      />
+    );
+  }
+
   // If on admin pages, show admin view
-  if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-requests' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions') {
+  if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-requests' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions' || currentPage === 'admin-suspicious-events' || currentPage === 'admin-suspect-review') {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
         <AdminSidebar 
@@ -175,6 +263,8 @@ export default function App() {
             currentPage === 'admin-settings' ? 'settings' : 
             currentPage === 'admin-delegation' ? 'delegation' :
             currentPage === 'admin-closed-positions' ? 'closed-positions' :
+            currentPage === 'admin-suspicious-events' ? 'suspicious-events' :
+            currentPage === 'admin-suspect-review' ? 'suspect-review' :
             'dashboard'
           } 
           onNavigate={(page) => setCurrentPage(
@@ -184,6 +274,8 @@ export default function App() {
             page === 'settings' ? 'admin-settings' : 
             page === 'delegation' ? 'admin-delegation' :
             page === 'closed-positions' ? 'admin-closed-positions' :
+            page === 'suspicious-events' ? 'admin-suspicious-events' :
+            page === 'suspect-review' ? 'admin-suspect-review' :
             'admin-dashboard'
           )} 
         />
@@ -222,29 +314,55 @@ export default function App() {
           <main>
             {currentPage === 'admin-dashboard' ? (
               <AdminDashboard 
-                onSignOut={() => setCurrentPage('role-selection')}
+                onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-members' ? (
               <AdminOrganizationMembers 
-                onSignOut={() => setCurrentPage('role-selection')} 
+                onSignOut={() => setCurrentPage('landing')} 
                 onViewPendingRequests={() => setCurrentPage('admin-requests')}
               />
             ) : currentPage === 'admin-requests' ? (
               <AdminPendingRequests 
-                onSignOut={() => setCurrentPage('role-selection')} 
+                onSignOut={() => setCurrentPage('landing')} 
                 onBack={() => setCurrentPage('admin-members')}
               />
             ) : currentPage === 'admin-settings' ? (
               <AdminSettings 
-                onSignOut={() => setCurrentPage('role-selection')}
+                onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-delegation' ? (
               <AdminRecruiterDelegation 
-                onSignOut={() => setCurrentPage('role-selection')}
+                onSignOut={() => setCurrentPage('landing')}
+              />
+            ) : currentPage === 'admin-closed-positions' ? (
+              <AdminClosedPositions 
+                onSignOut={() => setCurrentPage('landing')}
+              />
+            ) : currentPage === 'admin-suspicious-events' ? (
+              <AdminSuspiciousEvents 
+                onSignOut={() => setCurrentPage('landing')}
+                onViewEventDetail={(event) => {
+                  setSelectedSuspiciousEvent(event);
+                  setCurrentPage('admin-suspect-review');
+                }}
+              />
+            ) : currentPage === 'admin-suspect-review' && selectedSuspiciousEvent ? (
+              <AdminSuspectReviewPage 
+                eventId={selectedSuspiciousEvent.eventId}
+                candidateId={selectedSuspiciousEvent.candidateId}
+                candidateName={selectedSuspiciousEvent.candidateName}
+                position={selectedSuspiciousEvent.position}
+                group={selectedSuspiciousEvent.group}
+                recruiterAssigned={selectedSuspiciousEvent.recruiterAssigned}
+                currentModule={selectedSuspiciousEvent.module}
+                onBack={() => {
+                  setSelectedSuspiciousEvent(null);
+                  setCurrentPage('admin-suspicious-events');
+                }}
               />
             ) : (
-              <AdminClosedPositions 
-                onSignOut={() => setCurrentPage('role-selection')}
+              <AdminDashboard 
+                onSignOut={() => setCurrentPage('landing')}
               />
             )}
           </main>
@@ -285,7 +403,7 @@ export default function App() {
                 {/* Sign Out Button */}
                 <button 
                   className="h-[42px] rounded-full border border-[#c63434] px-6 flex items-center justify-center text-[#c63434] hover:bg-[#c63434] hover:text-white transition-colors duration-200 font-['Arimo',sans-serif] text-[16px]"
-                  onClick={() => setCurrentPage('role-selection')}
+                  onClick={() => setCurrentPage('landing')}
                 >
                   Sign out
                 </button>
@@ -331,6 +449,7 @@ export default function App() {
               description="High-performing candidates filtered by advanced criteria"
               assignedRecruiter="John Doe - Senior Recruiter"
               candidateIds={[1, 2, 3, 4, 5, 6, 7, 8]}
+              recruiterType={recruiterType}
               onBack={() => setCurrentPage(previousPage as any)} // Use saved previous page
               onViewCandidate={(candidateId) => {
                 setSelectedCandidateId(candidateId);
@@ -339,6 +458,11 @@ export default function App() {
               onOpenLiveAISetup={() => setCurrentPage('ai-interview-live-setup')}
               onOpenRecordedAISetup={() => setCurrentPage('ai-interview-recorded-setup')}
               onCreateAssessment={() => setCurrentPage('create-assessment')}
+              onCreateAIInterview={() => setCurrentPage('create-ai-interview')}
+              onViewModuleDetail={(detail) => {
+                setSelectedModuleDetail(detail);
+                setCurrentPage(detail.type === 'assessment' ? 'module-detail-assessment' : 'module-detail-ai-interview');
+              }}
             />
           ) : currentPage === 'ai-interview-live-setup' ? (
             <AIInterviewSetupLive
@@ -402,6 +526,19 @@ export default function App() {
                 setCurrentPage('projects');
               }}
             />
+          ) : currentPage === 'create-ai-interview' ? (
+            <CreateAIInterview 
+              onBack={() => setCurrentPage('group-overview')}
+              onSave={(interview) => {
+                // Handle AI interview save
+                console.log('AI Interview created:', interview);
+                setCurrentPage('group-overview');
+              }}
+            />
+          ) : currentPage === 'question-bank' ? (
+            <QuestionBankPage onBack={() => setCurrentPage('dashboard')} />
+          ) : currentPage === 'candidates' ? (
+            <CandidatesPage onBack={() => setCurrentPage('dashboard')} />
           ) : (
             <ProjectsPage 
               onViewProject={handleViewProject} 

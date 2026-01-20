@@ -1,8 +1,8 @@
-import { Users, FileText, Settings, LayoutDashboard, UserCog, Archive } from 'lucide-react';
+import { Users, FileText, Settings, LayoutDashboard, UserCog, Archive, AlertTriangle } from 'lucide-react';
 
 interface AdminSidebarProps {
-  activePage: 'dashboard' | 'members' | 'requests' | 'settings' | 'delegation' | 'closed-positions';
-  onNavigate: (page: 'dashboard' | 'members' | 'requests' | 'settings' | 'delegation' | 'closed-positions') => void;
+  activePage: 'dashboard' | 'members' | 'requests' | 'settings' | 'delegation' | 'closed-positions' | 'suspicious-events';
+  onNavigate: (page: 'dashboard' | 'members' | 'requests' | 'settings' | 'delegation' | 'closed-positions' | 'suspicious-events') => void;
 }
 
 export function AdminSidebar({ activePage, onNavigate }: AdminSidebarProps) {
@@ -73,6 +73,17 @@ export function AdminSidebar({ activePage, onNavigate }: AdminSidebarProps) {
         title="Closed Positions"
       >
         <Archive size={24} />
+      </button>
+      <button 
+        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+          activePage === 'suspicious-events' 
+            ? 'bg-indigo-50 text-indigo-600' 
+            : 'text-gray-400 hover:bg-gray-50'
+        }`}
+        onClick={() => onNavigate('suspicious-events')}
+        title="Suspicious Events"
+      >
+        <AlertTriangle size={24} />
       </button>
     </div>
   );

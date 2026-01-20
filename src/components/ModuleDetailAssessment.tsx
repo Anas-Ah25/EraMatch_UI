@@ -122,57 +122,47 @@ export function ModuleDetailAssessment({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-8"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-[16px] w-full max-w-[1400px] max-h-[90vh] overflow-hidden flex flex-col"
-      >
+    <div className="h-full w-full overflow-auto bg-[#f9fafb]">
+      <div className="max-w-[1400px] mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] px-8 py-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="w-[36px] h-[36px] rounded-[8px] bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            >
-              <ChevronLeft size={20} className="text-white" />
-            </button>
-            <div>
-              <h2 className="text-white text-[20px] mb-1">Assessment Details</h2>
-              <div className="flex items-center gap-3">
-                <span className="font-['Arimo',sans-serif] text-[14px] text-white/90">
-                  {candidateName}
-                </span>
-                <span className="text-white/60">•</span>
-                <span className="font-['Arimo',sans-serif] text-[14px] text-white/90">
-                  Completed {completedDate}
-                </span>
+        <div className="bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] px-8 py-6 sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={onClose}
+                className="w-[36px] h-[36px] rounded-[8px] bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              >
+                <ChevronLeft size={20} className="text-white" />
+              </button>
+              <div>
+                <h2 className="text-white text-[20px] mb-1">Assessment Details</h2>
+                <div className="flex items-center gap-3">
+                  <span className="font-['Arimo',sans-serif] text-[14px] text-white/90">
+                    {candidateName}
+                  </span>
+                  <span className="text-white/60">•</span>
+                  <span className="font-['Arimo',sans-serif] text-[14px] text-white/90">
+                    Completed {completedDate}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="font-['Arimo',sans-serif] text-[12px] text-white/80 mb-1">
-                Overall Score
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="font-['Arimo',sans-serif] text-[12px] text-white/80 mb-1">
+                  Overall Score
+                </div>
+                <div className="text-white text-[32px] leading-none">
+                  {score}%
+                </div>
               </div>
-              <div className="text-white text-[32px] leading-none">
-                {score}%
-              </div>
+              <button
+                onClick={onClose}
+                className="w-[36px] h-[36px] rounded-[8px] bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+              >
+                <X size={20} className="text-white" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="w-[36px] h-[36px] rounded-[8px] bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
-            >
-              <X size={20} className="text-white" />
-            </button>
           </div>
         </div>
 
@@ -476,7 +466,7 @@ export function ModuleDetailAssessment({
             </div>
           </div>
         )}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

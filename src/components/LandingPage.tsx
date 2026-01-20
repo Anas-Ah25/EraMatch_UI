@@ -5,27 +5,17 @@ import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
 interface LandingPageProps {
   onGetStarted: () => void;
   onViewDesigns: () => void;
+  onAdminLogin: () => void;
+  onRecruiterLogin: () => void;
+  onCandidateView: () => void;
 }
 
-export function LandingPage({ onGetStarted, onViewDesigns }: LandingPageProps) {
+export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecruiterLogin, onCandidateView }: LandingPageProps) {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#FFFFFF' }}>
       {/* Navigation */}
       <nav className="px-12 py-6 flex items-center justify-between border-b border-gray-200">
         <img src={logo} alt="ERAMATCH" className="h-12" />
-        <Button 
-          className="rounded-full px-6 transition-colors duration-200"
-          style={{ backgroundColor: '#6366F1', color: '#FFFFFF' }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#4F46E5';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#6366F1';
-          }}
-          onClick={onViewDesigns}
-        >
-          Figma Designs
-        </Button>
       </nav>
 
       {/* Hero Section */}
@@ -445,11 +435,71 @@ export function LandingPage({ onGetStarted, onViewDesigns }: LandingPageProps) {
 
       {/* Footer */}
       <footer className="px-12 py-8 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <img src={logo} alt="ERAMATCH" className="h-10" />
-          <p className="text-gray-600 text-sm">
-            © 2025 ERAMATCH. A Smarter Recruitment System.
-          </p>
+        <div className="max-w-7xl mx-auto">
+          {/* Login Buttons Section */}
+          <div className="mb-8 border-b border-gray-200 pb-8">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl mb-2" style={{ color: '#1F2937' }}>
+                Access Your Portal
+              </h3>
+              <p className="text-gray-600">
+                Sign in to your account or explore the candidate experience
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-4">
+              <Button 
+                className="rounded-full px-6 py-3 transition-colors duration-200 border-2"
+                style={{ backgroundColor: '#FFFFFF', color: '#F59E0B', borderColor: '#F59E0B' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#F59E0B';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                  e.currentTarget.style.color = '#F59E0B';
+                }}
+                onClick={onAdminLogin}
+              >
+                Admin Login
+              </Button>
+              <Button 
+                className="rounded-full px-6 py-3 transition-colors duration-200"
+                style={{ backgroundColor: '#6366F1', color: '#FFFFFF' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#4F46E5';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#6366F1';
+                }}
+                onClick={onRecruiterLogin}
+              >
+                Recruiter Login
+              </Button>
+              <Button 
+                className="rounded-full px-6 py-3 transition-colors duration-200 border-2"
+                style={{ backgroundColor: '#FFFFFF', color: '#10B981', borderColor: '#10B981' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#10B981';
+                  e.currentTarget.style.color = '#FFFFFF';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#FFFFFF';
+                  e.currentTarget.style.color = '#10B981';
+                }}
+                onClick={onCandidateView}
+              >
+                Candidate View
+              </Button>
+            </div>
+          </div>
+          
+          {/* Copyright */}
+          <div className="flex items-center justify-between">
+            <img src={logo} alt="ERAMATCH" className="h-10" />
+            <p className="text-gray-600 text-sm">
+              © 2025 ERAMATCH. A Smarter Recruitment System.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

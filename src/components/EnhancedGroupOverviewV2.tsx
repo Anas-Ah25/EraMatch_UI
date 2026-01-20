@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3 } from 'lucide-react';
+import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3, Target } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ModuleDetailAssessment } from './ModuleDetailAssessment';
-import { ModuleDetailAIInterview } from './ModuleDetailAIInterview';
 import { SuspectReviewPage } from './SuspectReviewPage';
 import { CreateAdvancedAssessment } from './CreateAdvancedAssessment';
 import { StageResultsDashboard } from './StageResultsDashboard';
@@ -15,11 +13,20 @@ interface EnhancedGroupOverviewV2Props {
   description: string;
   assignedRecruiter: string;
   candidateIds: number[];
+  recruiterType: 'recruiter' | 'technical';
   onBack: () => void;
   onViewCandidate: (candidateId: number) => void;
   onOpenLiveAISetup?: () => void;
   onOpenRecordedAISetup?: () => void;
   onCreateAssessment?: () => void;
+  onCreateAIInterview?: () => void;
+  onViewModuleDetail?: (detail: {
+    type: 'assessment' | 'ai-interview';
+    candidateId: number;
+    candidateName: string;
+    score: number;
+    completedDate: string;
+  }) => void;
 }
 
 type StageState = 'active' | 'closed' | 'review-mode' | 'not-started';
@@ -93,11 +100,14 @@ export function EnhancedGroupOverviewV2({
   description,
   assignedRecruiter,
   candidateIds,
+  recruiterType,
   onBack,
   onViewCandidate,
   onOpenLiveAISetup,
   onOpenRecordedAISetup,
-  onCreateAssessment
+  onCreateAssessment,
+  onCreateAIInterview,
+  onViewModuleDetail
 }: EnhancedGroupOverviewV2Props) {
   // Existing modals
   const [showRankModal, setShowRankModal] = useState(false);
@@ -110,7 +120,6 @@ export function EnhancedGroupOverviewV2({
   
   // New state for enhancements
   const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
-  const [showModuleDetail, setShowModuleDetail] = useState<{ type: 'assessment' | 'ai-interview'; candidateId: number } | null>(null);
   const [showSuspectReview, setShowSuspectReview] = useState<number | null>(null);
   const [activeKPIFilter, setActiveKPIFilter] = useState<string | null>(null);
   const [showModuleFilters, setShowModuleFilters] = useState(false);
@@ -127,8 +136,8 @@ export function EnhancedGroupOverviewV2({
   const [showFlaggedBatch, setShowFlaggedBatch] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   
-  // Role switching state
-  const [userRole, setUserRole] = useState<'recruiter' | 'technical'>('recruiter');
+  // Use recruiterType prop directly instead of state
+  const userRole = recruiterType;
   
   // Assessment creation state
   const [showAssessmentCreation, setShowAssessmentCreation] = useState(false);
@@ -734,7 +743,7 @@ export function EnhancedGroupOverviewV2({
               className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
             >
               <FileText size={16} className="text-[#6b7280]" />
-              <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+              <span className="font-['Arimo',sans-serif] text-[#111827] text-[14px]">
                 Activity Log
               </span>
             </button>
@@ -829,35 +838,19 @@ export function EnhancedGroupOverviewV2({
               )}
             </div>
             
-            {/* Role Switcher Toggle */}
+            {/* Current Recruiter Type Badge */}
             <div className="flex items-center gap-3">
               <span className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
-                View as:
+                Logged in as:
               </span>
-              <div className="flex items-center gap-1 p-[4px] bg-[#f3f4f6] rounded-[8px]">
-                <button
-                  onClick={() => setUserRole('recruiter')}
-                  className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-all ${
-                    userRole === 'recruiter'
-                      ? 'bg-white text-[#6366f1] shadow-sm'
-                      : 'text-[#6b7280] hover:text-[#374151]'
-                  }`}
-                >
-                  <Users size={14} />
-                  HR Recruiter
-                </button>
-                <button
-                  onClick={() => setUserRole('technical')}
-                  className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-all ${
-                    userRole === 'technical'
-                      ? 'bg-white text-[#10b981] shadow-sm'
-                      : 'text-[#6b7280] hover:text-[#374151]'
-                  }`}
-                >
-                  <Shield size={14} />
-                  Technical Recruiter
-                </button>
-              </div>
+              <span className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
+                userRole === 'technical'
+                  ? 'bg-emerald-50 text-[#10b981] border border-emerald-200'
+                  : 'bg-indigo-50 text-[#6366f1] border border-indigo-200'
+              }`}>
+                {userRole === 'technical' ? <Shield size={14} /> : <Users size={14} />}
+                {userRole === 'technical' ? 'Technical Recruiter' : 'HR Recruiter'}
+              </span>
             </div>
           </div>
           
@@ -912,7 +905,9 @@ export function EnhancedGroupOverviewV2({
                         showToast('Cannot modify configuration - stage is active');
                         return;
                       }
-                      setShowAIInterviewSettingsModal(true);
+                      if (onCreateAIInterview) {
+                        onCreateAIInterview();
+                      }
                     }}
                     disabled={stageConfigLocked}
                     className="flex-1 flex items-center justify-center gap-2 h-[40px] px-[16px] rounded-[8px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1346,7 +1341,17 @@ export function EnhancedGroupOverviewV2({
                         </td>
                         <td className="p-4 text-center">
                           <button
-                            onClick={() => candidate.assessmentScore > 0 && setShowModuleDetail({ type: 'assessment', candidateId: candidate.id })}
+                            onClick={() => {
+                              if (candidate.assessmentScore > 0 && onViewModuleDetail) {
+                                onViewModuleDetail({
+                                  type: 'assessment',
+                                  candidateId: candidate.id,
+                                  candidateName: candidate.name,
+                                  score: candidate.assessmentScore,
+                                  completedDate: new Date().toLocaleDateString()
+                                });
+                              }
+                            }}
                             className={`flex flex-col items-center gap-1 mx-auto ${candidate.assessmentScore > 0 ? 'hover:bg-[#f9fafb] rounded-[6px] p-2 transition-colors' : ''}`}
                           >
                             {getStatusIcon(candidate.assessment)}
@@ -1359,7 +1364,17 @@ export function EnhancedGroupOverviewV2({
                         </td>
                         <td className="p-4 text-center">
                           <button
-                            onClick={() => candidate.aiInterviewScore > 0 && setShowModuleDetail({ type: 'ai-interview', candidateId: candidate.id })}
+                            onClick={() => {
+                              if (candidate.aiInterviewScore > 0 && onViewModuleDetail) {
+                                onViewModuleDetail({
+                                  type: 'ai-interview',
+                                  candidateId: candidate.id,
+                                  candidateName: candidate.name,
+                                  score: candidate.aiInterviewScore,
+                                  completedDate: new Date().toLocaleDateString()
+                                });
+                              }
+                            }}
                             className={`flex flex-col items-center gap-1 mx-auto ${candidate.aiInterviewScore > 0 ? 'hover:bg-[#f9fafb] rounded-[6px] p-2 transition-colors' : ''}`}
                           >
                             {getStatusIcon(candidate.aiInterview)}
@@ -1703,39 +1718,7 @@ export function EnhancedGroupOverviewV2({
         </div>
       )}
 
-      {/* Module Detail Modals */}
-      <AnimatePresence>
-        {showModuleDetail && (
-          <>
-            {showModuleDetail.type === 'assessment' && (
-              <ModuleDetailAssessment
-                candidateId={showModuleDetail.candidateId}
-                candidateName={candidateStatuses.find(c => c.id === showModuleDetail.candidateId)?.name || ''}
-                score={candidateStatuses.find(c => c.id === showModuleDetail.candidateId)?.assessmentScore || 0}
-                completedDate={new Date().toLocaleDateString()}
-                onClose={() => setShowModuleDetail(null)}
-                onMoveToNextStage={() => {
-                  setShowModuleDetail(null);
-                  showToast('Candidate moved to next stage');
-                }}
-              />
-            )}
-            {showModuleDetail.type === 'ai-interview' && (
-              <ModuleDetailAIInterview
-                candidateId={showModuleDetail.candidateId}
-                candidateName={candidateStatuses.find(c => c.id === showModuleDetail.candidateId)?.name || ''}
-                score={candidateStatuses.find(c => c.id === showModuleDetail.candidateId)?.aiInterviewScore || 0}
-                completedDate={new Date().toLocaleDateString()}
-                onClose={() => setShowModuleDetail(null)}
-                onMoveToNextStage={() => {
-                  setShowModuleDetail(null);
-                  showToast('Candidate moved to next stage');
-                }}
-              />
-            )}
-          </>
-        )}
-      </AnimatePresence>
+
 
       {/* Start Stage Modal */}
       {showStartStageModal && (

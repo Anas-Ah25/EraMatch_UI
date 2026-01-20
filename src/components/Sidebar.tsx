@@ -1,4 +1,4 @@
-import { Home, Briefcase, Users, Settings, Bell } from 'lucide-react';
+import { Home, Briefcase, Users, Settings, Bell, BookOpen } from 'lucide-react';
 
 interface SidebarProps {
   activePage: string;
@@ -74,13 +74,39 @@ export function Sidebar({ activePage, onNavigate }: SidebarProps) {
 
       {/* Candidates Button */}
       <button 
-        className="relative rounded-[24px] h-[64px] w-[64px] flex items-center justify-center transition-all duration-300 overflow-hidden hover:bg-[#ede9ff] group-hover:w-[188px] group-hover:justify-start group-hover:px-[16px]"
+        className={`relative rounded-[24px] h-[64px] w-[64px] flex items-center justify-center transition-all duration-300 overflow-hidden ${
+          activePage === 'candidates' 
+            ? 'bg-[#dad3ff]' 
+            : 'hover:bg-[#ede9ff]'
+        } group-hover:w-[188px] group-hover:justify-start group-hover:px-[16px]`}
+        onClick={() => onNavigate('candidates')}
       >
         <Users size={32} className="text-[#4834AB] shrink-0" strokeWidth={2} />
         <span 
-          className="absolute left-[80px] font-['Arimo',sans-serif] text-[16px] leading-[24px] text-[#4834AB] whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:relative group-hover:left-0 group-hover:ml-[12px] transition-all duration-300"
+          className={`absolute left-[80px] font-['Arimo',sans-serif] text-[16px] leading-[24px] text-[#4834AB] whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:relative group-hover:left-0 group-hover:ml-[12px] transition-all duration-300 ${
+            activePage === 'candidates' ? 'font-medium' : ''
+          }`}
         >
           Candidates
+        </span>
+      </button>
+
+      {/* Question Bank Button */}
+      <button 
+        className={`relative rounded-[24px] h-[64px] w-[64px] flex items-center justify-center transition-all duration-300 overflow-hidden ${
+          activePage === 'question-bank' 
+            ? 'bg-[#dad3ff]' 
+            : 'hover:bg-[#ede9ff]'
+        } group-hover:w-[188px] group-hover:justify-start group-hover:px-[16px]`}
+        onClick={() => onNavigate('question-bank')}
+      >
+        <BookOpen size={32} className="text-[#4834AB] shrink-0" strokeWidth={2} />
+        <span 
+          className={`absolute left-[80px] font-['Arimo',sans-serif] text-[16px] leading-[24px] text-[#4834AB] whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:relative group-hover:left-0 group-hover:ml-[12px] transition-all duration-300 ${
+            activePage === 'question-bank' ? 'font-medium' : ''
+          }`}
+        >
+          Question Bank
         </span>
       </button>
 
