@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Switch } from './ui/switch';
 import { Question } from './CreateAssessmentPage';
 import { GroupCreationPage } from './GroupCreationPage';
+import { FiltrationFlowConfigModal } from './FiltrationFlowConfigModal';
 
 interface Candidate {
   id: number;
@@ -37,6 +38,7 @@ interface PositionDetailViewProps {
   savedAssessments?: Assessment[];
   onViewDashboard?: () => void;
   onViewGroup?: (groupId: string) => void;
+  initialActiveTab?: 'candidates' | 'groups' | 'insights';
 }
 
 export function PositionDetailView({ 
@@ -51,7 +53,8 @@ export function PositionDetailView({
   onSaveAssessment,
   savedAssessments = [],
   onViewDashboard,
-  onViewGroup
+  onViewGroup,
+  initialActiveTab = 'candidates'
 }: PositionDetailViewProps) {
   const [candidates, setCandidates] = useState<Candidate[]>([
     { id: 1, name: 'John Smith', email: 'john.smith@email.com', score: 95, match: 92, color: '#10b981', starred: false, selected: false },
@@ -73,11 +76,13 @@ export function PositionDetailView({
   const [editPositionDescription, setEditPositionDescription] = useState(description || '');
   const [editPositionScreening, setEditPositionScreening] = useState(screeningConditions || '');
   const [editPositionIsOpen, setEditPositionIsOpen] = useState(isOpen);
-  const [activeTab, setActiveTab] = useState<'candidates' | 'groups' | 'insights'>('candidates');
+  const [activeTab, setActiveTab] = useState<'candidates' | 'groups' | 'insights'>(initialActiveTab);
   const [showZipUploadModal, setShowZipUploadModal] = useState(false);
   const [showGoogleDriveModal, setShowGoogleDriveModal] = useState(false);
   const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
   const [showGroupCreationPage, setShowGroupCreationPage] = useState(false);
+  const [showFlowConfigModal, setShowFlowConfigModal] = useState(false);
+  const [pendingGroupData, setPendingGroupData] = useState<any>(null);
 
   // Assessment management - use savedAssessments from props
   const assessments = savedAssessments;
@@ -465,10 +470,9 @@ export function PositionDetailView({
                   onCreate={(groupData) => {
                     console.log('Group created:', groupData);
                     setShowGroupCreationPage(false);
-                    // Navigate to group settings page
-                    if (onViewGroup) {
-                      onViewGroup(`group-${Date.now()}`);
-                    }
+                    // Store group data and show flow config modal
+                    setPendingGroupData(groupData);
+                    setShowFlowConfigModal(true);
                   }}
                 />
               </div>
@@ -976,6 +980,20 @@ export function PositionDetailView({
         </div>
       )}
 
+      {/* Filtration Flow Config Modal */}
+      {showFlowConfigModal && (
+        <FiltrationFlowConfigModal
+          onClose={() => setShowFlowConfigModal(false)}
+          groupData={pendingGroupData}
+          onSave={(flowConfig) => {
+            console.log('Flow config saved:', flowConfig);
+            setShowFlowConfigModal(false);
+            if (onViewGroup) {
+              onViewGroup(`group-${Date.now()}`);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

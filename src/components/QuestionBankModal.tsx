@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { X, Search, Filter, Database, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -117,17 +117,18 @@ const MOCK_QUESTIONS: Record<string, QuestionVariant[]> = {
 export function QuestionBankModal({ questionType, onSelect, onClose, onSwitchToAI }: QuestionBankModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
-  const [isSearching, setIsSearching] = useState(false);
 
   const questions = MOCK_QUESTIONS[questionType] || [];
 
-  // Simulate semantic search with scoring
-  const performSemanticSearch = () => {
-    if (!searchQuery.trim()) return questions;
+  // Use useMemo to memoize filtered questions to prevent re-render loops
+  const filteredQuestions = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return questions.filter(q => {
+        const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
+        return matchesDifficulty;
+      });
+    }
     
-    setIsSearching(true);
-    setTimeout(() => setIsSearching(false), 500);
-
     // In a real implementation, this would call an embedding API
     // For now, we'll simulate semantic matching
     return questions
@@ -142,9 +143,7 @@ export function QuestionBankModal({ questionType, onSelect, onClose, onSwitchToA
         return matchesSearch && matchesDifficulty;
       })
       .sort((a, b) => (b.semanticScore || 0) - (a.semanticScore || 0));
-  };
-
-  const filteredQuestions = performSemanticSearch();
+  }, [searchQuery, selectedDifficulty, questions]);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -186,11 +185,6 @@ export function QuestionBankModal({ questionType, onSelect, onClose, onSwitchToA
                 onChange={(e) => handleSearch(e.target.value)}
                 className="w-full h-[44px] pl-10 pr-4 rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent"
               />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="w-4 h-4 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin" />
-                </div>
-              )}
             </div>
             <select
               value={selectedDifficulty}

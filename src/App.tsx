@@ -1,26 +1,23 @@
-import { useState } from 'react';
-import { CreateAssessmentPage, Question } from './components/CreateAssessmentPage';
+import React, { useState } from 'react';
 import { LandingPage } from './components/LandingPage';
-import { CandidateLoginPage } from './components/CandidateLoginPage';
+import { PaymentGatewayPage } from './components/PaymentGatewayPage';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { RecruiterLoginPage } from './components/RecruiterLoginPage';
-import { PaymentGatewayPage } from './components/PaymentGatewayPage';
+import { CandidateLoginPage } from './components/CandidateLoginPage';
 import { CandidateDashboard } from './components/CandidateDashboard';
-import { RecordedInterviewFlow } from './components/RecordedInterviewFlow';
-import { LiveInterviewFlow } from './components/LiveInterviewFlow';
-import { TechnicalAssessmentFlow } from './components/TechnicalAssessmentFlow';
-import { ModuleDetailAssessment } from './components/ModuleDetailAssessment';
-import { ModuleDetailAIInterview } from './components/ModuleDetailAIInterview';
-import { SkillClusteringWorkflow } from './components/SkillClusteringWorkflow';
-import { AdminSidebar } from './components/AdminSidebar';
+import { RecordedInterview } from './components/RecordedInterview';
+import { LiveInterview } from './components/LiveInterview';
+import { TechnicalAssessment } from './components/TechnicalAssessment';
+import { ProjectDetailView } from './components/ProjectDetailView';
+import { PositionDetailView } from './components/PositionDetailView';
+import { CreateAssessmentPage, Question } from './components/CreateAssessmentPage';
 import { AdminDashboard } from './components/AdminDashboard';
-import { AdminOrganizationMembers } from './components/AdminOrganizationMembers';
-import { AdminPendingRequests } from './components/AdminPendingRequests';
 import { AdminSettings } from './components/AdminSettings';
 import { AdminRecruiterDelegation } from './components/AdminRecruiterDelegation';
 import { AdminClosedPositions } from './components/AdminClosedPositions';
-import { AdminSuspiciousEvents } from './components/AdminSuspiciousEvents';
-import { AdminSuspectReviewPage } from './components/AdminSuspectReviewPage';
+import { AdminSubscriptionManagement } from './components/AdminSubscriptionManagement';
+import { AdminOrganizationMembers } from './components/AdminOrganizationMembers';
+import { AdminPendingRequests } from './components/AdminPendingRequests';
 import { Sidebar } from './components/Sidebar';
 import { Notifications } from './components/Notifications';
 import { Button } from './components/ui/button';
@@ -39,6 +36,10 @@ import { CandidatesPage } from './components/CandidatesPage';
 import { ProjectsPage } from './components/ProjectsPage';
 import logo from './imports/image-eramatch.png';
 import imgImageEramatch from './imports/image-eramatch.png';
+import { AdminSidebar } from './components/AdminSidebar';
+import { ModuleDetailAssessment } from './components/ModuleDetailAssessment';
+import { ModuleDetailAIInterview } from './components/ModuleDetailAIInterview';
+import { SkillClusteringView } from './components/SkillClusteringView';
 
 interface Assessment {
   id: string;
@@ -48,27 +49,22 @@ interface Assessment {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-requests' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-suspicious-events' | 'admin-suspect-review' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-requests' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-subscription' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<{ projectTitle: string; positionTitle: string } | null>(null);
+  const [selectedProjectPosition, setSelectedProjectPosition] = useState<string>(''); // Track position within a project (for ProjectDetailView)
   const [selectedCandidateId, setSelectedCandidateId] = useState<number | null>(null);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupName, setSelectedGroupName] = useState<string>('Senior React Developers Q1 2025');
+  const [selectedGroupFiltrationFlow, setSelectedGroupFiltrationFlow] = useState<('assessment' | 'ai-interview' | 'live-interview')[]>(['assessment', 'ai-interview']); // Track filtration flow configuration
   const [previousPage, setPreviousPage] = useState<string>('projects'); // Track previous page for group navigation
+  const [showGroupsOnReturn, setShowGroupsOnReturn] = useState(false); // Track if we should show groups panel when returning to position dashboard
+  const [returnToGroupsTab, setReturnToGroupsTab] = useState(false); // Track if we should show groups tab when returning to position detail view
   const [recordedInterviewCompleted, setRecordedInterviewCompleted] = useState(false);
   const [liveInterviewCompleted, setLiveInterviewCompleted] = useState(false);
   const [technicalAssessmentCompleted, setTechnicalAssessmentCompleted] = useState(false);
   const [pendingAssessment, setPendingAssessment] = useState<Assessment | null>(null);
   const [recruiterType, setRecruiterType] = useState<'recruiter' | 'technical'>('recruiter');
-  const [selectedSuspiciousEvent, setSelectedSuspiciousEvent] = useState<{
-    eventId: string;
-    candidateId: number;
-    candidateName: string;
-    position: string;
-    group: string;
-    recruiterAssigned: string;
-    module: string;
-  } | null>(null);
   const [selectedModuleDetail, setSelectedModuleDetail] = useState<{
     type: 'assessment' | 'ai-interview';
     candidateId: number;
@@ -101,6 +97,7 @@ export default function App() {
       <PaymentGatewayPage
         onBack={() => setCurrentPage('landing')}
         onComplete={() => setCurrentPage('recruiter-login')}
+        onBypass={() => setCurrentPage('recruiter-login')}
       />
     );
   }
@@ -156,7 +153,7 @@ export default function App() {
   // If on recorded interview, show recorded interview flow
   if (currentPage === 'recorded-interview') {
     return (
-      <RecordedInterviewFlow 
+      <RecordedInterview 
         onSignOut={() => setCurrentPage('candidate-login')}
         onExit={() => setCurrentPage('candidate-dashboard')}
         onCompletion={() => setRecordedInterviewCompleted(true)}
@@ -167,7 +164,7 @@ export default function App() {
   // If on live interview, show live interview flow
   if (currentPage === 'live-interview') {
     return (
-      <LiveInterviewFlow 
+      <LiveInterview 
         onSignOut={() => setCurrentPage('candidate-login')}
         onExit={() => setCurrentPage('candidate-dashboard')}
         onCompletion={() => setLiveInterviewCompleted(true)}
@@ -178,7 +175,7 @@ export default function App() {
   // If on technical assessment, show technical assessment flow
   if (currentPage === 'technical-assessment') {
     return (
-      <TechnicalAssessmentFlow 
+      <TechnicalAssessment 
         onSignOut={() => setCurrentPage('candidate-login')}
         onExit={() => setCurrentPage('candidate-dashboard')}
         onCompletion={() => {
@@ -239,7 +236,7 @@ export default function App() {
     ];
 
     return (
-      <SkillClusteringWorkflow
+      <SkillClusteringView
         candidates={mockCandidates}
         groupName={selectedGroupName}
         onComplete={(clusters) => {
@@ -252,7 +249,7 @@ export default function App() {
   }
 
   // If on admin pages, show admin view
-  if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-requests' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions' || currentPage === 'admin-suspicious-events' || currentPage === 'admin-suspect-review') {
+  if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-requests' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions' || currentPage === 'admin-subscription') {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
         <AdminSidebar 
@@ -263,8 +260,7 @@ export default function App() {
             currentPage === 'admin-settings' ? 'settings' : 
             currentPage === 'admin-delegation' ? 'delegation' :
             currentPage === 'admin-closed-positions' ? 'closed-positions' :
-            currentPage === 'admin-suspicious-events' ? 'suspicious-events' :
-            currentPage === 'admin-suspect-review' ? 'suspect-review' :
+            currentPage === 'admin-subscription' ? 'subscription' :
             'dashboard'
           } 
           onNavigate={(page) => setCurrentPage(
@@ -274,8 +270,7 @@ export default function App() {
             page === 'settings' ? 'admin-settings' : 
             page === 'delegation' ? 'admin-delegation' :
             page === 'closed-positions' ? 'admin-closed-positions' :
-            page === 'suspicious-events' ? 'admin-suspicious-events' :
-            page === 'suspect-review' ? 'admin-suspect-review' :
+            page === 'subscription' ? 'admin-subscription' :
             'admin-dashboard'
           )} 
         />
@@ -316,6 +311,10 @@ export default function App() {
               <AdminDashboard 
                 onSignOut={() => setCurrentPage('landing')}
               />
+            ) : currentPage === 'admin-subscription' ? (
+              <AdminSubscriptionManagement 
+                onSignOut={() => setCurrentPage('landing')}
+              />
             ) : currentPage === 'admin-members' ? (
               <AdminOrganizationMembers 
                 onSignOut={() => setCurrentPage('landing')} 
@@ -337,28 +336,6 @@ export default function App() {
             ) : currentPage === 'admin-closed-positions' ? (
               <AdminClosedPositions 
                 onSignOut={() => setCurrentPage('landing')}
-              />
-            ) : currentPage === 'admin-suspicious-events' ? (
-              <AdminSuspiciousEvents 
-                onSignOut={() => setCurrentPage('landing')}
-                onViewEventDetail={(event) => {
-                  setSelectedSuspiciousEvent(event);
-                  setCurrentPage('admin-suspect-review');
-                }}
-              />
-            ) : currentPage === 'admin-suspect-review' && selectedSuspiciousEvent ? (
-              <AdminSuspectReviewPage 
-                eventId={selectedSuspiciousEvent.eventId}
-                candidateId={selectedSuspiciousEvent.candidateId}
-                candidateName={selectedSuspiciousEvent.candidateName}
-                position={selectedSuspiciousEvent.position}
-                group={selectedSuspiciousEvent.group}
-                recruiterAssigned={selectedSuspiciousEvent.recruiterAssigned}
-                currentModule={selectedSuspiciousEvent.module}
-                onBack={() => {
-                  setSelectedSuspiciousEvent(null);
-                  setCurrentPage('admin-suspicious-events');
-                }}
               />
             ) : (
               <AdminDashboard 
@@ -426,19 +403,23 @@ export default function App() {
               positionTitle={selectedPosition?.positionTitle || ''}
               projectTitle={selectedPosition?.projectTitle || ''}
               onBack={() => setCurrentPage('projects')}
+              initialShowGroups={showGroupsOnReturn}
               onViewCandidate={(candidateId) => {
                 setSelectedCandidateId(candidateId);
                 setCurrentPage('candidate-profile');
               }}
               onCreateGroup={(candidateIds, groupData) => {
                 setSelectedGroupId(`group-${Date.now()}`);
-                setSelectedGroupName(groupData?.name || 'New Candidate Group');
+                setSelectedGroupName(groupData?.groupName || 'New Candidate Group');
+                setSelectedGroupFiltrationFlow(groupData?.filtrationFlow || ['assessment', 'ai-interview']);
                 setPreviousPage('position-dashboard'); // Save current page
+                setShowGroupsOnReturn(true); // Show groups panel when returning
                 setCurrentPage('group-overview');
               }}
               onViewGroup={(groupId) => {
                 setSelectedGroupId(groupId);
                 setPreviousPage('position-dashboard'); // Save current page
+                setShowGroupsOnReturn(true); // Show groups panel when returning
                 setCurrentPage('group-overview');
               }}
             />
@@ -450,7 +431,15 @@ export default function App() {
               assignedRecruiter="John Doe - Senior Recruiter"
               candidateIds={[1, 2, 3, 4, 5, 6, 7, 8]}
               recruiterType={recruiterType}
-              onBack={() => setCurrentPage(previousPage as any)} // Use saved previous page
+              filtrationFlow={selectedGroupFiltrationFlow}
+              onBack={() => {
+                setCurrentPage(previousPage as any); // Use saved previous page
+                // Reset the flags after navigating back so they don't persist
+                setTimeout(() => {
+                  setShowGroupsOnReturn(false);
+                  setReturnToGroupsTab(false);
+                }, 100);
+              }}
               onViewCandidate={(candidateId) => {
                 setSelectedCandidateId(candidateId);
                 setCurrentPage('candidate-profile');
@@ -555,10 +544,16 @@ export default function App() {
               onViewGroup={(groupId) => {
                 setSelectedGroupId(groupId);
                 setPreviousPage('projects'); // Save that we came from projects page
+                setReturnToGroupsTab(true); // Set flag to return to groups tab
                 setCurrentPage('group-overview');
               }}
               pendingAssessment={pendingAssessment}
               onAssessmentConsumed={() => setPendingAssessment(null)}
+              returnToGroupsTab={returnToGroupsTab}
+              initialPosition={selectedProjectPosition}
+              onPositionSelect={(positionTitle) => {
+                setSelectedProjectPosition(positionTitle);
+              }}
             />
           )}
         </main>

@@ -61,6 +61,17 @@ export function SectionEditor({ section, onSave, onCancel }: SectionEditorProps)
   const [editingVariant, setEditingVariant] = useState<EditingVariant>(null);
   const [showAIVariantMaker, setShowAIVariantMaker] = useState(false);
   const [selectedVariantForAI, setSelectedVariantForAI] = useState<QuestionVariant | null>(null);
+  const [expandedVariants, setExpandedVariants] = useState<Set<string>>(new Set());
+
+  const toggleVariantExpansion = (variantId: string) => {
+    const newExpanded = new Set(expandedVariants);
+    if (newExpanded.has(variantId)) {
+      newExpanded.delete(variantId);
+    } else {
+      newExpanded.add(variantId);
+    }
+    setExpandedVariants(newExpanded);
+  };
 
   const handleQuestionTypeSelect = (type: 'mcq' | 'essay' | 'code') => {
     setCurrentSection({ ...currentSection, type });
@@ -357,93 +368,289 @@ export function SectionEditor({ section, onSave, onCancel }: SectionEditorProps)
           {/* Variants List */}
           {currentSection.variants.length > 0 && (
             <div className="space-y-4">
-              {currentSection.variants.map((variant, index) => (
-                <div
-                  key={variant.id}
-                  className="border border-[#e5e7eb] rounded-[12px] p-6 hover:border-[#6366f1] transition-colors"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280] font-medium">
-                          Variant {index + 1}
-                        </span>
-                        {variant.difficulty && (
-                          <span className={`px-2 py-1 rounded-full text-[11px] font-medium ${
-                            variant.difficulty === 'Easy' ? 'bg-green-100 text-green-700' :
-                            variant.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
-                            {variant.difficulty}
-                          </span>
-                        )}
+              {currentSection.variants.map((variant, index) => {
+                const isExpanded = expandedVariants.has(variant.id);
+                return (
+                  <div
+                    key={variant.id}
+                    className="border border-[#e5e7eb] rounded-[12px] overflow-hidden hover:border-[#6366f1] transition-colors"
+                  >
+                    {/* Variant Header - Clickable to expand */}
+                    <div 
+                      className="p-6 cursor-pointer"
+                      onClick={() => toggleVariantExpansion(variant.id)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280] font-medium">
+                              Variant {index + 1}
+                            </span>
+                            {variant.difficulty && (
+                              <span className={`px-2 py-1 rounded-full text-[11px] font-medium ${
+                                variant.difficulty === 'Easy' ? 'bg-green-100 text-green-700' :
+                                variant.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {variant.difficulty}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                            {variant.questionText}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => setEditingVariant({ index, variant })}
+                            className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors flex items-center justify-center"
+                            title="Edit"
+                          >
+                            <Edit2 size={14} className="text-[#6b7280]" />
+                          </button>
+                          <button
+                            onClick={() => handleDuplicateVariant(index)}
+                            className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors flex items-center justify-center"
+                            title="Duplicate"
+                          >
+                            <Copy size={14} className="text-[#6b7280]" />
+                          </button>
+                          <button
+                            onClick={() => handleGenerateVariants(variant)}
+                            className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-purple-50 hover:border-purple-200 transition-colors flex items-center justify-center"
+                            title="Generate AI Variants"
+                          >
+                            <Wand2 size={14} className="text-purple-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteVariant(index)}
+                            className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-red-50 hover:border-red-200 transition-colors flex items-center justify-center"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} className="text-red-600" />
+                          </button>
+                        </div>
                       </div>
-                      <p className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                        {variant.questionText}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <button
-                        onClick={() => setEditingVariant({ index, variant })}
-                        className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors flex items-center justify-center"
-                        title="Edit"
-                      >
-                        <Edit2 size={14} className="text-[#6b7280]" />
-                      </button>
-                      <button
-                        onClick={() => handleDuplicateVariant(index)}
-                        className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors flex items-center justify-center"
-                        title="Duplicate"
-                      >
-                        <Copy size={14} className="text-[#6b7280]" />
-                      </button>
-                      <button
-                        onClick={() => handleGenerateVariants(variant)}
-                        className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-purple-50 hover:border-purple-200 transition-colors flex items-center justify-center"
-                        title="Generate AI Variants"
-                      >
-                        <Wand2 size={14} className="text-purple-600" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteVariant(index)}
-                        className="w-8 h-8 rounded-[6px] border border-[#e5e7eb] bg-white hover:bg-red-50 hover:border-red-200 transition-colors flex items-center justify-center"
-                        title="Delete"
-                      >
-                        <Trash2 size={14} className="text-red-600" />
-                      </button>
-                    </div>
-                  </div>
 
-                  {/* Variant Details Preview */}
-                  {variant.type === 'mcq' && variant.options && (
-                    <div className="mt-3 space-y-2">
-                      {variant.options.slice(0, 3).map((option, oIndex) => (
-                        <div key={oIndex} className="text-[13px] text-[#6b7280]">
-                          {String.fromCharCode(65 + oIndex)}. {option}
-                        </div>
-                      ))}
-                      {variant.options.length > 3 && (
-                        <div className="text-[13px] text-[#6b7280]">
-                          ... and {variant.options.length - 3} more
-                        </div>
+                      {/* Collapsed Preview */}
+                      {!isExpanded && (
+                        <>
+                          {variant.type === 'mcq' && variant.options && (
+                            <div className="mt-3 space-y-2">
+                              {variant.options.slice(0, 2).map((option, oIndex) => (
+                                <div key={oIndex} className="text-[13px] text-[#6b7280] truncate">
+                                  {String.fromCharCode(65 + oIndex)}. {option}
+                                </div>
+                              ))}
+                              {variant.options.length > 2 && (
+                                <div className="text-[13px] text-[#6366f1] font-medium">
+                                  Click to see all {variant.options.length} options
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {variant.type === 'code' && (
+                            <div className="mt-3 flex items-center gap-4 text-[13px] text-[#6b7280]">
+                              <span>Language: {variant.language || 'Not set'}</span>
+                              <span>Test Cases: {variant.testCases?.length || 0}</span>
+                              <span className="text-[#6366f1] font-medium">Click to see details</span>
+                            </div>
+                          )}
+
+                          {variant.type === 'essay' && (
+                            <div className="mt-3 text-[13px] text-[#6b7280]">
+                              {variant.maxWords && <span>Max words: {variant.maxWords}</span>}
+                              <span className="text-[#6366f1] font-medium ml-3">Click to see details</span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
-                  )}
 
-                  {variant.type === 'code' && (
-                    <div className="mt-3 flex items-center gap-4 text-[13px] text-[#6b7280]">
-                      <span>Language: {variant.language || 'Not set'}</span>
-                      <span>Test Cases: {variant.testCases?.length || 0}</span>
-                    </div>
-                  )}
+                    {/* Expanded Details */}
+                    {isExpanded && (
+                      <div className="px-6 pb-6 border-t border-[#e5e7eb] pt-4 bg-[#f9fafb]">
+                        {/* MCQ Full Details */}
+                        {variant.type === 'mcq' && variant.options && (
+                          <div className="space-y-3">
+                            <div className="text-[13px] font-medium text-[#374151] mb-2">Answer Options:</div>
+                            {variant.options.map((option, oIndex) => {
+                              const isCorrect = Array.isArray(variant.correctAnswer) 
+                                ? variant.correctAnswer.includes(oIndex)
+                                : variant.correctAnswer === oIndex;
+                              return (
+                                <div
+                                  key={oIndex}
+                                  className={`flex items-start gap-3 p-3 rounded-[8px] ${
+                                    isCorrect
+                                      ? 'bg-emerald-50 border border-emerald-200'
+                                      : 'bg-white border border-[#e5e7eb]'
+                                  }`}
+                                >
+                                  <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 mt-0.5 flex items-center justify-center ${
+                                    isCorrect
+                                      ? 'border-emerald-600 bg-emerald-600'
+                                      : 'border-gray-300'
+                                  }`}>
+                                    {isCorrect && (
+                                      <CheckCircle size={12} className="text-white" />
+                                    )}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
+                                      <span className="font-medium">{String.fromCharCode(65 + oIndex)}.</span> {option}
+                                    </div>
+                                    {isCorrect && (
+                                      <div className="text-[11px] text-emerald-700 mt-1 font-medium">
+                                        ✓ Correct Answer
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {variant.multipleCorrect && (
+                              <div className="text-[12px] text-[#6b7280] bg-blue-50 border border-blue-200 rounded-[6px] p-2">
+                                ℹ️ Multiple correct answers allowed
+                              </div>
+                            )}
+                          </div>
+                        )}
 
-                  {variant.type === 'essay' && variant.maxWords && (
-                    <div className="mt-3 text-[13px] text-[#6b7280]">
-                      Max words: {variant.maxWords}
-                    </div>
-                  )}
-                </div>
-              ))}
+                        {/* Code Full Details */}
+                        {variant.type === 'code' && (
+                          <div className="space-y-4">
+                            <div>
+                              <div className="text-[13px] font-medium text-[#374151] mb-2">Language & Constraints:</div>
+                              <div className="bg-white rounded-[8px] border border-[#e5e7eb] p-3 grid grid-cols-2 gap-3">
+                                <div>
+                                  <span className="text-[12px] text-[#6b7280]">Language:</span>
+                                  <span className="text-[13px] text-[#111827] ml-2 font-medium">{variant.language || 'Not specified'}</span>
+                                </div>
+                                {variant.timeLimit && (
+                                  <div>
+                                    <span className="text-[12px] text-[#6b7280]">Time Limit:</span>
+                                    <span className="text-[13px] text-[#111827] ml-2 font-medium">{variant.timeLimit}s</span>
+                                  </div>
+                                )}
+                                {variant.memoryLimit && (
+                                  <div>
+                                    <span className="text-[12px] text-[#6b7280]">Memory Limit:</span>
+                                    <span className="text-[13px] text-[#111827] ml-2 font-medium">{variant.memoryLimit}MB</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {variant.codeTemplate && (
+                              <div>
+                                <div className="text-[13px] font-medium text-[#374151] mb-2">Code Template:</div>
+                                <pre className="bg-gray-900 text-gray-100 rounded-[8px] p-4 text-[12px] overflow-x-auto">
+                                  <code>{variant.codeTemplate}</code>
+                                </pre>
+                              </div>
+                            )}
+
+                            {variant.testCases && variant.testCases.length > 0 && (
+                              <div>
+                                <div className="text-[13px] font-medium text-[#374151] mb-2">Test Cases ({variant.testCases.length}):</div>
+                                <div className="space-y-2">
+                                  {variant.testCases.map((testCase, tcIndex) => (
+                                    <div key={testCase.id} className="bg-white rounded-[8px] border border-[#e5e7eb] p-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-[12px] font-medium text-[#374151]">Test Case {tcIndex + 1}</span>
+                                        <div className="flex items-center gap-2">
+                                          {testCase.isHidden && (
+                                            <span className="text-[11px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Hidden</span>
+                                          )}
+                                          <span className="text-[11px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{testCase.points} pts</span>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                          <div className="text-[11px] text-[#6b7280] mb-1">Input:</div>
+                                          <pre className="text-[12px] text-[#111827] bg-[#f9fafb] p-2 rounded-[4px] overflow-x-auto">{testCase.input}</pre>
+                                        </div>
+                                        <div>
+                                          <div className="text-[11px] text-[#6b7280] mb-1">Expected Output:</div>
+                                          <pre className="text-[12px] text-[#111827] bg-[#f9fafb] p-2 rounded-[4px] overflow-x-auto">{testCase.expectedOutput}</pre>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Essay Full Details */}
+                        {variant.type === 'essay' && (
+                          <div className="space-y-4">
+                            {variant.maxWords && (
+                              <div className="bg-white rounded-[8px] border border-[#e5e7eb] p-3">
+                                <span className="text-[12px] text-[#6b7280]">Maximum Words:</span>
+                                <span className="text-[13px] text-[#111827] ml-2 font-medium">{variant.maxWords}</span>
+                              </div>
+                            )}
+                            
+                            {variant.expectedKeywords && variant.expectedKeywords.length > 0 && (
+                              <div>
+                                <div className="text-[13px] font-medium text-[#374151] mb-2">Expected Keywords:</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {variant.expectedKeywords.map((keyword, kIndex) => (
+                                    <span key={kIndex} className="px-3 py-1 bg-blue-50 text-blue-700 text-[12px] rounded-full border border-blue-200">
+                                      {keyword}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {variant.rubric && (
+                              <div>
+                                <div className="text-[13px] font-medium text-[#374151] mb-2">Evaluation Rubric:</div>
+                                <div className="bg-white rounded-[8px] border border-[#e5e7eb] p-4">
+                                  <p className="font-['Arimo',sans-serif] text-[13px] text-[#374151] whitespace-pre-wrap">
+                                    {variant.rubric}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Explanation (if exists) */}
+                        {variant.explanation && (
+                          <div className="mt-4 pt-4 border-t border-[#e5e7eb]">
+                            <div className="text-[13px] font-medium text-[#374151] mb-2">Explanation:</div>
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-[8px] p-3">
+                              <p className="font-['Arimo',sans-serif] text-[13px] text-emerald-900">
+                                {variant.explanation}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Tags (if exists) */}
+                        {variant.tags && variant.tags.length > 0 && (
+                          <div className="mt-4">
+                            <div className="text-[13px] font-medium text-[#374151] mb-2">Tags:</div>
+                            <div className="flex flex-wrap gap-2">
+                              {variant.tags.map((tag, tIndex) => (
+                                <span key={tIndex} className="px-2 py-1 bg-gray-100 text-gray-700 text-[11px] rounded-[4px]">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
 
               {/* Add Another Variant Button */}
               <button

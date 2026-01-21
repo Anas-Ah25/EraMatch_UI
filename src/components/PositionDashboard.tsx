@@ -32,6 +32,7 @@ interface PositionDashboardProps {
   positionTitle: string;
   projectTitle: string;
   onBack: () => void;
+  initialShowGroups?: boolean;
   onViewCandidate: (candidateId: number) => void;
   onCreateGroup: (candidates: number[], groupData: any) => void;
   onViewGroup?: (groupId: string) => void;
@@ -41,6 +42,7 @@ export function PositionDashboard({
   positionTitle,
   projectTitle,
   onBack,
+  initialShowGroups = false,
   onViewCandidate,
   onCreateGroup,
   onViewGroup
@@ -166,7 +168,7 @@ export function PositionDashboard({
   const [sortField, setSortField] = useState<string>('match');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [miniKGCandidate, setMiniKGCandidate] = useState<{ id: number; name: string; avatar: string; position: { x: number; y: number } } | null>(null);
-  const [showRecentGroups, setShowRecentGroups] = useState(false);
+  const [showRecentGroups, setShowRecentGroups] = useState(initialShowGroups);
   const [showSaveFilterDialog, setShowSaveFilterDialog] = useState(false);
   const [filterTemplateName, setFilterTemplateName] = useState('');
   const [savedFilterTemplates, setSavedFilterTemplates] = useState<Array<{ name: string; filters: any }>>([

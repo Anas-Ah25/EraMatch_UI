@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3, Target } from 'lucide-react';
+import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3, Target, Video } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SuspectReviewPage } from './SuspectReviewPage';
 import { CreateAdvancedAssessment } from './CreateAdvancedAssessment';
 import { StageResultsDashboard } from './StageResultsDashboard';
 import { ModuleMonitoringDashboard } from './ModuleMonitoringDashboard';
 import { StartStageModal } from './StartStageModal';
+import { BulkProgressionModal } from './BulkProgressionModal';
 
 interface EnhancedGroupOverviewV2Props {
   groupId: string;
@@ -14,6 +15,7 @@ interface EnhancedGroupOverviewV2Props {
   assignedRecruiter: string;
   candidateIds: number[];
   recruiterType: 'recruiter' | 'technical';
+  filtrationFlow?: ('assessment' | 'ai-interview' | 'live-interview')[]; // NEW: Filtration flow configuration
   onBack: () => void;
   onViewCandidate: (candidateId: number) => void;
   onOpenLiveAISetup?: () => void;
@@ -101,6 +103,7 @@ export function EnhancedGroupOverviewV2({
   assignedRecruiter,
   candidateIds,
   recruiterType,
+  filtrationFlow = ['assessment', 'ai-interview'], // Default flow if not provided
   onBack,
   onViewCandidate,
   onOpenLiveAISetup,
@@ -144,9 +147,12 @@ export function EnhancedGroupOverviewV2({
   const [groupAssessments, setGroupAssessments] = useState<any[]>([]);
 
   // NEW: Stage-gated state
-  const [currentStage, setCurrentStage] = useState<string>('assessment');
+  const [currentStage, setCurrentStage] = useState<string>(filtrationFlow[0] || 'assessment');
   const [stageState, setStageState] = useState<StageState>('not-started');
   const [stageConfigLocked, setStageConfigLocked] = useState(false);
+  
+  // NEW: Bulk progression modal
+  const [showBulkProgressionModal, setShowBulkProgressionModal] = useState(false);
   
   // NEW: Technical Acceptance Criteria
   const [acceptanceCriteria, setAcceptanceCriteria] = useState<TechnicalAcceptanceCriteria>({
@@ -186,14 +192,34 @@ export function EnhancedGroupOverviewV2({
   const [showStageResults, setShowStageResults] = useState(false);
   const [showModuleMonitoring, setShowModuleMonitoring] = useState<'assessment' | 'ai-interview' | null>(null);
 
-  // Mock pipeline data with stage states
-  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([
-    { id: 'assessment', name: 'Assessment', completed: 6, total: 8, pending: 2, state: 'not-started' },
-    { id: 'ai-interview', name: 'AI Interview', completed: 4, total: 8, pending: 4, state: 'not-started' },
-    { id: 'live-interview', name: 'Live Interview', completed: 2, total: 8, pending: 6, state: 'not-started' },
-    { id: 'review', name: 'Review', completed: 1, total: 8, pending: 7, state: 'not-started' },
-    { id: 'offer', name: 'Offer', completed: 0, total: 8, pending: 8, state: 'not-started' }
-  ]);
+  // NEW: Generate dynamic pipeline based on filtrationFlow configuration
+  const generatePipeline = (): PipelineStep[] => {
+    const moduleMap: Record<string, { name: string; icon: any }> = {
+      'assessment': { name: 'Technical Assessment', icon: FileText },
+      'ai-interview': { name: 'AI Interview', icon: Video },
+      'live-interview': { name: 'Live Interview', icon: MessageSquare }
+    };
+
+    const steps: PipelineStep[] = filtrationFlow.map((moduleType, index) => ({
+      id: moduleType,
+      name: moduleMap[moduleType]?.name || moduleType,
+      completed: 6 - index * 2,
+      total: 8,
+      pending: 2 + index * 2,
+      state: index === 0 ? 'not-started' as StageState : 'not-started' as StageState
+    }));
+
+    // Always add review and offer stages at the end
+    steps.push(
+      { id: 'review', name: 'Review', completed: 1, total: 8, pending: 7, state: 'not-started' },
+      { id: 'offer', name: 'Offer', completed: 0, total: 8, pending: 8, state: 'not-started' }
+    );
+
+    return steps;
+  };
+
+  // Mock pipeline data with stage states - NOW DYNAMIC
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(generatePipeline());
 
   // Mock candidate status data with new fields
   const [candidateStatuses, setCandidateStatuses] = useState<CandidateStatus[]>([
@@ -390,9 +416,52 @@ export function EnhancedGroupOverviewV2({
         actorRole: userRole === 'technical' ? 'technical' : 'hr',
         description: `Closed ${steps[currentStepIndex].name} stage`
       });
-      // Show results dashboard after closing
-      setShowStageResults(true);
+      // Open bulk progression modal after closing
+      setShowBulkProgressionModal(true);
     }
+  };
+
+  const handleBulkProgression = (selectedIds: number[], action: 'progress' | 'reject' | 'hold') => {
+    const updatedCandidates = candidateStatuses.map(candidate => {
+      if (selectedIds.includes(candidate.id)) {
+        if (action === 'progress') {
+          return { ...candidate, progressionState: 'selected' as const };
+        } else if (action === 'reject') {
+          return { ...candidate, progressionState: 'rejected' as const };
+        } else if (action === 'hold') {
+          return { ...candidate, progressionState: 'on-hold' as const };
+        }
+      }
+      return candidate;
+    });
+
+    setCandidateStatuses(updatedCandidates);
+
+    if (action === 'progress') {
+      // Move to next stage
+      const currentStepIndex = pipelineSteps.findIndex(s => s.id === currentStage);
+      if (currentStepIndex < pipelineSteps.length - 1) {
+        const nextStage = pipelineSteps[currentStepIndex + 1];
+        setCurrentStage(nextStage.id);
+        setStageState('not-started');
+        setStageConfigLocked(false);
+      }
+      showToast(`${selectedIds.length} candidates progressed to next stage`);
+    } else if (action === 'reject') {
+      showToast(`${selectedIds.length} candidates rejected`);
+    } else if (action === 'hold') {
+      showToast(`${selectedIds.length} candidates put on hold`);
+    }
+
+    addActivityLog({
+      type: 'candidate-progressed',
+      actor: assignedRecruiter,
+      actorRole: userRole === 'technical' ? 'technical' : 'hr',
+      description: `${action === 'progress' ? 'Progressed' : action === 'reject' ? 'Rejected' : 'Put on hold'} ${selectedIds.length} candidates`,
+      metadata: { candidateIds: selectedIds, action }
+    });
+
+    setShowBulkProgressionModal(false);
   };
 
   const handleEnterReviewMode = () => {
@@ -723,6 +792,50 @@ export function EnhancedGroupOverviewV2({
             <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-3">
               {description || 'No description provided'}
             </p>
+            
+            {/* Filtration Flow Indicator */}
+            <div className="mb-3 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-[8px] border border-emerald-200">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp size={14} className="text-emerald-600" />
+                <span className="font-['Arimo',sans-serif] text-[12px] font-medium text-emerald-900">
+                  Configured Filtration Flow
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                {filtrationFlow.map((moduleType, index) => {
+                  const moduleInfo = {
+                    'assessment': { name: 'Assessment', icon: FileText, color: 'emerald' },
+                    'ai-interview': { name: 'AI Interview', icon: Video, color: 'blue' },
+                    'live-interview': { name: 'Live Interview', icon: MessageSquare, color: 'purple' }
+                  };
+                  const info = moduleInfo[moduleType];
+                  const Icon = info.icon;
+                  
+                  return (
+                    <div key={moduleType} className="flex items-center gap-2">
+                      <div className={`flex items-center gap-1.5 px-2.5 py-1 bg-white border border-${info.color}-200 rounded-[6px]`}>
+                        <div className={`w-5 h-5 rounded bg-${info.color}-100 flex items-center justify-center`}>
+                          <Icon size={12} className={`text-${info.color}-600`} />
+                        </div>
+                        <span className="font-['Arimo',sans-serif] text-[12px] text-gray-700">
+                          {index + 1}. {info.name}
+                        </span>
+                      </div>
+                      {index < filtrationFlow.length - 1 && (
+                        <span className="text-emerald-400">→</span>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white border border-gray-200 rounded-[6px]">
+                  <CheckCircle size={12} className="text-gray-500" />
+                  <span className="font-['Arimo',sans-serif] text-[12px] text-gray-500">
+                    Review & Offer
+                  </span>
+                </div>
+              </div>
+            </div>
+            
             <div className="flex items-center gap-2">
               <Users size={14} className="text-[#6b7280]" />
               <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
@@ -1760,6 +1873,31 @@ export function EnhancedGroupOverviewV2({
             setShowModuleMonitoring(null);
             setShowSuspectReview(candidateId);
           }}
+        />
+      )}
+
+      {/* Bulk Progression Modal */}
+      {showBulkProgressionModal && (
+        <BulkProgressionModal
+          currentStage={pipelineSteps.find(s => s.id === currentStage)?.name || ''}
+          nextStage={
+            (() => {
+              const currentStepIndex = pipelineSteps.findIndex(s => s.id === currentStage);
+              return pipelineSteps[currentStepIndex + 1]?.name || 'Review';
+            })()
+          }
+          candidates={candidateStatuses
+            .filter(c => c.progressionState === 'active' || !c.progressionState)
+            .map(c => ({
+              id: c.id,
+              name: c.name,
+              avatar: c.avatar,
+              score: c.assessmentScore,
+              flags: c.flags,
+              meetsCriteria: c.meetsCriteria || false
+            }))}
+          onConfirm={handleBulkProgression}
+          onCancel={() => setShowBulkProgressionModal(false)}
         />
       )}
 

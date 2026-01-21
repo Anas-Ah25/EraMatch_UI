@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Settings, Clock, Target, BarChart3, Shuffle, Eye, CheckSquare, Shield } from 'lucide-react';
+import { Settings, Clock, Target, BarChart3 } from 'lucide-react';
 import { Button } from './ui/button';
 
 interface AssessmentConfig {
@@ -146,93 +146,6 @@ export function AssessmentSettings({ initialSettings, onSave }: AssessmentSettin
                 </button>
               ))}
             </div>
-          </div>
-        </div>
-
-        {/* Candidate Experience */}
-        <div>
-          <h3 className="text-[#111827] mb-4">Candidate Experience</h3>
-          
-          <div className="space-y-3">
-            <label className="flex items-center gap-3 p-4 rounded-[8px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.randomizeQuestions}
-                onChange={(e) => setSettings({ ...settings, randomizeQuestions: e.target.checked })}
-                className="w-5 h-5 rounded border-gray-300 text-[#6366f1] focus:ring-[#6366f1]"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Shuffle size={16} className="text-[#6b7280]" />
-                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                    Randomize Questions
-                  </span>
-                </div>
-                <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Show one random variant from each section to prevent cheating
-                </p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 p-4 rounded-[8px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.showResults}
-                onChange={(e) => setSettings({ ...settings, showResults: e.target.checked })}
-                className="w-5 h-5 rounded border-gray-300 text-[#6366f1] focus:ring-[#6366f1]"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Eye size={16} className="text-[#6b7280]" />
-                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                    Show Results Immediately
-                  </span>
-                </div>
-                <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Display score and correct answers after submission
-                </p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 p-4 rounded-[8px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.allowReview}
-                onChange={(e) => setSettings({ ...settings, allowReview: e.target.checked })}
-                className="w-5 h-5 rounded border-gray-300 text-[#6366f1] focus:ring-[#6366f1]"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <CheckSquare size={16} className="text-[#6b7280]" />
-                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                    Allow Review Before Submit
-                  </span>
-                </div>
-                <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Let candidates review and change answers before final submission
-                </p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 p-4 rounded-[8px] border border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer">
-              <input
-                type="checkbox"
-                checked={settings.proctoring}
-                onChange={(e) => setSettings({ ...settings, proctoring: e.target.checked })}
-                className="w-5 h-5 rounded border-gray-300 text-[#6366f1] focus:ring-[#6366f1]"
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <Shield size={16} className="text-[#6b7280]" />
-                  <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                    Enable AI Proctoring
-                  </span>
-                </div>
-                <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Monitor for tab switching, copy-paste, and suspicious behavior
-                </p>
-              </div>
-            </label>
           </div>
         </div>
       </div>

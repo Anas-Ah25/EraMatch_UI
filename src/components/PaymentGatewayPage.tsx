@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, CreditCard, Lock, Check, Star } from 'lucide-react';
+import { ArrowLeft, CreditCard, Lock, Check, Star, SkipForward } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -9,15 +9,17 @@ import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
 interface PaymentGatewayPageProps {
   onBack: () => void;
   onComplete: () => void;
+  onBypass?: () => void;
 }
 
-export function PaymentGatewayPage({ onBack, onComplete }: PaymentGatewayPageProps) {
+export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGatewayPageProps) {
   const [selectedPlan, setSelectedPlan] = useState<'starter' | 'professional' | 'enterprise'>('professional');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [cardNumber, setCardNumber] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
   const [nameOnCard, setNameOnCard] = useState('');
+  const [showBypassConfirm, setShowBypassConfirm] = useState(false);
 
   const plans = {
     starter: {
@@ -83,15 +85,67 @@ export function PaymentGatewayPage({ onBack, onComplete }: PaymentGatewayPagePro
       {/* Header */}
       <div className="px-12 py-6 flex items-center justify-between border-b border-gray-200 bg-white">
         <img src={logo} alt="ERAMATCH" className="h-12" />
-        <Button 
-          variant="ghost"
-          className="rounded-full px-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
-          onClick={onBack}
-        >
-          <ArrowLeft size={18} />
-          Back
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* Admin Bypass Button */}
+          {onBypass && (
+            <Button 
+              variant="ghost"
+              className="rounded-full px-4 py-2 flex items-center gap-2 text-xs text-purple-600 hover:bg-purple-50 border border-purple-300"
+              onClick={() => setShowBypassConfirm(true)}
+              title="Admin: Bypass payment for testing"
+            >
+              <SkipForward size={14} />
+              Admin Bypass
+            </Button>
+          )}
+          <Button 
+            variant="ghost"
+            className="rounded-full px-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            onClick={onBack}
+          >
+            <ArrowLeft size={18} />
+            Back
+          </Button>
+        </div>
       </div>
+
+      {/* Bypass Confirmation Modal */}
+      {showBypassConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                <SkipForward size={24} className="text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">Bypass Payment</h3>
+                <p className="text-sm text-gray-600">Admin Testing Mode</p>
+              </div>
+            </div>
+            <p className="text-gray-700 mb-6">
+              This will skip the payment process and create a test account with Professional plan features. This should only be used for testing purposes.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => {
+                  setShowBypassConfirm(false);
+                  if (onBypass) onBypass();
+                }}
+                className="flex-1 rounded-xl py-3 bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                Confirm Bypass
+              </Button>
+              <Button
+                onClick={() => setShowBypassConfirm(false)}
+                variant="outline"
+                className="flex-1 rounded-xl py-3 border-gray-300"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="px-12 py-16 max-w-6xl mx-auto">

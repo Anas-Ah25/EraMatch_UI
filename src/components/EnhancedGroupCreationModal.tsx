@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { X, Users, Sparkles, Calendar, Send, Video, TrendingUp, Edit } from 'lucide-react';
+import { X, Users, Sparkles, Calendar, Send, Video, TrendingUp, Edit, GripVertical, FileText, MessageSquare, UserCheck, CheckCircle, AlertCircle } from 'lucide-react';
+
+interface FiltrationModule {
+  id: string;
+  type: 'assessment' | 'ai-interview' | 'live-interview';
+  name: string;
+  icon: any;
+  enabled: boolean;
+  order: number;
+}
 
 interface EnhancedGroupCreationModalProps {
   selectedCount: number;
@@ -19,7 +28,16 @@ export function EnhancedGroupCreationModal({
   const [groupName, setGroupName] = useState(`Filtered: ${new Date().toLocaleDateString()}`);
   const [description, setDescription] = useState('');
   const [assignedRecruiter, setAssignedRecruiter] = useState('');
-  const [pipelineTemplate, setPipelineTemplate] = useState('standard');
+  const [pipelineTemplate, setPipelineTemplate] = useState('custom');
+  
+  // NEW: Filtration flow configuration
+  const [filtrationModules, setFiltrationModules] = useState<FiltrationModule[]>([
+    { id: 'assessment', type: 'assessment', name: 'Technical Assessment', icon: FileText, enabled: true, order: 0 },
+    { id: 'ai-interview', type: 'ai-interview', name: 'AI Video Interview', icon: Video, enabled: true, order: 1 },
+    { id: 'live-interview', type: 'live-interview', name: 'Live Interview', icon: MessageSquare, enabled: false, order: 2 }
+  ]);
+  const [draggedModule, setDraggedModule] = useState<string | null>(null);
+  
   const [immediateActions, setImmediateActions] = useState({
     sendAssessment: false,
     scheduleAssessment: false,
@@ -38,29 +56,61 @@ export function EnhancedGroupCreationModal({
     'Sarah Williams - HR Manager'
   ];
 
-  const pipelineTemplates = [
-    { value: 'standard', label: 'Standard Pipeline', description: 'Assessment → Interview → Review → Offer' },
-    { value: 'technical', label: 'Technical Pipeline', description: 'Technical Assessment → Technical Interview → Team Interview → Offer' },
-    { value: 'fast-track', label: 'Fast Track', description: 'Quick Assessment → Interview → Offer' },
-    { value: 'custom', label: 'Custom Pipeline', description: 'Define your own stages' }
-  ];
+  const toggleModule = (moduleId: string) => {
+    setFiltrationModules(filtrationModules.map(m => 
+      m.id === moduleId ? { ...m, enabled: !m.enabled } : m
+    ));
+  };
+
+  const handleDragStart = (moduleId: string) => {
+    setDraggedModule(moduleId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (targetModuleId: string) => {
+    if (!draggedModule || draggedModule === targetModuleId) return;
+    
+    const draggedIndex = filtrationModules.findIndex(m => m.id === draggedModule);
+    const targetIndex = filtrationModules.findIndex(m => m.id === targetModuleId);
+    
+    const newModules = [...filtrationModules];
+    const [removed] = newModules.splice(draggedIndex, 1);
+    newModules.splice(targetIndex, 0, removed);
+    
+    // Update order
+    setFiltrationModules(newModules.map((m, index) => ({ ...m, order: index })));
+    setDraggedModule(null);
+  };
 
   const handleCreate = () => {
     if (!groupName.trim()) return;
+    
+    // Get enabled modules in order
+    const enabledModules = filtrationModules
+      .filter(m => m.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map(m => m.type);
+    
     onCreate({
       groupName,
       description,
       assignedRecruiter,
       pipelineTemplate,
+      filtrationFlow: enabledModules, // NEW: Include filtration flow
       immediateActions,
       saveAsTemplate
     });
   };
 
+  const enabledCount = filtrationModules.filter(m => m.enabled).length;
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div 
-        className="bg-white rounded-[16px] w-full max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
+        className="bg-white rounded-[16px] w-full max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
         style={{ animationDuration: '200ms' }}
       >
         {/* Header */}
@@ -166,40 +216,133 @@ export function EnhancedGroupCreationModal({
             </select>
           </div>
 
-          {/* Pipeline Template */}
-          <div>
-            <label className="block font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-3">
-              Select Pipeline Template
-            </label>
-            <div className="space-y-2">
-              {pipelineTemplates.map((template) => (
-                <label
-                  key={template.value}
-                  className={`flex items-start p-[14px] rounded-[8px] border-2 cursor-pointer transition-colors ${
-                    pipelineTemplate === template.value
-                      ? 'border-[#6366f1] bg-[#f5f3ff]'
-                      : 'border-[#e5e7eb] hover:border-[#d1d5db]'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="pipeline"
-                    value={template.value}
-                    checked={pipelineTemplate === template.value}
-                    onChange={(e) => setPipelineTemplate(e.target.value)}
-                    className="mt-[3px] w-[18px] h-[18px] text-[#6366f1] cursor-pointer"
-                  />
-                  <div className="ml-3 flex-1">
-                    <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-1">
-                      {template.label}
-                    </div>
-                    <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
-                      {template.description}
-                    </div>
-                  </div>
-                </label>
-              ))}
+          {/* NEW: Filtration Flow Configuration */}
+          <div className="border-2 border-[#6366f1] rounded-[12px] p-6 bg-gradient-to-br from-[#f5f3ff] to-white">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-[#111827] font-medium flex items-center gap-2">
+                  <TrendingUp size={18} className="text-[#6366f1]" />
+                  Filtration Flow Configuration
+                </h3>
+                <p className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280] mt-1">
+                  Configure which modules candidates will go through and their order
+                </p>
+              </div>
+              <div className="px-3 py-1 bg-[#6366f1] text-white rounded-[6px] text-[12px] font-medium">
+                {enabledCount} module{enabledCount !== 1 ? 's' : ''} enabled
+              </div>
             </div>
+
+            {/* Module List */}
+            <div className="space-y-2">
+              {filtrationModules.map((module, index) => {
+                const Icon = module.icon;
+                return (
+                  <div
+                    key={module.id}
+                    draggable={module.enabled}
+                    onDragStart={() => handleDragStart(module.id)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(module.id)}
+                    className={`flex items-center gap-3 p-4 rounded-[8px] border-2 transition-all ${
+                      module.enabled
+                        ? 'bg-white border-[#10b981] cursor-move hover:shadow-md'
+                        : 'bg-[#f9fafb] border-[#e5e7eb] opacity-60'
+                    } ${draggedModule === module.id ? 'opacity-50 scale-95' : ''}`}
+                  >
+                    {/* Drag Handle */}
+                    {module.enabled && (
+                      <GripVertical size={18} className="text-[#9ca3af] flex-shrink-0" />
+                    )}
+                    
+                    {/* Order Badge */}
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0 ${
+                      module.enabled 
+                        ? 'bg-[#10b981] text-white' 
+                        : 'bg-[#e5e7eb] text-[#9ca3af]'
+                    }`}>
+                      {module.enabled ? filtrationModules.filter(m => m.enabled && m.order < module.order).length + 1 : '—'}
+                    </div>
+
+                    {/* Icon */}
+                    <div className={`w-9 h-9 rounded-[8px] flex items-center justify-center flex-shrink-0 ${
+                      module.enabled ? 'bg-[#10b981]/10' : 'bg-[#e5e7eb]'
+                    }`}>
+                      <Icon size={18} className={module.enabled ? 'text-[#10b981]' : 'text-[#9ca3af]'} />
+                    </div>
+
+                    {/* Module Info */}
+                    <div className="flex-1">
+                      <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                        {module.name}
+                      </div>
+                      <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
+                        {module.type === 'assessment' && 'Technical skills evaluation'}
+                        {module.type === 'ai-interview' && 'AI-powered video screening'}
+                        {module.type === 'live-interview' && 'Real-time interview session'}
+                      </div>
+                    </div>
+
+                    {/* Toggle */}
+                    <button
+                      onClick={() => toggleModule(module.id)}
+                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
+                        module.enabled ? 'bg-[#10b981]' : 'bg-[#e5e7eb]'
+                      }`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
+                        module.enabled ? 'translate-x-6' : 'translate-x-0.5'
+                      }`} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Flow Preview */}
+            {enabledCount > 0 && (
+              <div className="mt-4 p-4 bg-white rounded-[8px] border border-[#e5e7eb]">
+                <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-2">
+                  Pipeline Preview:
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {filtrationModules
+                    .filter(m => m.enabled)
+                    .sort((a, b) => a.order - b.order)
+                    .map((module, index, array) => {
+                      const Icon = module.icon;
+                      return (
+                        <div key={module.id} className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#10b981]/10 border border-[#10b981]/20 rounded-[6px]">
+                            <Icon size={14} className="text-[#10b981]" />
+                            <span className="font-['Arimo',sans-serif] text-[13px] text-[#059669]">
+                              {module.name}
+                            </span>
+                          </div>
+                          {index < array.length - 1 && (
+                            <span className="text-[#9ca3af]">→</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-[#f9fafb] border border-[#e5e7eb] rounded-[6px]">
+                    <CheckCircle size={14} className="text-[#6b7280]" />
+                    <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                      Review & Offer
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {enabledCount === 0 && (
+              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-[8px] flex items-start gap-2">
+                <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                <p className="font-['Arimo',sans-serif] text-[13px] text-amber-800">
+                  Please enable at least one module to create a filtration flow
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Immediate Actions */}

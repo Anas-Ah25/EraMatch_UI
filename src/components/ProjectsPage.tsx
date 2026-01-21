@@ -40,9 +40,12 @@ interface ProjectsPageProps {
   onAssessmentConsumed?: () => void;
   onViewDashboard?: (projectTitle: string, positionTitle: string) => void;
   onViewGroup?: (groupId: string) => void;
+  returnToGroupsTab?: boolean;
+  initialPosition?: string; // Position to show when loading a project
+  onPositionSelect?: (positionTitle: string) => void; // Callback when position changes
 }
 
-export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashboard, onCreateAssessment, pendingAssessment, onAssessmentConsumed, onViewDashboard, onViewGroup }: ProjectsPageProps) {
+export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashboard, onCreateAssessment, pendingAssessment, onAssessmentConsumed, onViewDashboard, onViewGroup, returnToGroupsTab = false, initialPosition = '', onPositionSelect }: ProjectsPageProps) {
   const [projects, setProjects] = useState<Project[]>([
     // Open projects
     { id: 1, title: 'Summer Internship', roles: 3, applicants: '999', isOpen: true, description: '' },
@@ -232,6 +235,9 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
         onAssessmentConsumed={onAssessmentConsumed}
         onViewDashboard={onViewDashboard}
         onViewGroup={onViewGroup}
+        returnToGroupsTab={returnToGroupsTab}
+        initialPosition={initialPosition}
+        onPositionSelect={onPositionSelect}
       />
     );
   }
