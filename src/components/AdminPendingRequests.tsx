@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Users, FileText, Briefcase, Search, Filter, Eye, ChevronDown } from 'lucide-react';
+import { Users, FileText, Briefcase, Search, Filter, Eye, ChevronDown, Check, X } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { CandidateProfileModal } from './CandidateProfileModal';
+import { toast } from 'sonner';
 
 interface JoinRequest {
   id: number;
@@ -27,8 +28,7 @@ export function AdminPendingRequests({ onSignOut, onBack }: AdminPendingRequests
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showPositionDropdown, setShowPositionDropdown] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-
-  const requests: JoinRequest[] = [
+  const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([
     {
       id: 1,
       name: 'Alex Thompson',
@@ -65,17 +65,27 @@ export function AdminPendingRequests({ onSignOut, onBack }: AdminPendingRequests
       skills: ['Data Analytics', 'Excel', 'Statistical Analysis'],
       requestDate: 'Today'
     }
-  ];
+  ]);
 
   const handleViewProfile = (request: JoinRequest) => {
     setSelectedCandidate(request);
     setShowProfileModal(true);
   };
 
-  // Get unique positions
-  const uniquePositions = Array.from(new Set(requests.map(r => r.appliedPosition)));
+  const handleAcceptRequest = (requestId: number, candidateName: string) => {
+    setPendingRequests(prev => prev.filter(req => req.id !== requestId));
+    toast.success(`${candidateName}'s request accepted successfully!`);
+  };
 
-  const filteredRequests = requests.filter(request => {
+  const handleRejectRequest = (requestId: number, candidateName: string) => {
+    setPendingRequests(prev => prev.filter(req => req.id !== requestId));
+    toast.error(`${candidateName}'s request rejected`);
+  };
+
+  // Get unique positions
+  const uniquePositions = Array.from(new Set(pendingRequests.map(r => r.appliedPosition)));
+
+  const filteredRequests = pendingRequests.filter(request => {
     // Search filter
     const matchesSearch = request.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -266,15 +276,33 @@ export function AdminPendingRequests({ onSignOut, onBack }: AdminPendingRequests
                   </td>
                   <td className="py-4 px-4 text-gray-500 text-sm">{request.requestDate}</td>
                   <td className="py-4 px-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg text-sm gap-2"
-                      onClick={() => handleViewProfile(request)}
-                    >
-                      <Eye className="w-4 h-4" />
-                      View Profile
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg text-sm gap-2"
+                        onClick={() => handleViewProfile(request)}
+                      >
+                        <Eye className="w-4 h-4" />
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="rounded-lg text-sm gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => handleAcceptRequest(request.id, request.name)}
+                      >
+                        <Check className="w-4 h-4" />
+                        Accept
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="rounded-lg text-sm gap-2 bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => handleRejectRequest(request.id, request.name)}
+                      >
+                        <X className="w-4 h-4" />
+                        Reject
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

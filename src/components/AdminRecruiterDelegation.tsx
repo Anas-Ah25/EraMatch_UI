@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDown, X, TrendingUp, TrendingDown, AlertTriangle, ArrowLeft, Eye, ArrowUpDown } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 interface JobPosition {
   id: number;
@@ -690,6 +691,7 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
                   style={{ backgroundColor: '#6366F1' }}
                   onClick={() => {
                     console.log('Notifying recruiters for position:', selectedPosition);
+                    toast.success('Recruiters notified successfully!');
                   }}
                 >
                   Notify Recruiters
@@ -833,6 +835,7 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
                   style={{ backgroundColor: '#6366F1' }}
                   onClick={() => {
                     console.log('Exporting insights for:', selectedPosition);
+                    toast.success('Insights exported successfully!');
                   }}
                 >
                   Export Report

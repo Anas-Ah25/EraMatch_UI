@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { ChevronLeft, Github, Mail, Phone, MapPin, Calendar, AlertTriangle, FileText, Video, BarChart3, Network, MessageSquare, Download, CheckCircle, XCircle, TrendingUp, Play, Clock, ThumbsUp, ThumbsDown, Activity, Eye, MessageCircle } from 'lucide-react';
+import { ChevronLeft, Github, Mail, Phone, MapPin, Calendar, AlertTriangle, FileText, Video, BarChart3, Network, MessageSquare, Download, CheckCircle, XCircle, TrendingUp, Play, Clock, ThumbsUp, ThumbsDown, Activity, Eye, MessageCircle, ExternalLink, FileCheck, Smile, Frown, Meh } from 'lucide-react';
 import { KnowledgeGraph } from './KnowledgeGraph';
 import { EnhancedAssessmentReport } from './EnhancedAssessmentReport';
 import { EnhancedAIInterviewReport } from './EnhancedAIInterviewReport';
 import { LiveInterviewTranscript } from './LiveInterviewTranscript';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
 
 interface CandidateProfileProps {
   candidateId: number;
@@ -18,6 +20,10 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [showTranscript, setShowTranscript] = useState<number | null>(null);
   const [showLiveTranscript, setShowLiveTranscript] = useState(false);
+  const [showAssessmentDetails, setShowAssessmentDetails] = useState(false);
+  const [showVideoResponse, setShowVideoResponse] = useState<number | null>(null);
+  const [showVideoTranscript, setShowVideoTranscript] = useState<number | null>(null);
+  const [showLiveInterviewTranscript, setShowLiveInterviewTranscript] = useState(false);
 
   // Mock candidate data
   const candidate = {
@@ -57,6 +63,16 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
       }
     ],
     antiCheating: false,
+    groupAssigned: true, // Whether candidate has been assigned to a group
+    pipelineStatus: {
+      groupAssignment: { status: 'completed', completedAt: '2025-01-14' },
+      assessment: { status: 'completed', completedAt: '2025-01-15' },
+      aiInterview: { status: 'completed', completedAt: '2025-01-16' },
+      liveInterview: { status: 'completed', completedAt: '2025-01-18' },
+      finalDecision: { status: 'completed', completedAt: '2025-01-20' }
+    },
+    offerStatus: 'sent', // 'sent' | 'accepted' | 'rejected' | null
+    offerAcceptedDate: null,
     scores: {
       overall: 95,
       assessment: 95,
@@ -85,6 +101,115 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
       ],
       overallFeedback: 'Excellent technical knowledge and communication skills. Strong problem-solving abilities.'
     }
+  };
+
+  // Mock assessment questions and answers
+  const assessmentQuestions = [
+    {
+      id: 1,
+      question: 'What is the main purpose of React hooks?',
+      candidateAnswer: 'React hooks allow functional components to use state and lifecycle features that were previously only available in class components. They provide a more direct API to the React concepts we already know.',
+      correctAnswer: 'React hooks let you use state and other React features without writing a class. They allow functional components to have state, lifecycle methods, and side effects.',
+      isCorrect: true,
+      topic: 'React'
+    },
+    {
+      id: 2,
+      question: 'Explain the difference between interface and type in TypeScript.',
+      candidateAnswer: 'Interfaces can be extended and merged, while types are more flexible and can represent unions, intersections, and primitives. Interfaces are better for object shapes that might be extended.',
+      correctAnswer: 'Interfaces can be extended and merged through declaration merging. Types are more flexible, supporting unions, intersections, primitives, and mapped types. Both can describe object shapes.',
+      isCorrect: true,
+      topic: 'TypeScript'
+    },
+    {
+      id: 3,
+      question: 'What is the time complexity of binary search?',
+      candidateAnswer: 'O(n)',
+      correctAnswer: 'O(log n)',
+      isCorrect: false,
+      topic: 'Algorithms'
+    },
+    {
+      id: 4,
+      question: 'How does event delegation work in JavaScript?',
+      candidateAnswer: 'Event delegation uses event bubbling to handle events at a higher level in the DOM. Instead of adding event listeners to multiple child elements, you add a single listener to a parent element.',
+      correctAnswer: 'Event delegation leverages event bubbling by placing an event listener on a parent element to handle events from child elements. This improves performance and works with dynamically added elements.',
+      isCorrect: true,
+      topic: 'JavaScript'
+    },
+    {
+      id: 5,
+      question: 'What is a closure in JavaScript?',
+      candidateAnswer: 'A closure is when a function has access to variables from its outer scope, even after the outer function has returned. It creates a private scope.',
+      correctAnswer: 'A closure is a function that has access to variables in its outer (enclosing) lexical scope, even after the outer function has returned. Closures are created every time a function is created.',
+      isCorrect: true,
+      topic: 'JavaScript'
+    }
+  ];
+
+  // Mock video interview data
+  const videoInterviewQuestions = [
+    {
+      id: 1,
+      question: 'Tell me about your experience with React and modern front-end development.',
+      videoUrl: '#',
+      transcript: 'I\'ve been working with React for over 5 years now. I started with class components and lifecycle methods, then transitioned to functional components and hooks. I\'ve built several large-scale applications using React, Redux for state management, and modern tools like Webpack and Vite for bundling. I\'m also experienced with TypeScript, which I believe is essential for maintaining large codebases. Recently, I\'ve been exploring Next.js for server-side rendering and static site generation.',
+      duration: '2:45',
+      score: 9.5
+    },
+    {
+      id: 2,
+      question: 'How do you approach debugging complex issues in production?',
+      videoUrl: '#',
+      transcript: 'When dealing with production issues, I follow a systematic approach. First, I try to reproduce the issue in a staging environment. I use logging services like Sentry or DataDog to track errors and understand the context. I also leverage browser DevTools and React DevTools for client-side issues. For backend issues, I check server logs and database queries. I believe in implementing proper error boundaries in React and comprehensive logging throughout the application.',
+      duration: '2:20',
+      score: 9.0
+    },
+    {
+      id: 3,
+      question: 'Describe a challenging technical problem you solved recently.',
+      videoUrl: '#',
+      transcript: 'Recently, I tackled a performance issue where our dashboard was taking 8-10 seconds to load. I used React Profiler to identify components that were re-rendering unnecessarily. I implemented React.memo for expensive components, used useMemo and useCallback hooks appropriately, and optimized our Redux selectors with reselect. I also implemented code splitting and lazy loading for routes. These optimizations reduced the load time to under 2 seconds.',
+      duration: '3:10',
+      score: 9.8
+    }
+  ];
+
+  // Mock live interview data with emotion indicators
+  const liveInterviewData = {
+    duration: '45:32',
+    completedAt: '2025-01-18',
+    overallConfidence: 85,
+    overallCorrectness: 88,
+    emotionMetrics: [
+      { emotion: 'Confident', percentage: 68, color: '#10b981', icon: 'smile' },
+      { emotion: 'Engaged', percentage: 82, color: '#6366f1', icon: 'activity' },
+      { emotion: 'Calm', percentage: 75, color: '#8b5cf6', icon: 'meh' },
+      { emotion: 'Enthusiastic', percentage: 71, color: '#f59e0b', icon: 'trending-up' }
+    ],
+    transcript: `Interviewer: Good morning! Thank you for joining us today. Let's start with you telling me a bit about your background.
+
+Candidate: Good morning! Thank you for having me. I've been working as a full-stack developer for about 8 years now. I started my career at a startup where I learned to wear multiple hats - from frontend development with React to backend services with Node.js and databases. Currently, I'm at Tech Corp where I lead a team of developers building microservices architecture.
+
+Interviewer: That sounds great. Can you walk me through how you would design a scalable notification system?
+
+Candidate: Absolutely. I would start by identifying the requirements - what types of notifications, expected volume, delivery channels (email, SMS, push), and latency requirements. For scalability, I'd use a message queue like RabbitMQ or AWS SQS to decouple the notification generation from delivery. I'd implement a worker pool to process notifications asynchronously. For storage, I'd use a combination of a fast cache like Redis for recent notifications and a database like PostgreSQL for persistence. I'd also implement retry logic with exponential backoff and dead letter queues for failed notifications.
+
+Interviewer: Excellent. How would you handle rate limiting?
+
+Candidate: Rate limiting is crucial to prevent abuse and ensure fair usage. I'd implement it at multiple levels. At the API gateway level, I'd use a token bucket algorithm to limit requests per user. For notifications specifically, I'd implement per-channel limits - for example, no more than 3 emails per hour to the same user unless it's critical. I'd use Redis to track counts with time-based keys that expire. I'd also implement circuit breakers to protect downstream services.
+
+Interviewer: Great answers. Let's talk about your experience with testing. What's your approach?
+
+Candidate: I'm a strong believer in comprehensive testing. I follow the testing pyramid - lots of unit tests, some integration tests, and fewer end-to-end tests. For React components, I use React Testing Library focusing on user behavior rather than implementation details. For API testing, I use Jest with supertest. I also implement contract testing for microservices communication. Code coverage is important, but I focus more on testing critical paths and edge cases. I also advocate for TDD when it makes sense, especially for complex business logic.
+
+Interviewer: How do you stay updated with new technologies?
+
+Candidate: I'm very passionate about continuous learning. I follow several tech blogs and newsletters like JavaScript Weekly and Node Weekly. I'm active on GitHub and contribute to open source projects when I can. I also attend local meetups and conferences. Recently, I've been exploring new patterns in React like server components and studying system design principles. I believe in learning by building, so I often create side projects to experiment with new technologies.
+
+Interviewer: Perfect. Do you have any questions for us?
+
+Candidate: Yes, I'd love to know more about the team structure and how you approach technical decision-making. Also, what are the biggest technical challenges the team is currently facing?`
   };
 
   const tabs = [
@@ -179,6 +304,75 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
           </div>
         </div>
 
+        {/* Offer Status Banner */}
+        {candidate.pipelineStatus.finalDecision.status === 'completed' && (
+          <div className={`rounded-xl border-2 p-6 mb-6 ${
+            candidate.offerStatus === 'sent'
+              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300'
+              : candidate.offerStatus === 'accepted'
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
+              : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-300'
+          }`}>
+            <div className="flex items-start gap-4">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${
+                candidate.offerStatus === 'sent'
+                  ? 'bg-emerald-500'
+                  : candidate.offerStatus === 'accepted'
+                  ? 'bg-green-500'
+                  : 'bg-gray-500'
+              }`}>
+                {candidate.offerStatus === 'sent' || candidate.offerStatus === 'accepted' ? (
+                  <Mail className="text-white" size={28} />
+                ) : (
+                  <XCircle className="text-white" size={28} />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-xl font-bold mb-2 ${
+                  candidate.offerStatus === 'sent'
+                    ? 'text-emerald-900'
+                    : candidate.offerStatus === 'accepted'
+                    ? 'text-green-900'
+                    : 'text-gray-900'
+                }`}>
+                  {candidate.offerStatus === 'sent' && 'Offer Sent'}
+                  {candidate.offerStatus === 'accepted' && 'Offer Accepted'}
+                  {candidate.offerStatus === 'rejected' && 'Not Selected'}
+                </h3>
+                <p className="text-gray-700 mb-3">
+                  {candidate.offerStatus === 'sent' && `An offer was sent to this candidate on ${candidate.pipelineStatus.finalDecision.completedAt}. Awaiting candidate response.`}
+                  {candidate.offerStatus === 'accepted' && `Candidate accepted the offer on ${candidate.offerAcceptedDate}. Next steps: Onboarding process.`}
+                  {candidate.offerStatus === 'rejected' && 'This candidate was not selected for the position.'}
+                </p>
+                {candidate.offerStatus === 'sent' && (
+                  <div className="flex items-center gap-3">
+                    <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Mail size={16} className="mr-2" />
+                      Resend Offer Email
+                    </Button>
+                    <Button variant="outline" className="border-emerald-600 text-emerald-700 hover:bg-emerald-50">
+                      <FileText size={16} className="mr-2" />
+                      View Offer Details
+                    </Button>
+                  </div>
+                )}
+                {candidate.offerStatus === 'accepted' && (
+                  <div className="flex items-center gap-3">
+                    <Button className="bg-green-600 hover:bg-green-700 text-white">
+                      <CheckCircle size={16} className="mr-2" />
+                      Start Onboarding
+                    </Button>
+                    <Button variant="outline" className="border-green-600 text-green-700 hover:bg-green-50">
+                      <FileText size={16} className="mr-2" />
+                      View Contract
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tabs */}
         <div className="bg-white rounded-[12px] border border-[#e5e7eb] overflow-hidden">
           <div className="border-b border-[#e5e7eb] px-6">
@@ -213,6 +407,191 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
           <div className="p-8">
             {activeTab === 'overview' && (
               <div className="space-y-6">
+                {/* Recruitment Pipeline Progress */}
+                <div>
+                  <h3 className="text-[#111827] mb-4">Recruitment Progress</h3>
+                  {!candidate.groupAssigned ? (
+                    <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                      <div className="text-gray-400 mb-2">
+                        <Clock size={48} className="mx-auto" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-700 mb-1">Not Started</h4>
+                      <p className="text-sm text-gray-500">Candidate has not been assigned to a group yet</p>
+                    </div>
+                  ) : (
+                    <div className="bg-white border border-[#e5e7eb] rounded-xl p-6">
+                      <div className="relative">
+                        {/* Progress Line */}
+                        <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200" style={{ zIndex: 0 }}>
+                          <div 
+                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500"
+                            style={{ 
+                              width: candidate.pipelineStatus.liveInterview.status === 'completed' 
+                                ? '100%' 
+                                : candidate.pipelineStatus.liveInterview.status === 'in-progress'
+                                ? '75%'
+                                : candidate.pipelineStatus.aiInterview.status === 'completed'
+                                ? '66%'
+                                : candidate.pipelineStatus.assessment.status === 'completed'
+                                ? '33%'
+                                : '0%'
+                            }}
+                          />
+                        </div>
+
+                        {/* Pipeline Stages */}
+                        <div className="relative grid grid-cols-5 gap-4" style={{ zIndex: 1 }}>
+                          {/* Group Assignment */}
+                          <div className="flex flex-col items-center">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
+                              candidate.pipelineStatus.groupAssignment.status === 'completed'
+                                ? 'bg-emerald-500 border-emerald-200'
+                                : 'bg-gray-300 border-gray-200'
+                            }`}>
+                              {candidate.pipelineStatus.groupAssignment.status === 'completed' ? (
+                                <CheckCircle size={24} className="text-white" />
+                              ) : (
+                                <Clock size={24} className="text-gray-500" />
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-['Arimo',sans-serif] text-[12px] font-semibold text-[#111827] mb-1">
+                                Group Assignment
+                              </div>
+                              {candidate.pipelineStatus.groupAssignment.completedAt && (
+                                <div className="font-['Arimo',sans-serif] text-[10px] text-[#6b7280]">
+                                  {candidate.pipelineStatus.groupAssignment.completedAt}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Assessment */}
+                          <div className="flex flex-col items-center">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
+                              candidate.pipelineStatus.assessment.status === 'completed'
+                                ? 'bg-emerald-500 border-emerald-200'
+                                : candidate.pipelineStatus.assessment.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
+                            }`}>
+                              {candidate.pipelineStatus.assessment.status === 'completed' ? (
+                                <CheckCircle size={24} className="text-white" />
+                              ) : candidate.pipelineStatus.assessment.status === 'in-progress' ? (
+                                <Activity size={24} className="text-white animate-pulse" />
+                              ) : (
+                                <BarChart3 size={24} className="text-gray-500" />
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-['Arimo',sans-serif] text-[12px] font-semibold text-[#111827] mb-1">
+                                Assessment
+                              </div>
+                              {candidate.pipelineStatus.assessment.completedAt && (
+                                <div className="font-['Arimo',sans-serif] text-[10px] text-[#6b7280]">
+                                  {candidate.pipelineStatus.assessment.completedAt}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* AI Interview */}
+                          <div className="flex flex-col items-center">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
+                              candidate.pipelineStatus.aiInterview.status === 'completed'
+                                ? 'bg-emerald-500 border-emerald-200'
+                                : candidate.pipelineStatus.aiInterview.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
+                            }`}>
+                              {candidate.pipelineStatus.aiInterview.status === 'completed' ? (
+                                <CheckCircle size={24} className="text-white" />
+                              ) : candidate.pipelineStatus.aiInterview.status === 'in-progress' ? (
+                                <Activity size={24} className="text-white animate-pulse" />
+                              ) : (
+                                <Video size={24} className="text-gray-500" />
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-['Arimo',sans-serif] text-[12px] font-semibold text-[#111827] mb-1">
+                                AI Video Interview
+                              </div>
+                              {candidate.pipelineStatus.aiInterview.completedAt && (
+                                <div className="font-['Arimo',sans-serif] text-[10px] text-[#6b7280]">
+                                  {candidate.pipelineStatus.aiInterview.completedAt}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Live Interview */}
+                          <div className="flex flex-col items-center">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
+                              candidate.pipelineStatus.liveInterview.status === 'completed'
+                                ? 'bg-emerald-500 border-emerald-200'
+                                : candidate.pipelineStatus.liveInterview.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
+                            }`}>
+                              {candidate.pipelineStatus.liveInterview.status === 'completed' ? (
+                                <CheckCircle size={24} className="text-white" />
+                              ) : candidate.pipelineStatus.liveInterview.status === 'in-progress' ? (
+                                <Activity size={24} className="text-white animate-pulse" />
+                              ) : (
+                                <Play size={24} className="text-gray-500" />
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-['Arimo',sans-serif] text-[12px] font-semibold text-[#111827] mb-1">
+                                Live Interview
+                              </div>
+                              {candidate.pipelineStatus.liveInterview.completedAt && (
+                                <div className="font-['Arimo',sans-serif] text-[10px] text-[#6b7280]">
+                                  {candidate.pipelineStatus.liveInterview.completedAt}
+                                </div>
+                              )}
+                              {candidate.pipelineStatus.liveInterview.status === 'in-progress' && (
+                                <div className="font-['Arimo',sans-serif] text-[10px] text-indigo-600 font-semibold">
+                                  In Progress
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Final Decision */}
+                          <div className="flex flex-col items-center">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
+                              candidate.pipelineStatus.finalDecision.status === 'completed'
+                                ? 'bg-emerald-500 border-emerald-200'
+                                : candidate.pipelineStatus.finalDecision.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
+                            }`}>
+                              {candidate.pipelineStatus.finalDecision.status === 'completed' ? (
+                                <CheckCircle size={24} className="text-white" />
+                              ) : candidate.pipelineStatus.finalDecision.status === 'in-progress' ? (
+                                <Activity size={24} className="text-white animate-pulse" />
+                              ) : (
+                                <FileCheck size={24} className="text-gray-500" />
+                              )}
+                            </div>
+                            <div className="text-center">
+                              <div className="font-['Arimo',sans-serif] text-[12px] font-semibold text-[#111827] mb-1">
+                                Final Decision
+                              </div>
+                              {candidate.pipelineStatus.finalDecision.completedAt && (
+                                <div className="font-['Arimo',sans-serif] text-[10px] text-[#6b7280]">
+                                  {candidate.pipelineStatus.finalDecision.completedAt}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <h3 className="text-[#111827] mb-4">Skills</h3>
                   <div className="flex flex-wrap gap-2">
@@ -752,6 +1131,22 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
 
             {activeTab === 'assessment' && (
               <div className="space-y-6">
+                {/* Score Card */}
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-2xl p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="text-indigo-900 font-semibold mb-2">Assessment Score</h4>
+                      <p className="text-sm text-indigo-700">
+                        {candidate.assessmentData.questionsCorrect} out of {candidate.assessmentData.questionsTotal} questions correct
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-5xl font-bold text-indigo-600 mb-1">{candidate.scores.assessment}</div>
+                      <div className="text-sm text-indigo-700">/ 100</div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-[#f9fafb] rounded-[8px] p-4">
                     <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-1">Completed</div>
@@ -772,6 +1167,15 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
                     </div>
                   </div>
                 </div>
+
+                {/* View Details Button */}
+                <Button
+                  onClick={() => setShowAssessmentDetails(true)}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-6 flex items-center justify-center gap-2"
+                >
+                  <FileCheck size={20} />
+                  View Questions & Answers
+                </Button>
 
                 <div>
                   <h3 className="text-[#111827] mb-4">Topic Scores</h3>
@@ -817,17 +1221,42 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
                 </div>
 
                 <div>
-                  <h3 className="text-[#111827] mb-4">Questions & Scores</h3>
-                  <div className="space-y-3">
-                    {candidate.interviewData.questions.map((q, i) => (
-                      <div key={i} className="bg-[#f9fafb] rounded-[8px] p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827] flex-1">
-                            {q.question}
-                          </span>
-                          <span className="font-['Arimo',sans-serif] text-[16px] text-[#6366f1] ml-4">
-                            {q.score}/10
-                          </span>
+                  <h3 className="text-[#111827] mb-4">Video Responses</h3>
+                  <div className="space-y-4">
+                    {videoInterviewQuestions.map((q, i) => (
+                      <div key={i} className="bg-white border border-[#e5e7eb] rounded-[12px] p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-2">
+                              Q{i + 1}: {q.question}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-[#6b7280]">
+                              <span className="flex items-center gap-1">
+                                <Clock size={14} />
+                                {q.duration}
+                              </span>
+                              <span className="font-['Arimo',sans-serif] text-[#6366f1]">
+                                Score: {q.score}/10
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            onClick={() => setShowVideoResponse(q.id)}
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-3 flex items-center justify-center gap-2"
+                          >
+                            <Play size={16} />
+                            View Video Response
+                          </Button>
+                          <Button
+                            onClick={() => setShowVideoTranscript(q.id)}
+                            variant="outline"
+                            className="flex-1 border-indigo-600 text-indigo-600 hover:bg-indigo-50 rounded-lg py-3 flex items-center justify-center gap-2"
+                          >
+                            <MessageCircle size={16} />
+                            View Transcript
+                          </Button>
                         </div>
                       </div>
                     ))}
@@ -847,45 +1276,87 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
 
             {activeTab === 'live-interview' && (
               <div className="space-y-6">
+                {/* Score Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-2 border-emerald-200 rounded-2xl p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-emerald-700 mb-1">Confidence Score</div>
+                        <div className="text-3xl font-bold text-emerald-900">{liveInterviewData.overallConfidence}%</div>
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center">
+                        <TrendingUp size={24} className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-2 border-indigo-200 rounded-2xl p-5">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm text-indigo-700 mb-1">Answer Correctness</div>
+                        <div className="text-3xl font-bold text-indigo-900">{liveInterviewData.overallCorrectness}%</div>
+                      </div>
+                      <div className="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center">
+                        <CheckCircle size={24} className="text-white" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-[#f9fafb] rounded-[8px] p-4">
                     <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-1">Completed</div>
                     <div className="font-['Arimo',sans-serif] text-[16px] text-[#111827]">
-                      {candidate.interviewData.completedAt}
+                      {liveInterviewData.completedAt}
                     </div>
                   </div>
                   <div className="bg-[#f9fafb] rounded-[8px] p-4">
                     <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mb-1">Duration</div>
                     <div className="font-['Arimo',sans-serif] text-[16px] text-[#111827]">
-                      {candidate.interviewData.duration}
+                      {liveInterviewData.duration}
                     </div>
                   </div>
                 </div>
 
+                {/* View Full Transcript Button */}
+                <Button
+                  onClick={() => setShowLiveInterviewTranscript(true)}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg py-6 flex items-center justify-center gap-2"
+                >
+                  <FileText size={20} />
+                  View Full Interview Transcript
+                </Button>
+
+                {/* Emotion Metrics */}
                 <div>
-                  <h3 className="text-[#111827] mb-4">Questions & Scores</h3>
-                  <div className="space-y-3">
-                    {candidate.interviewData.questions.map((q, i) => (
-                      <div key={i} className="bg-[#f9fafb] rounded-[8px] p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827] flex-1">
-                            {q.question}
+                  <h3 className="text-[#111827] mb-4">Overall Emotion Metrics</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {liveInterviewData.emotionMetrics.map((metric, i) => (
+                      <div key={i} className="bg-white border border-[#e5e7eb] rounded-[12px] p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            {metric.icon === 'smile' && <Smile size={20} style={{ color: metric.color }} />}
+                            {metric.icon === 'activity' && <Activity size={20} style={{ color: metric.color }} />}
+                            {metric.icon === 'meh' && <Meh size={20} style={{ color: metric.color }} />}
+                            {metric.icon === 'trending-up' && <TrendingUp size={20} style={{ color: metric.color }} />}
+                            <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                              {metric.emotion}
+                            </span>
+                          </div>
+                          <span className="text-lg font-semibold" style={{ color: metric.color }}>
+                            {metric.percentage}%
                           </span>
-                          <span className="font-['Arimo',sans-serif] text-[16px] text-[#6366f1] ml-4">
-                            {q.score}/10
-                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-[#e5e7eb] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ 
+                              width: `${metric.percentage}%`,
+                              backgroundColor: metric.color
+                            }}
+                          />
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-[#111827] mb-3">Overall Feedback</h3>
-                  <div className="bg-[#f9fafb] rounded-[8px] p-4">
-                    <p className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
-                      {candidate.interviewData.overallFeedback}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -1143,6 +1614,168 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
           </div>
         </div>
       </div>
+
+      {/* Assessment Details Modal */}
+      <Dialog open={showAssessmentDetails} onOpenChange={setShowAssessmentDetails}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Assessment Questions & Answers</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-4">
+            {assessmentQuestions.map((q, i) => (
+              <div key={q.id} className="border border-[#e5e7eb] rounded-lg p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium">
+                        Q{i + 1}
+                      </span>
+                      <span className="text-sm text-gray-500">{q.topic}</span>
+                    </div>
+                    <h4 className="text-lg font-medium text-gray-900 mb-3">{q.question}</h4>
+                  </div>
+                  {q.isCorrect ? (
+                    <CheckCircle size={24} className="text-emerald-600 flex-shrink-0" />
+                  ) : (
+                    <XCircle size={24} className="text-red-600 flex-shrink-0" />
+                  )}
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                    <div className="text-sm font-medium text-blue-900 mb-1">Candidate's Answer</div>
+                    <div className="text-sm text-blue-800">{q.candidateAnswer}</div>
+                  </div>
+                  
+                  <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded">
+                    <div className="text-sm font-medium text-emerald-900 mb-1">Correct Answer</div>
+                    <div className="text-sm text-emerald-800">{q.correctAnswer}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Response Modal */}
+      <Dialog open={showVideoResponse !== null} onOpenChange={() => setShowVideoResponse(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Video Response</DialogTitle>
+          </DialogHeader>
+          {showVideoResponse && videoInterviewQuestions.find(q => q.id === showVideoResponse) && (
+            <div className="mt-4">
+              <div className="bg-gray-100 rounded-lg aspect-video flex items-center justify-center mb-4">
+                <div className="text-center">
+                  <Play size={64} className="text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600">Video Player Placeholder</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Duration: {videoInterviewQuestions.find(q => q.id === showVideoResponse)?.duration}
+                  </p>
+                </div>
+              </div>
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                <h4 className="font-medium text-indigo-900 mb-2">Question</h4>
+                <p className="text-indigo-800">{videoInterviewQuestions.find(q => q.id === showVideoResponse)?.question}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Video Transcript Modal */}
+      <Dialog open={showVideoTranscript !== null} onOpenChange={() => setShowVideoTranscript(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Video Response Transcript</DialogTitle>
+          </DialogHeader>
+          {showVideoTranscript && videoInterviewQuestions.find(q => q.id === showVideoTranscript) && (
+            <div className="mt-4">
+              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+                <h4 className="font-medium text-indigo-900 mb-2">Question</h4>
+                <p className="text-indigo-800">{videoInterviewQuestions.find(q => q.id === showVideoTranscript)?.question}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <h4 className="font-medium text-gray-900 mb-3">Transcript</h4>
+                <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  {videoInterviewQuestions.find(q => q.id === showVideoTranscript)?.transcript}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Live Interview Transcript Modal */}
+      <Dialog open={showLiveInterviewTranscript} onOpenChange={setShowLiveInterviewTranscript}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Live Interview Transcript</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 space-y-4">
+            {/* Metadata Card */}
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-indigo-700 mb-1">Candidate</div>
+                  <div className="font-semibold text-indigo-900">{candidate.name}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-indigo-700 mb-1">Date</div>
+                  <div className="font-semibold text-indigo-900">{liveInterviewData.completedAt}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-indigo-700 mb-1">Duration</div>
+                  <div className="font-semibold text-indigo-900">{liveInterviewData.duration}</div>
+                </div>
+                <div>
+                  <div className="text-sm text-indigo-700 mb-1">Scores</div>
+                  <div className="font-semibold text-indigo-900">
+                    Confidence: {liveInterviewData.overallConfidence}% | Correctness: {liveInterviewData.overallCorrectness}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Transcript Content */}
+            <div className="bg-white border border-[#e5e7eb] rounded-xl p-6">
+              <h4 className="font-semibold text-gray-900 mb-4 text-lg">Full Transcript</h4>
+              <div className="space-y-4 text-gray-700 leading-relaxed">
+                {liveInterviewData.transcript.split('\n\n').map((paragraph, i) => {
+                  const lines = paragraph.split('\n');
+                  return (
+                    <div key={i} className="space-y-2">
+                      {lines.map((line, j) => {
+                        if (line.startsWith('Interviewer:')) {
+                          return (
+                            <p key={j} className="font-semibold text-indigo-600">
+                              {line}
+                            </p>
+                          );
+                        } else if (line.startsWith('Candidate:')) {
+                          return (
+                            <p key={j} className="font-semibold text-emerald-600">
+                              {line}
+                            </p>
+                          );
+                        } else if (line.trim()) {
+                          return (
+                            <p key={j} className="text-gray-700 ml-4">
+                              {line}
+                            </p>
+                          );
+                        }
+                        return null;
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

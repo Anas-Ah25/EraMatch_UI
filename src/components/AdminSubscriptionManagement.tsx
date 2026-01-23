@@ -1,20 +1,35 @@
 import { Check, CreditCard, Calendar, Users, Zap, ArrowRight } from 'lucide-react';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 interface AdminSubscriptionManagementProps {
   onSignOut: () => void;
 }
 
 export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionManagementProps) {
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isCardUpdateModalOpen, setIsCardUpdateModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [currentPlanState, setCurrentPlanState] = useState('Professional');
+  
+  // Card update form state
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCVC, setCardCVC] = useState('');
+  const [cardName, setCardName] = useState('');
+
   // Current plan details
   const currentPlan = {
-    name: 'Professional',
-    price: 599,
+    name: currentPlanState,
+    price: currentPlanState === 'Starter' ? 249 : currentPlanState === 'Professional' ? 599 : 2000,
     billingCycle: 'Monthly',
     nextBillingDate: 'February 20, 2026',
-    teamMembers: 10,
-    jobPostings: 'Unlimited',
-    aiInterviews: 500,
-    storage: '100 GB'
+    teamMembers: currentPlanState === 'Starter' ? 3 : currentPlanState === 'Professional' ? 10 : 'Unlimited',
+    jobPostings: currentPlanState === 'Starter' ? '10' : 'Unlimited',
+    aiInterviews: currentPlanState === 'Starter' ? 100 : currentPlanState === 'Professional' ? 500 : 'Unlimited',
+    storage: currentPlanState === 'Starter' ? '25 GB' : currentPlanState === 'Professional' ? '100 GB' : '1 TB'
   };
 
   // Available plans for upgrade
@@ -30,7 +45,7 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
         '25 GB storage',
         'Email support'
       ],
-      isCurrent: false
+      isCurrent: currentPlanState === 'Starter'
     },
     {
       name: 'Professional',
@@ -44,7 +59,7 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
         'Priority support',
         'Advanced analytics'
       ],
-      isCurrent: true
+      isCurrent: currentPlanState === 'Professional'
     },
     {
       name: 'Enterprise',
@@ -59,9 +74,31 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
         'Custom integrations',
         'SLA guarantee'
       ],
-      isCurrent: false
+      isCurrent: currentPlanState === 'Enterprise'
     }
   ];
+
+  const handleUpgrade = (plan: any) => {
+    setSelectedPlan(plan);
+    setIsUpgradeModalOpen(true);
+  };
+
+  const handleCardUpdate = () => {
+    setIsCardUpdateModalOpen(true);
+  };
+
+  const handleUpgradeConfirm = () => {
+    if (selectedPlan) {
+      setCurrentPlanState(selectedPlan.name);
+      toast.success(`Upgraded to ${selectedPlan.name} plan`);
+      setIsUpgradeModalOpen(false);
+    }
+  };
+
+  const handleCardUpdateConfirm = () => {
+    toast.success('Card updated successfully');
+    setIsCardUpdateModalOpen(false);
+  };
 
   return (
     <div className="px-12 py-8">
@@ -169,6 +206,7 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-2'
                 }`}
+                onClick={() => handleUpgrade(plan)}
               >
                 {plan.isCurrent ? (
                   'Current Plan'
@@ -197,11 +235,91 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
               <div className="text-sm text-gray-500">Expires 12/2027</div>
             </div>
           </div>
-          <button className="h-10 px-6 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+          <button className="h-10 px-6 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition-colors" onClick={handleCardUpdate}>
             Update Card
           </button>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Upgrade Plan</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to upgrade to the {selectedPlan?.name} plan?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsUpgradeModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleUpgradeConfirm}>
+              Upgrade
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card Update Modal */}
+      <Dialog open={isCardUpdateModalOpen} onOpenChange={setIsCardUpdateModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Update Card</DialogTitle>
+            <DialogDescription>
+              Enter your new card details to update your payment method.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <input
+              type="text"
+              placeholder="Card Number"
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+            <div className="flex items-center gap-4">
+              <input
+                type="text"
+                placeholder="Expiry (MM/YY)"
+                value={cardExpiry}
+                onChange={(e) => setCardExpiry(e.target.value)}
+                className="w-1/2 px-4 py-2 border border-gray-300 rounded-lg"
+              />
+              <input
+                type="text"
+                placeholder="CVC"
+                value={cardCVC}
+                onChange={(e) => setCardCVC(e.target.value)}
+                className="w-1/2 px-4 py-2 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <input
+              type="text"
+              placeholder="Cardholder Name"
+              value={cardName}
+              onChange={(e) => setCardName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsCardUpdateModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleCardUpdateConfirm}>
+              Update Card
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

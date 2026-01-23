@@ -7,6 +7,7 @@ import { StageResultsDashboard } from './StageResultsDashboard';
 import { ModuleMonitoringDashboard } from './ModuleMonitoringDashboard';
 import { StartStageModal } from './StartStageModal';
 import { BulkProgressionModal } from './BulkProgressionModal';
+import { FinalDecisionModal } from './FinalDecisionModal';
 
 interface EnhancedGroupOverviewV2Props {
   groupId: string;
@@ -153,6 +154,9 @@ export function EnhancedGroupOverviewV2({
   
   // NEW: Bulk progression modal
   const [showBulkProgressionModal, setShowBulkProgressionModal] = useState(false);
+  
+  // NEW: Final Decision modal
+  const [showFinalDecisionModal, setShowFinalDecisionModal] = useState(false);
   
   // NEW: Technical Acceptance Criteria
   const [acceptanceCriteria, setAcceptanceCriteria] = useState<TechnicalAcceptanceCriteria>({
@@ -421,6 +425,53 @@ export function EnhancedGroupOverviewV2({
     }
   };
 
+  const handleSendOffers = (selectedCandidateIds: number[], emailContent: string) => {
+    // Update candidate statuses to reflect offer sent
+    const updatedCandidates = candidateStatuses.map(candidate => {
+      if (selectedCandidateIds.includes(candidate.id)) {
+        return { ...candidate, offer: 'completed' as const };
+      }
+      return candidate;
+    });
+    setCandidateStatuses(updatedCandidates);
+    
+    // Log activity
+    addActivityLog({
+      type: 'candidate-progressed',
+      actor: assignedRecruiter,
+      actorRole: userRole === 'technical' ? 'technical' : 'hr',
+      description: `Sent offers to ${selectedCandidateIds.length} candidate(s)`
+    });
+    
+    showToast(`✓ Offers sent successfully to ${selectedCandidateIds.length} candidate(s)`);
+  };
+
+  const handleExportContacts = (selectedCandidateIds: number[]) => {
+    // Get selected candidates data
+    const selectedCandidates = candidateStatuses.filter(c => selectedCandidateIds.includes(c.id));
+    
+    // Create CSV content
+    const csvHeaders = 'Name,Email,Phone,Final Score,Position\n';
+    const csvRows = selectedCandidates.map(candidate => 
+      `"${candidate.name}","candidate${candidate.id}@example.com","+1-555-${String(candidate.id).padStart(4, '0')}","${candidate.assessmentScore}","${groupName}"`
+    ).join('\n');
+    
+    const csvContent = csvHeaders + csvRows;
+    
+    // Create download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${groupName}_selected_candidates.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast(`✓ Exported ${selectedCandidateIds.length} candidate contact(s)`);
+  };
+
   const handleBulkProgression = (selectedIds: number[], action: 'progress' | 'reject' | 'hold') => {
     const updatedCandidates = candidateStatuses.map(candidate => {
       if (selectedIds.includes(candidate.id)) {
@@ -654,6 +705,24 @@ export function EnhancedGroupOverviewV2({
   const getStageActionButton = () => {
     const currentStepData = pipelineSteps.find(s => s.id === currentStage);
     if (!currentStepData) return null;
+
+    // Check if this is the last stage and it's closed - show Final Decision button
+    const currentStepIndex = pipelineSteps.findIndex(s => s.id === currentStage);
+    const isLastStage = currentStepIndex === pipelineSteps.length - 1;
+    
+    if (isLastStage && stageState === 'closed') {
+      return (
+        <button
+          onClick={() => setShowFinalDecisionModal(true)}
+          className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-colors shadow-lg"
+        >
+          <CheckCircle size={18} />
+          <span className="font-['Arimo',sans-serif] text-[14px] font-semibold">
+            Final Decision - Send Offers
+          </span>
+        </button>
+      );
+    }
 
     if (stageState === 'not-started') {
       return (
@@ -1900,6 +1969,26 @@ export function EnhancedGroupOverviewV2({
           onCancel={() => setShowBulkProgressionModal(false)}
         />
       )}
+
+      {/* Final Decision Modal */}
+      <FinalDecisionModal
+        open={showFinalDecisionModal}
+        onClose={() => setShowFinalDecisionModal(false)}
+        groupName={groupName}
+        positionTitle={description}
+        candidates={candidateStatuses
+          .filter(c => c.progressionState === 'selected' || c.progressionState === 'active' || !c.progressionState)
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            email: `candidate${c.id}@example.com`,
+            phone: `+1-555-${String(c.id).padStart(4, '0')}`,
+            finalScore: c.assessmentScore,
+            position: groupName
+          }))}
+        onSendOffers={handleSendOffers}
+        onExportContacts={handleExportContacts}
+      />
 
       {/* Toast Notification */}
       <AnimatePresence>

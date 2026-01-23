@@ -286,110 +286,110 @@ export function PositionDetailView({
             </div>
           </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            {/* Candidate Fitting Distribution */}
-            <div className="bg-white rounded-[12px] p-6 shadow-sm flex flex-col">
-              <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-8">
-                Candidate Fitting Distribution
-              </h3>
-              <div className="flex-1 flex items-center justify-center">
-                <div className="relative flex items-center justify-center pt-6 pb-4" style={{ minHeight: '340px' }}>
-                  {/* Pie Chart Container */}
-                  <div className="relative" style={{ width: '280px', height: '280px', minWidth: '280px', minHeight: '280px' }}>
-                    <ResponsiveContainer width={280} height={280}>
-                      <PieChart>
-                        <Pie
-                          data={fittingData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={0}
-                          outerRadius={120}
-                          paddingAngle={1}
-                          dataKey="value"
-                          startAngle={90}
-                          endAngle={450}
-                        >
-                          {fittingData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
+          {/* Quick Data Board */}
+          <div className="grid grid-cols-4 gap-4 mb-6">
+            {/* Total Candidates */}
+            <div className="bg-white rounded-[12px] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                  Total Candidates
+                </h4>
+                <Users size={18} className="text-[#6366f1]" />
+              </div>
+              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                {candidates.length}
+              </p>
+            </div>
 
-                    {/* Labels positioned around the pie */}
-                    {/* Top Right - Excellent */}
-                    <div className="absolute" style={{ top: '40px', right: '-80px' }}>
-                      <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#10b981' }}>
-                        Excellent (80-100%): 2
+            {/* Groups Created */}
+            <div className="bg-white rounded-[12px] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                  Groups Created
+                </h4>
+                <Users size={18} className="text-[#10b981]" />
+              </div>
+              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                {groups.length}
+              </p>
+            </div>
+
+            {/* Assigned Candidates */}
+            <div className="bg-white rounded-[12px] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                  Assigned
+                </h4>
+                <div className="w-[8px] h-[8px] rounded-full bg-[#10b981]"></div>
+              </div>
+              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                {groups.reduce((sum, g) => sum + g.candidateCount, 0)}
+              </p>
+            </div>
+
+            {/* Unassigned Candidates */}
+            <div className="bg-white rounded-[12px] p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                  Unassigned
+                </h4>
+                <div className="w-[8px] h-[8px] rounded-full bg-[#f59e0b]"></div>
+              </div>
+              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)}
+              </p>
+            </div>
+          </div>
+
+          {/* Group Distribution */}
+          <div className="bg-white rounded-[12px] p-6 shadow-sm mb-6">
+            <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-4">
+              Candidates by Group
+            </h3>
+            {groups.length > 0 ? (
+              <div className="space-y-3">
+                {groups.map((group) => (
+                  <div key={group.id}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
+                        {group.name}
+                      </span>
+                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                        {group.candidateCount} candidates
                       </span>
                     </div>
-
-                    {/* Right - Poor */}
-                    <div className="absolute" style={{ top: '120px', right: '-70px' }}>
-                      <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#ff9a76' }}>
-                        Poor {'(<40%):'} 0
-                      </span>
-                    </div>
-
-                    {/* Bottom Center - Fair */}
-                    <div className="absolute" style={{ bottom: '-8px', left: '50%', transform: 'translateX(-50%)' }}>
-                      <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#ffa366' }}>
-                        Fair (40-59%): 4
-                      </span>
-                    </div>
-
-                    {/* Left - Good */}
-                    <div className="absolute" style={{ top: '120px', left: '-80px' }}>
-                      <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#f59e0b' }}>
-                        Good (60-79%): 4
-                      </span>
+                    <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[#6366f1]"
+                        style={{ width: `${(group.candidateCount / candidates.length) * 100}%` }}
+                      />
                     </div>
                   </div>
-                </div>
+                ))}
+                {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0) > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
+                        Unassigned
+                      </span>
+                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                        {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)} candidates
+                      </span>
+                    </div>
+                    <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-[#f59e0b]"
+                        style={{ width: `${((candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)) / candidates.length) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-
-            {/* Score Distribution */}
-            <div className="bg-white rounded-[12px] p-6 shadow-sm flex flex-col">
-              <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-8">
-                Score Distribution
-              </h3>
-              <div className="flex-1 flex items-center justify-center">
-                <div style={{ width: '100%', height: '340px', minHeight: '340px' }}>
-                  <ResponsiveContainer width="100%" height={340}>
-                    <BarChart data={scoreData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" vertical={true} horizontal={true} />
-                      <XAxis 
-                        dataKey="range" 
-                        axisLine={{ stroke: '#6b7280' }}
-                        tickLine={false}
-                        tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
-                      />
-                      <YAxis 
-                        axisLine={{ stroke: '#6b7280' }}
-                        tickLine={false}
-                        tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
-                        domain={[0, 4]}
-                        ticks={[0, 1, 2, 3, 4]}
-                      />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#374151', 
-                          border: 'none', 
-                          borderRadius: '6px',
-                          color: 'white',
-                          fontSize: '12px',
-                          fontFamily: 'Arimo, sans-serif'
-                        }}
-                        cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
-                      />
-                      <Bar dataKey="count" fill="#5b21b6" radius={[4, 4, 0, 0]} maxBarSize={80} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] text-center py-4">
+                No groups created yet. Create a group to organize candidates.
+              </p>
+            )}
           </div>
 
           {/* All Candidates List */}
@@ -598,6 +598,112 @@ export function PositionDetailView({
                   Export Insights
                 </span>
               </button>
+            </div>
+
+            {/* Candidate Analytics Charts */}
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              {/* Candidate Fitting Distribution */}
+              <div className="bg-white rounded-[12px] p-6 shadow-sm flex flex-col">
+                <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-8">
+                  Candidate Fitting Distribution
+                </h3>
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="relative flex items-center justify-center pt-6 pb-4" style={{ minHeight: '340px' }}>
+                    {/* Pie Chart Container */}
+                    <div className="relative" style={{ width: '280px', height: '280px', minWidth: '280px', minHeight: '280px' }}>
+                      <ResponsiveContainer width={280} height={280}>
+                        <PieChart>
+                          <Pie
+                            data={fittingData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={0}
+                            outerRadius={120}
+                            paddingAngle={1}
+                            dataKey="value"
+                            startAngle={90}
+                            endAngle={450}
+                          >
+                            {fittingData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} stroke="white" strokeWidth={2} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+
+                      {/* Labels positioned around the pie */}
+                      {/* Top Right - Excellent */}
+                      <div className="absolute" style={{ top: '40px', right: '-80px' }}>
+                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#10b981' }}>
+                          Excellent (80-100%): 2
+                        </span>
+                      </div>
+
+                      {/* Right - Poor */}
+                      <div className="absolute" style={{ top: '120px', right: '-70px' }}>
+                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#ff9a76' }}>
+                          Poor {'(<40%):'} 0
+                        </span>
+                      </div>
+
+                      {/* Bottom Center - Fair */}
+                      <div className="absolute" style={{ bottom: '-8px', left: '50%', transform: 'translateX(-50%)' }}>
+                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#ffa366' }}>
+                          Fair (40-59%): 4
+                        </span>
+                      </div>
+
+                      {/* Left - Good */}
+                      <div className="absolute" style={{ top: '120px', left: '-80px' }}>
+                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#f59e0b' }}>
+                          Good (60-79%): 4
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Score Distribution */}
+              <div className="bg-white rounded-[12px] p-6 shadow-sm flex flex-col">
+                <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-8">
+                  Score Distribution
+                </h3>
+                <div className="flex-1 flex items-center justify-center">
+                  <div style={{ width: '100%', height: '340px', minHeight: '340px' }}>
+                    <ResponsiveContainer width="100%" height={340}>
+                      <BarChart data={scoreData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" vertical={true} horizontal={true} />
+                        <XAxis 
+                          dataKey="range" 
+                          axisLine={{ stroke: '#6b7280' }}
+                          tickLine={false}
+                          tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
+                        />
+                        <YAxis 
+                          axisLine={{ stroke: '#6b7280' }}
+                          tickLine={false}
+                          tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
+                          domain={[0, 4]}
+                          ticks={[0, 1, 2, 3, 4]}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#374151', 
+                            border: 'none', 
+                            borderRadius: '6px',
+                            color: 'white',
+                            fontSize: '12px',
+                            fontFamily: 'Arimo, sans-serif'
+                          }}
+                          cursor={{ fill: 'rgba(99, 102, 241, 0.1)' }}
+                        />
+                        <Bar dataKey="count" fill="#5b21b6" radius={[4, 4, 0, 0]} maxBarSize={80} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Insights Grid */}

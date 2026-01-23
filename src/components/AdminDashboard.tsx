@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Eye, ArrowUpDown, X, TrendingUp, TrendingDown, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Eye, ArrowUpDown, X, TrendingUp, TrendingDown, AlertTriangle, ArrowLeft, Download } from 'lucide-react';
 import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 interface JobPosition {
   id: number;
@@ -223,6 +224,65 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
   ];
 
   const maxCount = Math.max(...pipelineData.map(d => d.count));
+
+  // Export function to download position insights as CSV
+  const exportPositionInsights = (position: JobPosition) => {
+    const candidatesTotal = position.candidatesCount;
+    const assessmentPassed = Math.floor(candidatesTotal * 0.78 * 0.78);
+    const interviewCompleted = Math.floor(candidatesTotal * 0.52 * 0.66);
+    const recommended = Math.floor(candidatesTotal * 0.52 * 0.66 * 0.78);
+
+    const csvContent = [
+      ['Position Insights Report'],
+      ['Generated:', new Date().toLocaleString()],
+      [],
+      ['Position Information'],
+      ['Job Title', position.jobTitle],
+      ['Department', position.department],
+      ['Status', position.status],
+      ['Assigned HR', position.assignedHR],
+      ['Technical Recruiter', position.assignedTechnicalRecruiter],
+      [],
+      ['Pipeline Overview'],
+      ['Stage', 'Count', 'Percentage'],
+      ['Applied', candidatesTotal, '100%'],
+      ['Assessment', Math.floor(candidatesTotal * 0.78), '78%'],
+      ['Interview', Math.floor(candidatesTotal * 0.52), '52%'],
+      ['Offer', Math.floor(candidatesTotal * 0.24), '24%'],
+      ['Hired', Math.floor(candidatesTotal * 0.16), '16%'],
+      [],
+      ['Assessment Performance'],
+      ['Metric', 'Value'],
+      ['Average Score', '87.4%'],
+      ['Pass Rate', '78%'],
+      ['Passed', assessmentPassed],
+      ['Failed', Math.floor(candidatesTotal * 0.78 * 0.22)],
+      [],
+      ['Interview Outcomes'],
+      ['Metric', 'Value'],
+      ['Completed', interviewCompleted],
+      ['Recommended', recommended],
+      ['Not Recommended', Math.floor(candidatesTotal * 0.52 * 0.66 * 0.22)],
+      [],
+      ['Integrity Indicators'],
+      ['Severity', 'Count', 'Description'],
+      ['Low', '2', 'Minor timing irregularities'],
+      ['Medium', '1', 'Tab switching detected'],
+      ['High', '0', 'No critical violations'],
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Position_Insights_${position.jobTitle.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success('Position insights exported successfully!');
+  };
 
   // If viewing insights, show full page insights view
   if (viewMode === 'insights' && selectedPosition) {
@@ -521,9 +581,7 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
           <Button
             className="rounded-full px-8 py-6 text-white"
             style={{ backgroundColor: '#6366F1' }}
-            onClick={() => {
-              console.log('Exporting insights for:', selectedPosition);
-            }}
+            onClick={() => exportPositionInsights(selectedPosition)}
           >
             Export Report
           </Button>
