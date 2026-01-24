@@ -6,6 +6,7 @@ import { Switch } from './ui/switch';
 import { Question } from './CreateAssessmentPage';
 import { GroupCreationPage } from './GroupCreationPage';
 import { FiltrationFlowConfigModal } from './FiltrationFlowConfigModal';
+import { CandidateProfile } from './CandidateProfile';
 
 interface Candidate {
   id: number;
@@ -83,6 +84,7 @@ export function PositionDetailView({
   const [showGroupCreationPage, setShowGroupCreationPage] = useState(false);
   const [showFlowConfigModal, setShowFlowConfigModal] = useState(false);
   const [pendingGroupData, setPendingGroupData] = useState<any>(null);
+  const [viewingCandidateId, setViewingCandidateId] = useState<number | null>(null);
 
   // Assessment management - use savedAssessments from props
   const assessments = savedAssessments;
@@ -164,7 +166,7 @@ export function PositionDetailView({
       <div className="box-border content-stretch flex flex-col gap-[24px] items-start pb-0 pt-[32px] px-[32px]">
         {/* Back Button */}
         <button
-          onClick={onBack}
+          onClick={() => viewingCandidateId !== null ? setViewingCandidateId(null) : onBack()}
           className="flex items-center gap-2 text-[#9ca3af] hover:text-[#6b7280] transition-colors font-['Arimo',sans-serif] text-[14px]"
         >
           <ChevronLeft size={18} strokeWidth={1.5} />
@@ -448,7 +450,10 @@ export function PositionDetailView({
                         strokeWidth={1.5}
                       />
                     </button>
-                    <button className="h-[40px] px-[20px] rounded-[8px] bg-[#5b21b6] hover:bg-[#6d28d9] font-['Arimo',sans-serif] text-[14px] text-white transition-colors">
+                    <button 
+                      onClick={() => setViewingCandidateId(candidate.id)}
+                      className="h-[40px] px-[20px] rounded-[8px] bg-[#5b21b6] hover:bg-[#6d28d9] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
+                    >
                       View Report
                     </button>
                   </div>
@@ -1099,6 +1104,16 @@ export function PositionDetailView({
             }
           }}
         />
+      )}
+
+      {/* Candidate Profile View */}
+      {viewingCandidateId !== null && (
+        <div className="fixed inset-0 bg-[#edf0f8] z-50">
+          <CandidateProfile 
+            candidateId={viewingCandidateId}
+            onBack={() => setViewingCandidateId(null)}
+          />
+        </div>
       )}
     </div>
   );

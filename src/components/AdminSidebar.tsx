@@ -1,8 +1,8 @@
 import { Users, FileText, Settings, LayoutDashboard, UserCog, Archive, CreditCard } from 'lucide-react';
 
 interface AdminSidebarProps {
-  activePage: 'dashboard' | 'members' | 'requests' | 'settings' | 'delegation' | 'closed-positions' | 'subscription';
-  onNavigate: (page: 'dashboard' | 'members' | 'requests' | 'settings' | 'delegation' | 'closed-positions' | 'subscription') => void;
+  activePage: 'dashboard' | 'members' | 'settings' | 'delegation' | 'closed-positions' | 'subscription';
+  onNavigate: (page: 'dashboard' | 'members' | 'settings' | 'delegation' | 'closed-positions' | 'subscription') => void;
 }
 
 export function AdminSidebar({ activePage, onNavigate }: AdminSidebarProps) {
@@ -51,17 +51,6 @@ export function AdminSidebar({ activePage, onNavigate }: AdminSidebarProps) {
         title="Recruiter Delegation"
       >
         <UserCog size={24} />
-      </button>
-      <button 
-        className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
-          activePage === 'requests' 
-            ? 'bg-indigo-50 text-indigo-600' 
-            : 'text-gray-400 hover:bg-gray-50'
-        }`}
-        onClick={() => onNavigate('requests')}
-        title="Pending Requests"
-      >
-        <FileText size={24} />
       </button>
       <button 
         className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${

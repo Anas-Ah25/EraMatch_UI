@@ -384,7 +384,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                     key={tab.id}
                     onClick={() => {
                       if (tab.id === 'knowledge-graph') {
-                        onViewKnowledgeGraph();
+                        onViewKnowledgeGraph?.();
                       } else {
                         setActiveTab(tab.id as TabType);
                       }

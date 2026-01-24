@@ -1,10 +1,15 @@
-import { ChevronLeft, Plus, Pencil, Sparkles, BarChart3, Users, CheckCircle, TrendingUp, Calendar, Award, Target, Briefcase } from 'lucide-react';
+import { ChevronLeft, Plus, Pencil, Sparkles, BarChart3, Users, CheckCircle, TrendingUp, Calendar, Award, Target, Briefcase, Archive, MoreVertical, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Switch } from './ui/switch';
 import { Card } from './ui/card';
 import { useState, useEffect } from 'react';
 import { PositionDetailView } from './PositionDetailView';
+import { ArchiveProjectModal } from './ArchiveProjectModal';
+import { ClosePositionModal, type PositionOutcome, type PositionClosureStatus } from './ClosePositionModal';
+import { CompleteProjectModal, type ProjectCompletionData } from './CompleteProjectModal';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { toast } from 'sonner';
 
 interface Position {
   id: number;
@@ -13,11 +18,17 @@ interface Position {
   screeningConditions?: string;
   applicants: number;
   isOpen: boolean;
+  closureStatus?: PositionClosureStatus;
+  closureReason?: string;
+  selectedCandidatesCount?: number;
+  closureDate?: string;
 }
 
 interface ProjectDetailViewProps {
   projectTitle: string;
   projectDescription?: string;
+  projectStatus?: 'Draft' | 'Active' | 'Complete' | 'Archived';
+  completionDate?: string;
   onBack: () => void;
   backLabel?: string;
   onCreateAssessment?: () => void;
@@ -28,6 +39,8 @@ interface ProjectDetailViewProps {
   returnToGroupsTab?: boolean;
   initialPosition?: string;
   onPositionSelect?: (positionTitle: string) => void;
+  onArchiveProject?: () => void;
+  onCompleteProject?: (data: ProjectCompletionData) => void;
 }
 
 // Store positions data for each project
@@ -58,7 +71,7 @@ const projectPositions: { [key: string]: Position[] } = {
   ],
 };
 
-export function ProjectDetailView({ projectTitle, projectDescription, onBack, backLabel = 'Back', onCreateAssessment, pendingAssessment, onAssessmentConsumed, onViewDashboard, onViewGroup, returnToGroupsTab, initialPosition, onPositionSelect }: ProjectDetailViewProps) {
+export function ProjectDetailView({ projectTitle, projectDescription, projectStatus, completionDate, onBack, backLabel = 'Back', onCreateAssessment, pendingAssessment, onAssessmentConsumed, onViewDashboard, onViewGroup, returnToGroupsTab, initialPosition, onPositionSelect, onArchiveProject, onCompleteProject }: ProjectDetailViewProps) {
   // Get positions for this specific project, or use empty array as fallback
   const initialPositions = projectPositions[projectTitle] || [];
   
@@ -81,6 +94,9 @@ export function ProjectDetailView({ projectTitle, projectDescription, onBack, ba
   const [editPositionDescription, setEditPositionDescription] = useState('');
   const [editPositionScreening, setEditPositionScreening] = useState('');
   const [editPositionIsOpen, setEditPositionIsOpen] = useState(false);
+  
+  // Archive modal state
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   const handleAddPosition = () => {
     if (newPositionTitle.trim()) {
@@ -216,14 +232,34 @@ export function ProjectDetailView({ projectTitle, projectDescription, onBack, ba
     <>
       <div className="h-full w-full overflow-auto">
         <div className="max-w-[1400px] mx-auto px-[48px] py-[24px]">
-          {/* Back Button */}
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 text-[#9ca3af] hover:text-[#6b7280] transition-colors font-['Arimo',sans-serif] text-[14px] mb-[28px]"
-          >
-            <ChevronLeft size={18} strokeWidth={1.5} />
-            {backLabel}
-          </button>
+          {/* Back Button and Archive Dropdown */}
+          <div className="flex items-center justify-between mb-[28px]">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-[#9ca3af] hover:text-[#6b7280] transition-colors font-['Arimo',sans-serif] text-[14px]"
+            >
+              <ChevronLeft size={18} strokeWidth={1.5} />
+              {backLabel}
+            </button>
+
+            {/* Archive Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-[32px] h-[32px] rounded-[6px] flex items-center justify-center hover:bg-[#f3f4f6] transition-colors">
+                  <MoreVertical size={18} className="text-[#9ca3af]" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[180px]">
+                <DropdownMenuItem
+                  onClick={() => setIsArchiveModalOpen(true)}
+                  className="cursor-pointer"
+                >
+                  <Archive size={16} className="mr-2" />
+                  Archive Project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           {/* Project Title */}
           <h1 className="font-['Arimo',sans-serif] text-[28px] text-black mb-[12px]">
@@ -741,6 +777,21 @@ export function ProjectDetailView({ projectTitle, projectDescription, onBack, ba
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Archive Project Modal */}
+      <ArchiveProjectModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        onConfirm={() => {
+          if (onArchiveProject) {
+            onArchiveProject();
+          }
+          toast.success(`Project "${projectTitle}" has been archived.`);
+        }}
+        projectTitle={projectTitle}
+        isCompleted={projectStatus === 'Complete'}
+        completionDate={completionDate}
+      />
     </>
   );
 }

@@ -17,7 +17,6 @@ import { AdminRecruiterDelegation } from './components/AdminRecruiterDelegation'
 import { AdminClosedPositions } from './components/AdminClosedPositions';
 import { AdminSubscriptionManagement } from './components/AdminSubscriptionManagement';
 import { AdminOrganizationMembers } from './components/AdminOrganizationMembers';
-import { AdminPendingRequests } from './components/AdminPendingRequests';
 import { Sidebar } from './components/Sidebar';
 import { Notifications } from './components/Notifications';
 import { Button } from './components/ui/button';
@@ -49,7 +48,7 @@ interface Assessment {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-requests' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-subscription' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-subscription' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<{ projectTitle: string; positionTitle: string } | null>(null);
   const [selectedProjectPosition, setSelectedProjectPosition] = useState<string>(''); // Track position within a project (for ProjectDetailView)
@@ -249,14 +248,13 @@ export default function App() {
   }
 
   // If on admin pages, show admin view
-  if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-requests' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions' || currentPage === 'admin-subscription') {
+  if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions' || currentPage === 'admin-subscription') {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
         <AdminSidebar 
           activePage={
             currentPage === 'admin-dashboard' ? 'dashboard' : 
             currentPage === 'admin-members' ? 'members' : 
-            currentPage === 'admin-requests' ? 'requests' : 
             currentPage === 'admin-settings' ? 'settings' : 
             currentPage === 'admin-delegation' ? 'delegation' :
             currentPage === 'admin-closed-positions' ? 'closed-positions' :
@@ -266,7 +264,6 @@ export default function App() {
           onNavigate={(page) => setCurrentPage(
             page === 'dashboard' ? 'admin-dashboard' : 
             page === 'members' ? 'admin-members' : 
-            page === 'requests' ? 'admin-requests' : 
             page === 'settings' ? 'admin-settings' : 
             page === 'delegation' ? 'admin-delegation' :
             page === 'closed-positions' ? 'admin-closed-positions' :
@@ -318,12 +315,6 @@ export default function App() {
             ) : currentPage === 'admin-members' ? (
               <AdminOrganizationMembers 
                 onSignOut={() => setCurrentPage('landing')} 
-                onViewPendingRequests={() => setCurrentPage('admin-requests')}
-              />
-            ) : currentPage === 'admin-requests' ? (
-              <AdminPendingRequests 
-                onSignOut={() => setCurrentPage('landing')} 
-                onBack={() => setCurrentPage('admin-members')}
               />
             ) : currentPage === 'admin-settings' ? (
               <AdminSettings 
