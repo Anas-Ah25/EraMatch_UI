@@ -1,4 +1,4 @@
-import { XCircle, CheckCircle, PauseCircle, User } from 'lucide-react';
+import { XCircle, CheckCircle, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { useState } from 'react';
@@ -13,12 +13,11 @@ interface ClosePositionModalProps {
   groupsCount: number;
 }
 
-export type PositionClosureStatus = 'Filled' | 'Cancelled' | 'On-Hold';
+export type PositionClosureStatus = 'Filled' | 'Cancelled';
 
 export interface PositionOutcome {
   status: PositionClosureStatus;
   reason: string;
-  selectedCandidatesCount?: number;
   closureDate: string;
 }
 
@@ -32,7 +31,6 @@ export function ClosePositionModal({
 }: ClosePositionModalProps) {
   const [selectedStatus, setSelectedStatus] = useState<PositionClosureStatus | null>(null);
   const [reason, setReason] = useState('');
-  const [selectedCount, setSelectedCount] = useState<number>(1);
 
   const handleConfirm = () => {
     if (!selectedStatus) return;
@@ -40,7 +38,6 @@ export function ClosePositionModal({
     const outcome: PositionOutcome = {
       status: selectedStatus,
       reason: reason.trim() || getDefaultReason(selectedStatus),
-      selectedCandidatesCount: selectedStatus === 'Filled' ? selectedCount : undefined,
       closureDate: new Date().toISOString()
     };
 
@@ -52,7 +49,6 @@ export function ClosePositionModal({
   const handleReset = () => {
     setSelectedStatus(null);
     setReason('');
-    setSelectedCount(1);
   };
 
   const handleClose = () => {
@@ -63,11 +59,9 @@ export function ClosePositionModal({
   const getDefaultReason = (status: PositionClosureStatus): string => {
     switch (status) {
       case 'Filled':
-        return `Position successfully filled with ${selectedCount} qualified candidate${selectedCount > 1 ? 's' : ''}`;
+        return 'Position successfully filled';
       case 'Cancelled':
         return 'Position cancelled';
-      case 'On-Hold':
-        return 'Position placed on hold';
     }
   };
 
@@ -94,14 +88,6 @@ export function ClosePositionModal({
       bgColor: 'bg-red-50',
       title: 'Position Cancelled',
       description: 'No longer recruiting for this role'
-    },
-    {
-      status: 'On-Hold',
-      icon: PauseCircle,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
-      title: 'Position On-Hold',
-      description: 'Temporarily paused recruitment'
     }
   ];
 
@@ -144,7 +130,7 @@ export function ClosePositionModal({
           <p className="font-['Arimo',sans-serif] text-[14px] text-[#374151] font-medium">
             Select Outcome:
           </p>
-          <div className="grid grid-cols-3 gap-[12px]">
+          <div className="grid grid-cols-2 gap-[12px]">
             {outcomeOptions.map((option) => {
               const Icon = option.icon;
               const isSelected = selectedStatus === option.status;
@@ -175,39 +161,6 @@ export function ClosePositionModal({
             })}
           </div>
         </div>
-
-        {/* Filled - Candidate Count */}
-        {selectedStatus === 'Filled' && (
-          <div className="space-y-[8px]">
-            <label className="font-['Arimo',sans-serif] text-[14px] text-[#374151] font-medium">
-              Number of Candidates Hired:
-            </label>
-            <div className="flex items-center gap-[12px]">
-              <button
-                onClick={() => setSelectedCount(Math.max(1, selectedCount - 1))}
-                className="w-[36px] h-[36px] rounded-[6px] border border-[#e5e7eb] hover:bg-[#f9fafb] flex items-center justify-center"
-              >
-                <span className="text-[18px] text-[#6b7280]">−</span>
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={selectedCount}
-                onChange={(e) => setSelectedCount(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-[80px] h-[36px] rounded-[6px] border border-[#e5e7eb] text-center font-['Arimo',sans-serif] text-[14px] text-black focus:outline-none focus:ring-2 focus:ring-[#6366f1]"
-              />
-              <button
-                onClick={() => setSelectedCount(selectedCount + 1)}
-                className="w-[36px] h-[36px] rounded-[6px] border border-[#e5e7eb] hover:bg-[#f9fafb] flex items-center justify-center"
-              >
-                <span className="text-[18px] text-[#6b7280]">+</span>
-              </button>
-              <span className="font-['Arimo',sans-serif] text-[13px] text-[#9ca3af]">
-                candidate{selectedCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* Reason/Notes */}
         {selectedStatus && (
@@ -247,8 +200,6 @@ export function ClosePositionModal({
                 ? 'bg-emerald-600 hover:bg-emerald-700'
                 : selectedStatus === 'Cancelled'
                 ? 'bg-red-600 hover:bg-red-700'
-                : selectedStatus === 'On-Hold'
-                ? 'bg-amber-600 hover:bg-amber-700'
                 : 'bg-[#9ca3af]'
             } text-white disabled:opacity-50 disabled:cursor-not-allowed`}
           >

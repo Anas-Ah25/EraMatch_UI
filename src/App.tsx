@@ -4,10 +4,11 @@ import { PaymentGatewayPage } from './components/PaymentGatewayPage';
 import { AdminLoginPage } from './components/AdminLoginPage';
 import { RecruiterLoginPage } from './components/RecruiterLoginPage';
 import { CandidateLoginPage } from './components/CandidateLoginPage';
+import { CandidateHomePage } from './components/CandidateHomePage';
 import { CandidateDashboard } from './components/CandidateDashboard';
-import { RecordedInterview } from './components/RecordedInterview';
-import { LiveInterview } from './components/LiveInterview';
-import { TechnicalAssessment } from './components/TechnicalAssessment';
+import { RecordedInterviewFlow } from './components/RecordedInterviewFlow';
+import { LiveInterviewFlow } from './components/LiveInterviewFlow';
+import { TechnicalAssessmentFlow } from './components/TechnicalAssessmentFlow';
 import { ProjectDetailView } from './components/ProjectDetailView';
 import { PositionDetailView } from './components/PositionDetailView';
 import { CreateAssessmentPage, Question } from './components/CreateAssessmentPage';
@@ -48,7 +49,7 @@ interface Assessment {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-subscription' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'payment-gateway' | 'admin-login' | 'recruiter-login' | 'candidate-login' | 'candidate-home' | 'candidate-testing' | 'candidate-dashboard' | 'recorded-interview' | 'live-interview' | 'technical-assessment' | 'dashboard' | 'projects' | 'create-assessment' | 'create-ai-interview' | 'position-dashboard' | 'group-overview' | 'candidate-profile' | 'knowledge-graph' | 'alerts' | 'candidates' | 'admin-dashboard' | 'admin-members' | 'admin-settings' | 'admin-delegation' | 'admin-closed-positions' | 'admin-subscription' | 'ai-interview-live-setup' | 'ai-interview-recorded-setup' | 'recorded-interview-questions' | 'question-bank' | 'module-detail-assessment' | 'module-detail-ai-interview' | 'skill-clustering'>('landing');
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedPosition, setSelectedPosition] = useState<{ projectTitle: string; positionTitle: string } | null>(null);
   const [selectedProjectPosition, setSelectedProjectPosition] = useState<string>(''); // Track position within a project (for ProjectDetailView)
@@ -129,7 +130,33 @@ export default function App() {
     return (
       <CandidateLoginPage 
         onBack={() => setCurrentPage('landing')} 
-        onSignIn={() => setCurrentPage('candidate-dashboard')}
+        onSignIn={() => setCurrentPage('candidate-home')}
+      />
+    );
+  }
+
+  // Candidate Home Page
+  if (currentPage === 'candidate-home') {
+    return (
+      <CandidateHomePage
+        onOpenTestingPage={() => setCurrentPage('candidate-testing')}
+        currentStage="assessment"
+      />
+    );
+  }
+
+  // Candidate Testing Page (Development)
+  if (currentPage === 'candidate-testing') {
+    return (
+      <CandidateDashboard 
+        onSignOut={() => setCurrentPage('candidate-home')}
+        onBack={() => setCurrentPage('candidate-home')}
+        onStartRecordedInterview={() => setCurrentPage('recorded-interview')}
+        recordedInterviewCompleted={recordedInterviewCompleted}
+        onStartLiveInterview={() => setCurrentPage('live-interview')}
+        liveInterviewCompleted={liveInterviewCompleted}
+        onStartTechnicalAssessment={() => setCurrentPage('technical-assessment')}
+        technicalAssessmentCompleted={technicalAssessmentCompleted}
       />
     );
   }
@@ -152,9 +179,9 @@ export default function App() {
   // If on recorded interview, show recorded interview flow
   if (currentPage === 'recorded-interview') {
     return (
-      <RecordedInterview 
-        onSignOut={() => setCurrentPage('candidate-login')}
-        onExit={() => setCurrentPage('candidate-dashboard')}
+      <RecordedInterviewFlow 
+        onSignOut={() => setCurrentPage('candidate-home')}
+        onExit={() => setCurrentPage('candidate-home')}
         onCompletion={() => setRecordedInterviewCompleted(true)}
       />
     );
@@ -163,9 +190,9 @@ export default function App() {
   // If on live interview, show live interview flow
   if (currentPage === 'live-interview') {
     return (
-      <LiveInterview 
-        onSignOut={() => setCurrentPage('candidate-login')}
-        onExit={() => setCurrentPage('candidate-dashboard')}
+      <LiveInterviewFlow 
+        onSignOut={() => setCurrentPage('candidate-home')}
+        onExit={() => setCurrentPage('candidate-home')}
         onCompletion={() => setLiveInterviewCompleted(true)}
       />
     );
@@ -174,12 +201,12 @@ export default function App() {
   // If on technical assessment, show technical assessment flow
   if (currentPage === 'technical-assessment') {
     return (
-      <TechnicalAssessment 
-        onSignOut={() => setCurrentPage('candidate-login')}
-        onExit={() => setCurrentPage('candidate-dashboard')}
+      <TechnicalAssessmentFlow 
+        onSignOut={() => setCurrentPage('candidate-home')}
+        onExit={() => setCurrentPage('candidate-home')}
         onCompletion={() => {
           setTechnicalAssessmentCompleted(true);
-          setCurrentPage('candidate-dashboard');
+          setCurrentPage('candidate-home');
         }}
       />
     );

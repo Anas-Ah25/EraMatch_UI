@@ -170,7 +170,7 @@ export function PositionDetailView({
           className="flex items-center gap-2 text-[#9ca3af] hover:text-[#6b7280] transition-colors font-['Arimo',sans-serif] text-[14px]"
         >
           <ChevronLeft size={18} strokeWidth={1.5} />
-          Back to {projectTitle}
+          {viewingCandidateId !== null ? 'Back to Position' : 'Back to Positions'}
         </button>
 
         {/* Header with Title and Edit Button */}

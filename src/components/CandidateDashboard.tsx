@@ -1,6 +1,6 @@
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { FileText, Layers, Clock, CheckCircle2 } from 'lucide-react';
+import { FileText, Layers, Clock, CheckCircle2, ArrowLeft } from 'lucide-react';
 import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
 
 interface CandidateDashboardProps {
@@ -11,9 +11,10 @@ interface CandidateDashboardProps {
   liveInterviewCompleted?: boolean;
   onStartTechnicalAssessment?: () => void;
   technicalAssessmentCompleted?: boolean;
+  onBack?: () => void;
 }
 
-export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStartLiveInterview, recordedInterviewCompleted, liveInterviewCompleted, onStartTechnicalAssessment, technicalAssessmentCompleted }: CandidateDashboardProps) {
+export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStartLiveInterview, recordedInterviewCompleted, liveInterviewCompleted, onStartTechnicalAssessment, technicalAssessmentCompleted, onBack }: CandidateDashboardProps) {
   const assessments = [
     {
       id: 1,
@@ -73,6 +74,17 @@ export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStar
 
       {/* Main Content */}
       <main className="px-12 py-8">
+        {/* Back Button (only shown when onBack is provided) */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-[#6366f1] hover:text-[#5558e3] transition-colors mb-6 font-['Arimo',sans-serif] text-[14px] font-medium"
+          >
+            <ArrowLeft size={16} />
+            <span>Back to Homepage</span>
+          </button>
+        )}
+
         <h2 className="text-gray-700 mb-8 text-2xl font-semibold">Available assessments</h2>
 
         <div className="space-y-6">

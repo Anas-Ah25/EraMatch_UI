@@ -13,7 +13,6 @@ interface CompleteProjectModalProps {
     totalPositions: number;
     filledPositions: number;
     cancelledPositions: number;
-    onHoldPositions: number;
     totalCandidates: number;
     selectedCandidates: number;
   };
@@ -35,7 +34,7 @@ export function CompleteProjectModal({
   const [summaryNotes, setSummaryNotes] = useState('');
 
   const allPositionsClosed = 
-    projectStats.filledPositions + projectStats.cancelledPositions + projectStats.onHoldPositions === projectStats.totalPositions;
+    projectStats.filledPositions + projectStats.cancelledPositions === projectStats.totalPositions;
 
   const handleConfirm = () => {
     const completionData: ProjectCompletionData = {
@@ -120,13 +119,6 @@ export function CompleteProjectModal({
                     </span>
                   </div>
                 )}
-                {projectStats.onHoldPositions > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="font-['Arimo',sans-serif] text-[11px] text-amber-700">
-                      ⏸ {projectStats.onHoldPositions} On-Hold
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -173,7 +165,7 @@ export function CompleteProjectModal({
               </div>
               <p className="font-['Arimo',sans-serif] text-[20px] font-semibold text-black">
                 {projectStats.totalPositions > 0
-                  ? Math.round(((projectStats.filledPositions + projectStats.cancelledPositions + projectStats.onHoldPositions) / projectStats.totalPositions) * 100)
+                  ? Math.round(((projectStats.filledPositions + projectStats.cancelledPositions) / projectStats.totalPositions) * 100)
                   : 0}%
               </p>
             </div>

@@ -1,4 +1,4 @@
-import { ChevronLeft, Plus, Pencil, Sparkles, BarChart3, Users, CheckCircle, TrendingUp, Calendar, Award, Target, Briefcase, Archive, MoreVertical, XCircle, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Plus, Pencil, Sparkles, BarChart3, Users, CheckCircle, TrendingUp, Calendar, Award, Target, Briefcase, Archive, XCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Switch } from './ui/switch';
@@ -8,7 +8,6 @@ import { PositionDetailView } from './PositionDetailView';
 import { ArchiveProjectModal } from './ArchiveProjectModal';
 import { ClosePositionModal, type PositionOutcome, type PositionClosureStatus } from './ClosePositionModal';
 import { CompleteProjectModal, type ProjectCompletionData } from './CompleteProjectModal';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { toast } from 'sonner';
 
 interface Position {
@@ -20,7 +19,6 @@ interface Position {
   isOpen: boolean;
   closureStatus?: PositionClosureStatus;
   closureReason?: string;
-  selectedCandidatesCount?: number;
   closureDate?: string;
 }
 
@@ -97,6 +95,19 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
   
   // Archive modal state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  
+  // Close position modal state
+  const [isClosePositionModalOpen, setIsClosePositionModalOpen] = useState(false);
+  const [closingPosition, setClosingPosition] = useState<Position | null>(null);
+
+  // Complete project modal state
+  const [isCompleteProjectModalOpen, setIsCompleteProjectModalOpen] = useState(false);
+  
+  // Warning modal for archiving active project
+  const [showActiveProjectWarning, setShowActiveProjectWarning] = useState(false);
+  
+  // Track internal project status
+  const [internalProjectStatus, setInternalProjectStatus] = useState<'Draft' | 'Active' | 'Complete' | 'Archived'>(projectStatus || 'Active');
 
   const handleAddPosition = () => {
     if (newPositionTitle.trim()) {
@@ -140,6 +151,35 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
       ));
       setIsEditDialogOpen(false);
       setEditingPosition(null);
+    }
+  };
+
+  const handleClosePosition = (position: Position) => {
+    setClosingPosition(position);
+    setIsClosePositionModalOpen(true);
+  };
+
+  const handleConfirmClosePosition = (outcome: PositionOutcome) => {
+    if (closingPosition) {
+      setPositions(positions.map(p =>
+        p.id === closingPosition.id
+          ? {
+              ...p,
+              isOpen: false,
+              closureStatus: outcome.status,
+              closureReason: outcome.reason,
+              closureDate: outcome.closureDate
+            }
+          : p
+      ));
+      
+      // Show success toast
+      const message = outcome.status === 'Filled' 
+        ? `Position "${closingPosition.title}" closed as Filled`
+        : `Position "${closingPosition.title}" closed as Cancelled`;
+      toast.success(message);
+      
+      setClosingPosition(null);
     }
   };
 
@@ -232,7 +272,7 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
     <>
       <div className="h-full w-full overflow-auto">
         <div className="max-w-[1400px] mx-auto px-[48px] py-[24px]">
-          {/* Back Button and Archive Dropdown */}
+          {/* Back Button and Action Buttons */}
           <div className="flex items-center justify-between mb-[28px]">
             <button
               onClick={onBack}
@@ -242,29 +282,120 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
               {backLabel}
             </button>
 
-            {/* Archive Dropdown Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="w-[32px] h-[32px] rounded-[6px] flex items-center justify-center hover:bg-[#f3f4f6] transition-colors">
-                  <MoreVertical size={18} className="text-[#9ca3af]" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[180px]">
-                <DropdownMenuItem
-                  onClick={() => setIsArchiveModalOpen(true)}
-                  className="cursor-pointer"
-                >
-                  <Archive size={16} className="mr-2" />
-                  Archive Project
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-[12px]">
+              {/* Complete Project Button */}
+              {(() => {
+                const allPositionsClosed = positions.length > 0 && positions.every(p => p.closureStatus);
+                const canComplete = allPositionsClosed && internalProjectStatus === 'Active';
+                
+                return internalProjectStatus === 'Active' ? (
+                  <div className="relative group">
+                    <button 
+                      onClick={() => canComplete && setIsCompleteProjectModalOpen(true)}
+                      disabled={!canComplete}
+                      className={`flex items-center gap-[8px] h-[36px] px-[16px] rounded-[6px] border transition-colors font-['Arimo',sans-serif] text-[14px] ${
+                        canComplete
+                          ? 'border-[#10b981] bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                          : 'border-[#e5e7eb] text-[#d1d5db] cursor-not-allowed'
+                      }`}
+                    >
+                      <CheckCircle2 size={16} />
+                      Complete Project
+                    </button>
+                    
+                    {/* Tooltip for disabled state */}
+                    {!canComplete && (
+                      <div className="absolute top-full right-0 mt-[8px] w-[280px] bg-gray-900 text-white text-[12px] px-[12px] py-[8px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                        <p className="font-['Arimo',sans-serif]">
+                          All positions must be closed before completing the project.
+                        </p>
+                        <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                      </div>
+                    )}
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Archive Button */}
+              {(() => {
+                const canArchive = internalProjectStatus === 'Complete';
+                
+                return (
+                  <div className="relative group">
+                    <button 
+                      onClick={() => {
+                        if (canArchive) {
+                          setIsArchiveModalOpen(true);
+                        } else {
+                          setShowActiveProjectWarning(true);
+                        }
+                      }}
+                      className={`flex items-center gap-[8px] h-[36px] px-[16px] rounded-[6px] border transition-colors font-['Arimo',sans-serif] text-[14px] ${
+                        canArchive
+                          ? 'border-[#d1d5db] hover:bg-[#f9fafb] text-[#374151]'
+                          : 'border-[#e5e7eb] text-[#d1d5db] cursor-not-allowed'
+                      }`}
+                    >
+                      <Archive size={16} />
+                      Archive Project
+                    </button>
+                    
+                    {/* Tooltip for disabled state */}
+                    {!canArchive && (
+                      <div className="absolute top-full right-0 mt-[8px] w-[280px] bg-gray-900 text-white text-[12px] px-[12px] py-[8px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
+                        <p className="font-['Arimo',sans-serif]">
+                          Project must be marked as "Complete" before archiving.
+                        </p>
+                        <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 transform rotate-45"></div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
 
-          {/* Project Title */}
-          <h1 className="font-['Arimo',sans-serif] text-[28px] text-black mb-[12px]">
-            {projectTitle}
-          </h1>
+          {/* Project Title and Status */}
+          <div className="mb-[12px]">
+            <h1 className="font-['Arimo',sans-serif] text-[28px] text-black mb-[10px]">
+              {projectTitle}
+            </h1>
+            {/* Status Badge */}
+            {(() => {
+              const allPositionsClosed = positions.length > 0 && positions.every(p => p.closureStatus);
+              
+              if (internalProjectStatus === 'Complete') {
+                return (
+                  <div className="inline-flex items-center gap-[6px] h-[28px] px-[12px] rounded-full bg-blue-50 border border-blue-200">
+                    <CheckCircle2 size={14} className="text-blue-600" />
+                    <span className="font-['Arimo',sans-serif] text-[12px] text-blue-600 font-medium">
+                      Complete
+                    </span>
+                  </div>
+                );
+              } else if (internalProjectStatus === 'Archived') {
+                return (
+                  <div className="inline-flex items-center gap-[6px] h-[28px] px-[12px] rounded-full bg-gray-100 border border-gray-300">
+                    <Archive size={14} className="text-gray-600" />
+                    <span className="font-['Arimo',sans-serif] text-[12px] text-gray-600 font-medium">
+                      Archived
+                    </span>
+                  </div>
+                );
+              } else {
+                // Active status
+                return (
+                  <div className="inline-flex items-center gap-[6px] h-[28px] px-[12px] rounded-full bg-emerald-50 border border-emerald-200">
+                    <div className="w-[6px] h-[6px] rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="font-['Arimo',sans-serif] text-[12px] text-emerald-600 font-medium">
+                      Active {allPositionsClosed && '• Ready to Complete'}
+                    </span>
+                  </div>
+                );
+              }
+            })()}
+          </div>
 
           {/* Project Description */}
           <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] mb-[24px] leading-[20px]">
@@ -338,8 +469,24 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
                         </p>
                       </div>
 
-                      {/* Currently Open Badge */}
-                      {position.isOpen && (
+                      {/* Status Badges */}
+                      {position.closureStatus === 'Filled' && (
+                        <div className="h-[26px] rounded-full bg-emerald-50 border border-emerald-200 px-[12px] flex items-center justify-center gap-[6px]">
+                          <CheckCircle2 size={14} className="text-emerald-600" />
+                          <span className="font-['Arimo',sans-serif] text-[12px] text-emerald-600 font-medium">
+                            Filled
+                          </span>
+                        </div>
+                      )}
+                      {position.closureStatus === 'Cancelled' && (
+                        <div className="h-[26px] rounded-full bg-red-50 border border-red-200 px-[12px] flex items-center justify-center gap-[6px]">
+                          <XCircle size={14} className="text-red-600" />
+                          <span className="font-['Arimo',sans-serif] text-[12px] text-red-600 font-medium">
+                            Cancelled
+                          </span>
+                        </div>
+                      )}
+                      {position.isOpen && !position.closureStatus && (
                         <div className="h-[26px] rounded-full border border-[#10b981] px-[12px] flex items-center justify-center">
                           <span className="font-['Arimo',sans-serif] text-[12px] text-[#10b981]">
                             currently open
@@ -360,6 +507,14 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
                         className="w-[32px] h-[32px] rounded-[6px] flex items-center justify-center hover:bg-[#f3f4f6] transition-colors"
                       >
                         <Pencil size={16} className="text-[#9ca3af]" strokeWidth={1.5} />
+                      </button>
+
+                      {/* Close Button */}
+                      <button
+                        onClick={() => handleClosePosition(position)}
+                        className="w-[32px] h-[32px] rounded-[6px] flex items-center justify-center hover:bg-[#f3f4f6] transition-colors"
+                      >
+                        <XCircle size={16} className="text-[#9ca3af]" strokeWidth={1.5} />
                       </button>
 
                       {/* View Button */}
@@ -778,6 +933,16 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
         </DialogContent>
       </Dialog>
 
+      {/* Close Position Modal */}
+      <ClosePositionModal
+        isOpen={isClosePositionModalOpen}
+        onClose={() => setIsClosePositionModalOpen(false)}
+        onConfirm={handleConfirmClosePosition}
+        positionTitle={closingPosition?.title || ''}
+        candidatesCount={closingPosition?.applicants || 0}
+        groupsCount={0}
+      />
+
       {/* Archive Project Modal */}
       <ArchiveProjectModal
         isOpen={isArchiveModalOpen}
@@ -792,6 +957,59 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
         isCompleted={projectStatus === 'Complete'}
         completionDate={completionDate}
       />
+
+      {/* Complete Project Modal */}
+      <CompleteProjectModal
+        isOpen={isCompleteProjectModalOpen}
+        onClose={() => setIsCompleteProjectModalOpen(false)}
+        onConfirm={(data) => {
+          // Update internal status to Complete
+          setInternalProjectStatus('Complete');
+          
+          if (onCompleteProject) {
+            onCompleteProject(data);
+          }
+          toast.success(`Project "${projectTitle}" has been marked as Complete.`);
+          setIsCompleteProjectModalOpen(false);
+        }}
+        projectTitle={projectTitle}
+        projectStats={{
+          totalPositions: positions.length,
+          filledPositions: positions.filter(p => p.closureStatus === 'Filled').length,
+          cancelledPositions: positions.filter(p => p.closureStatus === 'Cancelled').length,
+          totalCandidates: positions.reduce((sum, p) => sum + p.applicants, 0),
+          selectedCandidates: Math.floor(positions.reduce((sum, p) => sum + p.applicants, 0) * 0.05) // Mock data - 5% selection rate
+        }}
+      />
+
+      {/* Active Project Warning Modal */}
+      <Dialog open={showActiveProjectWarning} onOpenChange={setShowActiveProjectWarning}>
+        <DialogContent className="sm:max-w-[500px] bg-white p-0">
+          <div className="p-6 pb-4">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-[18px] font-['Arimo',sans-serif] text-black">Warning</DialogTitle>
+              <DialogDescription className="text-[13px] text-[#9ca3af] font-['Arimo',sans-serif] mt-1">
+                This project is still active and cannot be archived.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex flex-col gap-4">
+              <p className="text-[14px] font-['Arimo',sans-serif] text-black">
+                To archive this project, you must first complete it by closing all positions.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#f3f4f6]">
+            <button
+              onClick={() => setShowActiveProjectWarning(false)}
+              className="h-[38px] px-[20px] rounded-[6px] font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] hover:bg-[#f9fafb] transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -188,8 +188,8 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
       setTimeout(() => {
         setFireflies(prev => prev.filter(f => f.id !== fireflyId));
         currentIndex++;
-        setTimeout(spawnNextFirefly, 500);
-      }, 2000);
+        setTimeout(spawnNextFirefly, 1000); // Increased from 500ms to 1000ms
+      }, 3000); // Increased from 2000ms to 3000ms
     };
 
     setTimeout(spawnNextFirefly, 1000);
@@ -200,8 +200,20 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
     setScore(prev => prev + 1);
     
     if (firefly.isCalibration) {
-      setTargetsCaught(prev => prev + 1);
+      const newTargetsCaught = targetsCaught + 1;
+      setTargetsCaught(newTargetsCaught);
       console.log('Calibration point clicked:', firefly.x, firefly.y);
+      
+      // Check if all 5 calibration targets have been caught
+      if (newTargetsCaught >= 5) {
+        setTimeout(() => {
+          setCalibrationComplete(true);
+          setIsCalibrating(false);
+          if (document.fullscreenElement) {
+            document.exitFullscreen();
+          }
+        }, 500); // Close game shortly after hitting the target
+      }
     }
   };
 

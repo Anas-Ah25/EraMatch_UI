@@ -3,24 +3,25 @@
 ## ✅ Completed Components
 
 ### 1. ClosePositionModal (`/components/ClosePositionModal.tsx`)
-- Modal for closing individual positions with three outcomes:
+- Modal for closing individual positions with two outcomes:
   - **Filled**: Specify number of candidates hired
   - **Cancelled**: Provide cancellation reason
-  - **On-Hold**: Provide reason for pause
 - Shows position summary (candidates, groups)
 - Captures closure date and notes
-- Color-coded buttons based on outcome type
+- Color-coded buttons based on outcome type (Green for Filled, Red for Cancelled)
+- ✅ **UPDATED**: Removed "On-Hold" option - only Filled and Cancelled remain
 
 ### 2. CompleteProjectModal (`/components/CompleteProjectModal.tsx`)
 - Modal for completing entire projects
 - Displays final project statistics:
-  - Total/filled/cancelled/on-hold positions
+  - Total/filled/cancelled positions
   - Total candidates and selected count
   - Success rate calculation
   - Completion percentage
 - Warning if not all positions are closed
 - Captures completion date and summary notes
 - Explains that analytics will be frozen
+- ⚠️ **NEEDS UPDATE**: Still references onHoldPositions in stats - should be removed
 
 ### 3. ArchiveProjectModal (`/components/ArchiveProjectModal.tsx`)
 - Updated to ONLY allow archiving completed projects
@@ -93,9 +94,10 @@
 1. **Project Lifecycle States**:
    - Draft → Active → Complete → Archived
    
-2. **Position Closure**:
+2. **Position Closure** (Updated - On-Hold Removed):
    - Independent of project completion
-   - Three outcomes: Filled, Cancelled, On-Hold
+   - Two outcomes only: **Filled** (success) or **Cancelled** (failure)
+   - Simpler binary decision model for clearer analytics
    
 3. **Separation of Concerns**:
    - Complete ≠ Archive
@@ -109,4 +111,6 @@
 
 ## 📝 Next Steps
 
-Continue with items 5 and 6 to complete the ProjectDetailView functionality, then move through items 7-10 in order.
+1. **Immediate**: Update CompleteProjectModal to remove onHoldPositions references
+2. **Then**: Continue with items 5 and 6 to complete the ProjectDetailView functionality
+3. **Finally**: Move through items 7-10 in order
