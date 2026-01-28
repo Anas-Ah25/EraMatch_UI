@@ -34,12 +34,12 @@ import { CreateAIInterview } from './components/CreateAIInterview';
 import { QuestionBankPage } from './components/QuestionBankPage';
 import { CandidatesPage } from './components/CandidatesPage';
 import { ProjectsPage } from './components/ProjectsPage';
-import logo from './imports/image-eramatch.png';
-import imgImageEramatch from './imports/image-eramatch.png';
+import logo from './assets/image-eramatch.png';
+
 import { AdminSidebar } from './components/AdminSidebar';
 import { ModuleDetailAssessment } from './components/ModuleDetailAssessment';
 import { ModuleDetailAIInterview } from './components/ModuleDetailAIInterview';
-import { SkillClusteringView } from './components/SkillClusteringView';
+// import { SkillClusteringView } from './components/SkillClusteringView';
 
 interface Assessment {
   id: string;
@@ -81,7 +81,7 @@ export default function App() {
   // If on landing page, show only that page
   if (currentPage === 'landing') {
     return (
-      <LandingPage 
+      <LandingPage
         onGetStarted={() => setCurrentPage('payment-gateway')}
         onViewDesigns={() => setCurrentPage('payment-gateway')}
         onAdminLogin={() => setCurrentPage('admin-login')}
@@ -128,8 +128,8 @@ export default function App() {
   // If on candidate login page, show only that page
   if (currentPage === 'candidate-login') {
     return (
-      <CandidateLoginPage 
-        onBack={() => setCurrentPage('landing')} 
+      <CandidateLoginPage
+        onBack={() => setCurrentPage('landing')}
         onSignIn={() => setCurrentPage('candidate-home')}
       />
     );
@@ -148,7 +148,7 @@ export default function App() {
   // Candidate Testing Page (Development)
   if (currentPage === 'candidate-testing') {
     return (
-      <CandidateDashboard 
+      <CandidateDashboard
         onSignOut={() => setCurrentPage('candidate-home')}
         onBack={() => setCurrentPage('candidate-home')}
         onStartRecordedInterview={() => setCurrentPage('recorded-interview')}
@@ -164,7 +164,7 @@ export default function App() {
   // If on candidate dashboard, show candidate view
   if (currentPage === 'candidate-dashboard') {
     return (
-      <CandidateDashboard 
+      <CandidateDashboard
         onSignOut={() => setCurrentPage('candidate-login')}
         onStartRecordedInterview={() => setCurrentPage('recorded-interview')}
         recordedInterviewCompleted={recordedInterviewCompleted}
@@ -179,7 +179,7 @@ export default function App() {
   // If on recorded interview, show recorded interview flow
   if (currentPage === 'recorded-interview') {
     return (
-      <RecordedInterviewFlow 
+      <RecordedInterviewFlow
         onSignOut={() => setCurrentPage('candidate-home')}
         onExit={() => setCurrentPage('candidate-home')}
         onCompletion={() => setRecordedInterviewCompleted(true)}
@@ -190,7 +190,7 @@ export default function App() {
   // If on live interview, show live interview flow
   if (currentPage === 'live-interview') {
     return (
-      <LiveInterviewFlow 
+      <LiveInterviewFlow
         onSignOut={() => setCurrentPage('candidate-home')}
         onExit={() => setCurrentPage('candidate-home')}
         onCompletion={() => setLiveInterviewCompleted(true)}
@@ -201,7 +201,7 @@ export default function App() {
   // If on technical assessment, show technical assessment flow
   if (currentPage === 'technical-assessment') {
     return (
-      <TechnicalAssessmentFlow 
+      <TechnicalAssessmentFlow
         onSignOut={() => setCurrentPage('candidate-home')}
         onExit={() => setCurrentPage('candidate-home')}
         onCompletion={() => {
@@ -278,27 +278,27 @@ export default function App() {
   if (currentPage === 'admin-dashboard' || currentPage === 'admin-members' || currentPage === 'admin-settings' || currentPage === 'admin-delegation' || currentPage === 'admin-closed-positions' || currentPage === 'admin-subscription') {
     return (
       <div className="min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
-        <AdminSidebar 
+        <AdminSidebar
           activePage={
-            currentPage === 'admin-dashboard' ? 'dashboard' : 
-            currentPage === 'admin-members' ? 'members' : 
-            currentPage === 'admin-settings' ? 'settings' : 
-            currentPage === 'admin-delegation' ? 'delegation' :
-            currentPage === 'admin-closed-positions' ? 'closed-positions' :
-            currentPage === 'admin-subscription' ? 'subscription' :
-            'dashboard'
-          } 
+            currentPage === 'admin-dashboard' ? 'dashboard' :
+              currentPage === 'admin-members' ? 'members' :
+                currentPage === 'admin-settings' ? 'settings' :
+                  currentPage === 'admin-delegation' ? 'delegation' :
+                    currentPage === 'admin-closed-positions' ? 'closed-positions' :
+                      currentPage === 'admin-subscription' ? 'subscription' :
+                        'dashboard'
+          }
           onNavigate={(page) => setCurrentPage(
-            page === 'dashboard' ? 'admin-dashboard' : 
-            page === 'members' ? 'admin-members' : 
-            page === 'settings' ? 'admin-settings' : 
-            page === 'delegation' ? 'admin-delegation' :
-            page === 'closed-positions' ? 'admin-closed-positions' :
-            page === 'subscription' ? 'admin-subscription' :
-            'admin-dashboard'
-          )} 
+            page === 'dashboard' ? 'admin-dashboard' :
+              page === 'members' ? 'admin-members' :
+                page === 'settings' ? 'admin-settings' :
+                  page === 'delegation' ? 'admin-delegation' :
+                    page === 'closed-positions' ? 'admin-closed-positions' :
+                      page === 'subscription' ? 'admin-subscription' :
+                        'admin-dashboard'
+          )}
         />
-        
+
         <div className="ml-20">
           {/* Header */}
           <header className="px-12 py-6">
@@ -308,7 +308,7 @@ export default function App() {
               </div>
               <div className="flex items-center gap-4">
                 <Notifications />
-                <Button 
+                <Button
                   className="rounded-full px-6 transition-colors duration-200 border"
                   style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
                   onMouseEnter={(e) => {
@@ -332,31 +332,31 @@ export default function App() {
           {/* Main Content */}
           <main>
             {currentPage === 'admin-dashboard' ? (
-              <AdminDashboard 
+              <AdminDashboard
                 onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-subscription' ? (
-              <AdminSubscriptionManagement 
+              <AdminSubscriptionManagement
                 onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-members' ? (
-              <AdminOrganizationMembers 
-                onSignOut={() => setCurrentPage('landing')} 
+              <AdminOrganizationMembers
+                onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-settings' ? (
-              <AdminSettings 
+              <AdminSettings
                 onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-delegation' ? (
-              <AdminRecruiterDelegation 
+              <AdminRecruiterDelegation
                 onSignOut={() => setCurrentPage('landing')}
               />
             ) : currentPage === 'admin-closed-positions' ? (
-              <AdminClosedPositions 
+              <AdminClosedPositions
                 onSignOut={() => setCurrentPage('landing')}
               />
             ) : (
-              <AdminDashboard 
+              <AdminDashboard
                 onSignOut={() => setCurrentPage('landing')}
               />
             )}
@@ -373,7 +373,7 @@ export default function App() {
       ) : (
         <Sidebar activePage={currentPage} onNavigate={setCurrentPage} />
       )}
-      
+
       <div className="ml-[96px] transition-all duration-300">
         {/* Header - Figma Design Style for Recruiter View */}
         <header className="bg-[#edf0f8] h-[90px]">
@@ -381,22 +381,22 @@ export default function App() {
             <div className="box-border content-stretch flex h-[90px] items-center justify-between px-[32px] py-0 w-full">
               {/* Logo */}
               <div className="h-[40px] w-[201.188px]">
-                <img 
-                  src={imgImageEramatch} 
-                  alt="ERAMATCH" 
-                  className="h-[40px] w-[201.188px] object-cover" 
+                <img
+                  src={logo}
+                  alt="ERAMATCH"
+                  className="h-[40px] w-[201.188px] object-cover"
                 />
               </div>
-              
+
               {/* Notifications and Sign Out */}
               <div className="flex items-center gap-[16px]">
                 {/* Notification Bell Icon */}
                 <div className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center cursor-pointer hover:bg-[#dad3ff] transition-colors">
                   <Notifications />
                 </div>
-                
+
                 {/* Sign Out Button */}
-                <button 
+                <button
                   className="h-[42px] rounded-full border border-[#c63434] px-6 flex items-center justify-center text-[#c63434] hover:bg-[#c63434] hover:text-white transition-colors duration-200 font-['Arimo',sans-serif] text-[16px]"
                   onClick={() => setCurrentPage('landing')}
                 >
@@ -410,7 +410,7 @@ export default function App() {
         {/* Main Content */}
         <main>
           {currentPage === 'alerts' ? (
-            <AlertsNotifications 
+            <AlertsNotifications
               onViewCandidate={(candidateId) => {
                 setSelectedCandidateId(candidateId);
                 setCurrentPage('candidate-profile');
@@ -510,17 +510,17 @@ export default function App() {
               onBack={() => setCurrentPage('candidate-profile')}
             />
           ) : currentPage === 'dashboard' ? (
-            <Dashboard 
+            <Dashboard
               onViewAllProjects={() => {
                 setSelectedProject('');
                 setCurrentPage('projects');
-              }} 
+              }}
               onViewProject={handleViewProject}
             />
           ) : currentPage === 'candidate-dashboard' ? (
             <CandidateDashboard />
           ) : currentPage === 'create-assessment' ? (
-            <CreateAssessmentPage 
+            <CreateAssessmentPage
               onBack={() => setCurrentPage('projects')}
               onSave={(title, questions) => {
                 const newAssessment: Assessment = {
@@ -534,7 +534,7 @@ export default function App() {
               }}
             />
           ) : currentPage === 'create-ai-interview' ? (
-            <CreateAIInterview 
+            <CreateAIInterview
               onBack={() => setCurrentPage('group-overview')}
               onSave={(interview) => {
                 // Handle AI interview save
@@ -547,8 +547,8 @@ export default function App() {
           ) : currentPage === 'candidates' ? (
             <CandidatesPage onBack={() => setCurrentPage('dashboard')} />
           ) : (
-            <ProjectsPage 
-              onViewProject={handleViewProject} 
+            <ProjectsPage
+              onViewProject={handleViewProject}
               initialProjectTitle={selectedProject}
               onBackToDashboard={() => {
                 setSelectedProject('');

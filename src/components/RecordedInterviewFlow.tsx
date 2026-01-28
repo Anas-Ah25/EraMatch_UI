@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Sparkles, Video, Clock, User, Camera, Mic, Play, Info, Scan, CheckCircle2, Target, Copy, X, AlertTriangle, Users } from 'lucide-react';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface RecordedInterviewFlowProps {
   onSignOut: () => void;
@@ -77,7 +77,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
   const handleStartFaceDetection = () => {
     setFaceDetectionStarted(true);
     setDetectionProgress(0);
-    
+
     // Simulate face detection progress
     const interval = setInterval(() => {
       setDetectionProgress((prev) => {
@@ -100,7 +100,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
     setScore(0);
     setTargetsCaught(0);
     setCalibrationComplete(false);
-    
+
     // Enter fullscreen
     if (calibrationRef.current) {
       if (calibrationRef.current.requestFullscreen) {
@@ -147,7 +147,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
 
       const point = allPoints[currentIndex];
       const fireflyId = Date.now();
-      
+
       setFireflies([{ ...point, id: fireflyId }]);
 
       // Remove firefly after 3 seconds if not clicked (increased from 2 seconds)
@@ -164,13 +164,13 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
   const handleFireflyClick = (firefly: { x: number; y: number; id: number; isCalibration: boolean }) => {
     setFireflies(prev => prev.filter(f => f.id !== firefly.id));
     setScore(prev => prev + 1);
-    
+
     if (firefly.isCalibration) {
       const newTargetsCaught = targetsCaught + 1;
       setTargetsCaught(newTargetsCaught);
       // Log calibration data
       console.log('Calibration point clicked:', firefly.x, firefly.y);
-      
+
       // Check if all 5 calibration targets have been caught
       if (newTargetsCaught >= 5) {
         setTimeout(() => {
@@ -215,7 +215,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
           setTimeout(() => {
             setShowUploadProgress(false);
             setUploadProgress(0);
-            
+
             // Move to next question or complete
             if (currentQuestion < totalQuestions) {
               setCurrentQuestion(prev => prev + 1);
@@ -245,9 +245,9 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
               <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              
+
               <h2 className="text-gray-700">Welcome to AI Interview</h2>
-              
+
               <p className="text-gray-600 max-w-lg">
                 Get ready to showcase your skills and experience through our AI-powered interview process. We'll guide you through each step to ensure the best experience.
               </p>
@@ -460,7 +460,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                 {/* Camera Feed */}
                 <div className="bg-slate-900 rounded-lg h-80 flex flex-col items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div 
+                    <div
                       className="w-64 h-64 rounded-full border-2 opacity-30"
                       style={{ borderColor: '#6366F1' }}
                     />
@@ -512,9 +512,9 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                     <span className="text-gray-600 text-sm">{detectionProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="h-2 rounded-full transition-all duration-300"
-                      style={{ 
+                      style={{
                         width: `${detectionProgress}%`,
                         backgroundColor: '#6366F1'
                       }}
@@ -596,7 +596,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                     <div className="flex justify-center pt-4">
                       <Button
                         className="text-white rounded-full px-8"
-                        style={{ 
+                        style={{
                           background: 'linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)'
                         }}
                         onClick={handleStartCalibration}
@@ -610,10 +610,10 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
 
               {/* Fullscreen Calibration Game */}
               {isCalibrating && (
-                <div 
+                <div
                   ref={calibrationRef}
                   className="fixed inset-0 w-screen h-screen cursor-crosshair"
-                  style={{ 
+                  style={{
                     background: 'linear-gradient(135deg, #5B21B6 0%, #DB2777 100%)',
                     zIndex: 9999
                   }}
@@ -623,7 +623,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                     <div className="text-white">
                       <div className="text-sm opacity-80 mb-1">Progress: {targetsCaught} / {totalTargets} targets</div>
                       <div className="w-64 bg-white/20 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-white h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(targetsCaught / totalTargets) * 100}%` }}
                         />
@@ -933,7 +933,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                     'Start Recording'
                   )}
                 </Button>
-                
+
                 {mockRecorded && !mockRecording && (
                   <button className="text-gray-500 text-sm hover:text-gray-700">
                     Retry
@@ -1027,7 +1027,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
             <img src={logo} alt="ERAMATCH - A Smarter Recruitment System" className="h-12" />
           </div>
           <div>
-            <Button 
+            <Button
               className="rounded-full px-6 transition-colors duration-200 border"
               style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
               onMouseEnter={(e) => {
@@ -1058,13 +1058,12 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                 {steps.map((step) => (
                   <div key={step.number} className="flex flex-col items-center w-20">
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all ${
-                        currentStep > step.number
+                      className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all ${currentStep > step.number
                           ? 'bg-gradient-to-br'
                           : currentStep === step.number
-                          ? 'bg-gradient-to-br'
-                          : 'bg-gray-300'
-                      }`}
+                            ? 'bg-gradient-to-br'
+                            : 'bg-gray-300'
+                        }`}
                       style={currentStep >= step.number ? { backgroundColor: '#6366F1' } : {}}
                     >
                       {currentStep > step.number ? '✓' : step.number}
@@ -1109,18 +1108,18 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
               <Card className="max-w-4xl mx-auto p-12">
                 <div className="flex flex-col items-center space-y-6">
                   <div className="w-16 h-16 rounded-full flex items-center justify-center animate-spin" style={{ borderTop: '4px solid #6366F1', borderRight: '4px solid transparent', borderBottom: '4px solid transparent', borderLeft: '4px solid transparent' }} />
-                  
+
                   <h3 className="text-gray-700">Uploading your response...</h3>
-                  
+
                   <div className="w-full max-w-md">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-600 text-sm">Upload progress</span>
                       <span className="text-gray-700">{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full transition-all duration-300"
-                        style={{ 
+                        style={{
                           width: `${uploadProgress}%`,
                           backgroundColor: '#6366F1'
                         }}
@@ -1180,7 +1179,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                   {/* Retry Button */}
                   {questionRecorded && !questionRecording && retries < 2 && (
                     <div className="flex justify-center">
-                      <button 
+                      <button
                         className="text-gray-500 text-sm hover:text-gray-700"
                         onClick={handleRetryQuestion}
                       >

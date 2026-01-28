@@ -1,5 +1,5 @@
 import svgPaths from "./svg-dnuhrjuvc";
-import imgImageEramatch from "figma:asset/32b64e522a3b524affa7936547f1cc68d3dc74c8.png";
+import imgImageEramatch from "../assets/image-eramatch.png";
 
 function ImageEramatch() {
   return (

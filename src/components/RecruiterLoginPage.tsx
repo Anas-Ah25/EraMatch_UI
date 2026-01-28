@@ -3,7 +3,7 @@ import { ArrowLeft, Briefcase } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface RecruiterLoginPageProps {
   onBack: () => void;
@@ -41,7 +41,7 @@ export function RecruiterLoginPage({ onBack, onSignIn }: RecruiterLoginPageProps
       {/* Header */}
       <div className="px-12 py-6 flex items-center justify-between border-b border-gray-200 bg-white">
         <img src={logo} alt="ERAMATCH" className="h-12" />
-        <Button 
+        <Button
           variant="ghost"
           className="rounded-full px-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
           onClick={onBack}
@@ -57,7 +57,7 @@ export function RecruiterLoginPage({ onBack, onSignIn }: RecruiterLoginPageProps
           {/* Login Card */}
           <div className="bg-white rounded-3xl p-8 shadow-2xl">
             {/* Icon */}
-            <div 
+            <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6"
               style={{ backgroundColor: '#EEF2FF' }}
             >

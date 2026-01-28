@@ -1,7 +1,7 @@
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { FileText, Layers, Clock, CheckCircle2, ArrowLeft } from 'lucide-react';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface CandidateDashboardProps {
   onSignOut: () => void;
@@ -51,7 +51,7 @@ export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStar
             <img src={logo} alt="ERAMATCH - A Smarter Recruitment System" className="h-12" />
           </div>
           <div className="flex items-center gap-4">
-            <Button 
+            <Button
               className="rounded-full px-6 transition-colors duration-200 border"
               style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
               onMouseEnter={(e) => {
@@ -110,7 +110,7 @@ export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStar
                       <span>{assessment.parts}</span>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center gap-2 text-gray-600 text-sm">
                     <Clock className="w-4 h-4" />
                     <span>{assessment.expectedTime}</span>
@@ -118,8 +118,8 @@ export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStar
 
                   {/* Check completion status and render appropriate button */}
                   {(recordedInterviewCompleted && assessment.type === 'interview' && assessment.parts === 5) ||
-                   (liveInterviewCompleted && assessment.type === 'interview' && assessment.parts === 1) ||
-                   (technicalAssessmentCompleted && assessment.type === 'assessment') ? (
+                    (liveInterviewCompleted && assessment.type === 'interview' && assessment.parts === 1) ||
+                    (technicalAssessmentCompleted && assessment.type === 'assessment') ? (
                     <div className="flex items-center gap-3">
                       <Button
                         className="rounded-full px-6 whitespace-nowrap w-44 bg-gray-300 cursor-not-allowed"
@@ -137,10 +137,10 @@ export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStar
                         assessment.type === 'interview' && assessment.parts === 5
                           ? onStartRecordedInterview
                           : assessment.type === 'interview' && assessment.parts === 1
-                          ? onStartLiveInterview
-                          : assessment.type === 'assessment'
-                          ? onStartTechnicalAssessment
-                          : undefined
+                            ? onStartLiveInterview
+                            : assessment.type === 'assessment'
+                              ? onStartTechnicalAssessment
+                              : undefined
                       }
                     >
                       {assessment.type === 'assessment' ? 'Start Assessment' : 'Start Interview'}

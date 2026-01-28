@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Sparkles, Video, Clock, User, Camera, Mic, Play, Info, Scan, CheckCircle2, Copy, X, AlertTriangle, Users, Volume2 } from 'lucide-react';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface LiveInterviewFlowProps {
   onSignOut: () => void;
@@ -64,19 +64,19 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
     if (inInterviewSession && conversationTurns < maxTurns) {
       setAiSpeaking(true);
       setCandidateSpeaking(false);
-      
+
       // Simulate AI speaking for 3-5 seconds
       const speakDuration = 3000 + Math.random() * 2000;
       const timer = setTimeout(() => {
         setAiSpeaking(false);
         setCandidateSpeaking(true);
-        
+
         // Auto-detect when candidate stops speaking (simulate 5-8 seconds of candidate speaking)
         const candidateSpeakDuration = 5000 + Math.random() * 3000;
         const candidateTimer = setTimeout(() => {
           setCandidateSpeaking(false);
           setConversationTurns(prev => prev + 1);
-          
+
           // Check if interview is complete
           if (conversationTurns >= maxTurns - 1) {
             setShowUploadProgress(true);
@@ -120,7 +120,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
   const handleStartFaceDetection = () => {
     setFaceDetectionStarted(true);
     setDetectionProgress(0);
-    
+
     const interval = setInterval(() => {
       setDetectionProgress((prev) => {
         if (prev >= 100) {
@@ -142,7 +142,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
     setScore(0);
     setTargetsCaught(0);
     setCalibrationComplete(false);
-    
+
     if (calibrationRef.current) {
       if (calibrationRef.current.requestFullscreen) {
         calibrationRef.current.requestFullscreen();
@@ -182,7 +182,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
 
       const point = allPoints[currentIndex];
       const fireflyId = Date.now();
-      
+
       setFireflies([{ ...point, id: fireflyId }]);
 
       setTimeout(() => {
@@ -198,12 +198,12 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
   const handleFireflyClick = (firefly: { x: number; y: number; id: number; isCalibration: boolean }) => {
     setFireflies(prev => prev.filter(f => f.id !== firefly.id));
     setScore(prev => prev + 1);
-    
+
     if (firefly.isCalibration) {
       const newTargetsCaught = targetsCaught + 1;
       setTargetsCaught(newTargetsCaught);
       console.log('Calibration point clicked:', firefly.x, firefly.y);
-      
+
       // Check if all 5 calibration targets have been caught
       if (newTargetsCaught >= 5) {
         setTimeout(() => {
@@ -223,10 +223,10 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
 
   const handleCandidateStopSpeaking = () => {
     setCandidateSpeaking(false);
-    
+
     // After candidate finishes, increment conversation turn
     setConversationTurns(prev => prev + 1);
-    
+
     if (conversationTurns >= maxTurns - 1) {
       // Interview complete - show upload progress
       setShowUploadProgress(true);
@@ -257,9 +257,9 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
               <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
-              
+
               <h2 className="text-gray-700">Welcome to Live AI Interview</h2>
-              
+
               <p className="text-gray-600 max-w-lg">
                 Get ready for a real-time conversation with our AI interviewer. This interview will feel like a natural conversation where the AI asks questions and you respond in real-time.
               </p>
@@ -469,7 +469,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-slate-900 rounded-lg h-80 flex flex-col items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div 
+                    <div
                       className="w-64 h-64 rounded-full border-2 opacity-30"
                       style={{ borderColor: '#6366F1' }}
                     />
@@ -514,9 +514,9 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
                     <span className="text-gray-600 text-sm">{detectionProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="h-2 rounded-full transition-all duration-300"
-                      style={{ 
+                      style={{
                         width: `${detectionProgress}%`,
                         backgroundColor: '#6366F1'
                       }}
@@ -595,7 +595,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
                     <div className="flex justify-center pt-4">
                       <Button
                         className="text-white rounded-full px-8"
-                        style={{ 
+                        style={{
                           background: 'linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)'
                         }}
                         onClick={handleStartCalibration}
@@ -608,10 +608,10 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
               )}
 
               {isCalibrating && (
-                <div 
+                <div
                   ref={calibrationRef}
                   className="fixed inset-0 w-screen h-screen cursor-crosshair"
-                  style={{ 
+                  style={{
                     background: 'linear-gradient(135deg, #5B21B6 0%, #DB2777 100%)',
                     zIndex: 9999
                   }}
@@ -620,7 +620,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
                     <div className="text-white">
                       <div className="text-sm opacity-80 mb-1">Progress: {targetsCaught} / {totalTargets} targets</div>
                       <div className="w-64 bg-white/20 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-white h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(targetsCaught / totalTargets) * 100}%` }}
                         />
@@ -903,7 +903,7 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
             <img src={logo} alt="ERAMATCH - A Smarter Recruitment System" className="h-12" />
           </div>
           <div>
-            <Button 
+            <Button
               className="rounded-full px-6 transition-colors duration-200 border"
               style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
               onMouseEnter={(e) => {
@@ -959,18 +959,18 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
               <Card className="max-w-4xl mx-auto p-12">
                 <div className="flex flex-col items-center space-y-6">
                   <div className="w-16 h-16 rounded-full flex items-center justify-center animate-spin" style={{ borderTop: '4px solid #6366F1', borderRight: '4px solid transparent', borderBottom: '4px solid transparent', borderLeft: '4px solid transparent' }} />
-                  
+
                   <h3 className="text-gray-700">Uploading interview recording...</h3>
-                  
+
                   <div className="w-full max-w-md">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-gray-600 text-sm">Upload progress</span>
                       <span className="text-gray-700">{uploadProgress}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="h-2 rounded-full transition-all duration-300"
-                        style={{ 
+                        style={{
                           width: `${uploadProgress}%`,
                           backgroundColor: '#6366F1'
                         }}

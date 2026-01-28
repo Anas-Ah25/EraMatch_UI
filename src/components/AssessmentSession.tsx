@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { AlertCircle, ChevronLeft, ChevronRight, Clock, CheckCircle2, Code2, Flag, Play } from 'lucide-react';
-import logo from 'figma:asset/10df70523178854e754d3c6143efdb26effe4ce6.png';
+import logo from '../assets/image-eramatch.png';
 
 interface AssessmentSessionProps {
   onSignOut: () => void;
@@ -163,7 +163,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
   // Assessment timer countdown
   useEffect(() => {
     if (assessmentComplete) return; // Stop timer when assessment is complete
-    
+
     const timer = setInterval(() => {
       setAssessmentTimer((prev) => {
         if (prev <= 1) {
@@ -297,7 +297,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
   const handleRunCode = () => {
     const code = answers[currentQuestion.id] as string || currentQuestion.starterCode || '';
     const language = selectedLanguages[currentQuestion.id] || 'javascript';
-    
+
     // Simulate code execution (mock implementation)
     try {
       if (language === 'javascript' || language === 'typescript') {
@@ -334,8 +334,8 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
   // If assessment is complete, show completion screen
   if (assessmentComplete) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center" 
+      <div
+        className="min-h-screen flex items-center justify-center"
         style={{ backgroundColor: '#EDF0F8' }}
       >
         <Card className="max-w-3xl mx-auto p-12">
@@ -404,10 +404,10 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className="min-h-screen transition-all duration-300" 
-      style={{ 
+      className="min-h-screen transition-all duration-300"
+      style={{
         backgroundColor: '#EDF0F8',
         border: showRedBorder ? '8px solid #EF4444' : 'none'
       }}
@@ -433,7 +433,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
               </div>
 
               <div className="flex flex-col items-center gap-2">
-                <div 
+                <div
                   className="text-6xl font-bold transition-colors"
                   style={{ color: inactivityCountdown <= 2 ? '#EF4444' : '#6366F1' }}
                 >
@@ -466,7 +466,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
             {/* Timer */}
             <div className="flex items-center gap-2 px-4 py-2 rounded-full" style={{ backgroundColor: assessmentTimer < 300 ? '#FEE2E2' : '#FFFFFF' }}>
               <Clock className="w-5 h-5" style={{ color: assessmentTimer < 300 ? '#EF4444' : '#6366F1' }} />
-              <span 
+              <span
                 className="font-mono"
                 style={{ color: assessmentTimer < 300 ? '#EF4444' : '#6366F1' }}
               >
@@ -505,9 +505,9 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
+          <div
             className="h-2 rounded-full transition-all duration-300"
-            style={{ 
+            style={{
               width: `${((currentQuestionIndex + 1) / questions.length) * 100}%`,
               backgroundColor: '#6366F1'
             }}
@@ -531,15 +531,15 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                     }}
                     className="w-10 h-10 rounded-full flex items-center justify-center text-sm transition-colors"
                     style={{
-                      backgroundColor: index === currentQuestionIndex 
-                        ? '#6366F1' 
-                        : answers[q.id] !== undefined 
-                          ? '#D1FAE5' 
+                      backgroundColor: index === currentQuestionIndex
+                        ? '#6366F1'
+                        : answers[q.id] !== undefined
+                          ? '#D1FAE5'
                           : '#F3F4F6',
-                      color: index === currentQuestionIndex 
-                        ? '#FFFFFF' 
-                        : answers[q.id] !== undefined 
-                          ? '#059669' 
+                      color: index === currentQuestionIndex
+                        ? '#FFFFFF'
+                        : answers[q.id] !== undefined
+                          ? '#059669'
                           : '#6B7280'
                     }}
                   >
@@ -577,7 +577,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-4">
-                  <span 
+                  <span
                     className="px-3 py-1 rounded-full text-sm text-white"
                     style={{ backgroundColor: '#6366F1' }}
                   >
@@ -590,9 +590,9 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
               <div>
                 <Button
                   className="rounded-full px-4 transition-colors"
-                  style={{ 
-                    backgroundColor: flaggedQuestions.has(currentQuestion.id) ? '#EF4444' : '#FEE2E2', 
-                    color: flaggedQuestions.has(currentQuestion.id) ? '#FFFFFF' : '#EF4444' 
+                  style={{
+                    backgroundColor: flaggedQuestions.has(currentQuestion.id) ? '#EF4444' : '#FEE2E2',
+                    color: flaggedQuestions.has(currentQuestion.id) ? '#FFFFFF' : '#EF4444'
                   }}
                   onClick={() => toggleFlagQuestion(currentQuestion.id)}
                 >
@@ -617,7 +617,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
               {currentQuestion.type === 'mcq' && currentQuestion.options && (
                 <div className="space-y-3">
                   {currentQuestion.options.map((option, index) => (
-                    <label 
+                    <label
                       key={index}
                       className="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50"
                       style={{
@@ -648,7 +648,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                       <Code2 size={16} className="text-gray-500" />
                       <select
                         className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer"
-                        style={{ 
+                        style={{
                           focusRingColor: '#6366F1',
                           backgroundColor: '#FFFFFF',
                           color: '#374151'
@@ -672,7 +672,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                   </div>
                   <textarea
                     className="w-full min-h-80 p-4 border border-gray-300 rounded-b-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 resize-y"
-                    style={{ 
+                    style={{
                       focusRingColor: '#6366F1',
                       backgroundColor: '#1E293B',
                       color: '#E2E8F0'
@@ -754,7 +754,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                     {unansweredCount > 0 ? 'Unanswered Questions' : 'Confirm Submission'}
                   </h3>
                   <p className="text-gray-600 text-sm">
-                    {unansweredCount > 0 
+                    {unansweredCount > 0
                       ? `You still have ${unansweredCount} unanswered question${unansweredCount > 1 ? 's' : ''}. Are you sure you want to submit?`
                       : 'Are you sure you want to submit your assessment? This action cannot be undone.'
                     }

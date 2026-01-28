@@ -4,7 +4,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface PaymentGatewayPageProps {
   onBack: () => void;
@@ -88,7 +88,7 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
         <div className="flex items-center gap-3">
           {/* Admin Bypass Button */}
           {onBypass && (
-            <Button 
+            <Button
               variant="ghost"
               className="rounded-full px-4 py-2 flex items-center gap-2 text-xs text-purple-600 hover:bg-purple-50 border border-purple-300"
               onClick={() => setShowBypassConfirm(true)}
@@ -98,7 +98,7 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
               Admin Bypass
             </Button>
           )}
-          <Button 
+          <Button
             variant="ghost"
             className="rounded-full px-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
             onClick={onBack}
@@ -169,10 +169,9 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
 
               <RadioGroup value={selectedPlan} onValueChange={(value: any) => setSelectedPlan(value)}>
                 {/* Starter */}
-                <div 
-                  className={`flex items-center justify-between p-4 rounded-xl border-2 mb-3 cursor-pointer transition-all ${
-                    selectedPlan === 'starter' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                <div
+                  className={`flex items-center justify-between p-4 rounded-xl border-2 mb-3 cursor-pointer transition-all ${selectedPlan === 'starter' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   onClick={() => setSelectedPlan('starter')}
                 >
                   <div className="flex items-center gap-4">
@@ -193,10 +192,9 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
                 </div>
 
                 {/* Professional */}
-                <div 
-                  className={`flex items-center justify-between p-4 rounded-xl border-2 mb-3 cursor-pointer transition-all relative ${
-                    selectedPlan === 'professional' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                <div
+                  className={`flex items-center justify-between p-4 rounded-xl border-2 mb-3 cursor-pointer transition-all relative ${selectedPlan === 'professional' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   onClick={() => setSelectedPlan('professional')}
                 >
                   <div className="absolute -top-3 left-4">
@@ -223,10 +221,9 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
                 </div>
 
                 {/* Enterprise */}
-                <div 
-                  className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    selectedPlan === 'enterprise' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                <div
+                  className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedPlan === 'enterprise' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   onClick={() => setSelectedPlan('enterprise')}
                 >
                   <div className="flex items-center gap-4">
@@ -256,9 +253,8 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
 
               <div className="grid grid-cols-2 gap-4">
                 <div
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    billingCycle === 'monthly' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${billingCycle === 'monthly' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   onClick={() => setBillingCycle('monthly')}
                 >
                   <div className="text-base mb-1" style={{ color: '#1F2937' }}>Monthly</div>
@@ -266,9 +262,8 @@ export function PaymentGatewayPage({ onBack, onComplete, onBypass }: PaymentGate
                 </div>
 
                 <div
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all relative ${
-                    billingCycle === 'annual' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all relative ${billingCycle === 'annual' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   onClick={() => setBillingCycle('annual')}
                 >
                   <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: '#10B981', color: '#FFFFFF' }}>

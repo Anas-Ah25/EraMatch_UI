@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { Video, Clock, User, Info, AlertCircle, FileText, Laptop, Network, Globe, Layers, Activity, Camera, Mic, Scan, CheckCircle2, Sparkles, Target, Copy, X, AlertTriangle, Users, Monitor } from 'lucide-react';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 import { AssessmentSession } from './AssessmentSession';
 
 interface TechnicalAssessmentFlowProps {
@@ -17,16 +17,16 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   const [showInactivityAlert, setShowInactivityAlert] = useState(false);
   const [showRedBorder, setShowRedBorder] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
-  
+
   // Device test states
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecorded, setHasRecorded] = useState(false);
-  
+
   // Face detection states
   const [faceDetectionStarted, setFaceDetectionStarted] = useState(false);
   const [faceDetectionComplete, setFaceDetectionComplete] = useState(false);
   const [detectionProgress, setDetectionProgress] = useState(0);
-  
+
   // Break the Ice states
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [calibrationComplete, setCalibrationComplete] = useState(false);
@@ -35,10 +35,10 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   const [targetsCaught, setTargetsCaught] = useState(0);
   const [totalTargets] = useState(20);
   const calibrationRef = useRef<HTMLDivElement>(null);
-  
+
   // Copy/Paste states
   const [copyPasteUnderstood, setCopyPasteUnderstood] = useState(false);
-  
+
   // Mock Question states
   const [mockRecording, setMockRecording] = useState(false);
   const [mockRecorded, setMockRecorded] = useState(false);
@@ -210,7 +210,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   const handleStartFaceDetection = () => {
     setFaceDetectionStarted(true);
     setDetectionProgress(0);
-    
+
     const interval = setInterval(() => {
       setDetectionProgress((prev) => {
         if (prev >= 100) {
@@ -232,28 +232,28 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
     setScore(0);
     setTargetsCaught(0);
     setFireflies([]);
-    
+
     const spawnFirefly = () => {
       if (targetsCaught >= totalTargets) {
         setIsCalibrating(false);
         setCalibrationComplete(true);
         return;
       }
-      
+
       const newFirefly = {
         x: Math.random() * 80 + 10,
         y: Math.random() * 80 + 10,
         id: Date.now(),
         isCalibration: true
       };
-      
+
       setFireflies(prev => [...prev, newFirefly]);
-      
+
       setTimeout(() => {
         setFireflies(prev => prev.filter(f => f.id !== newFirefly.id));
       }, 2000);
     };
-    
+
     const interval = setInterval(() => {
       if (targetsCaught < totalTargets) {
         spawnFirefly();
@@ -298,13 +298,12 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
           {steps.map((step) => (
             <div key={step.number} className="flex flex-col items-center w-20">
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all ${
-                  currentStep > step.number
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all ${currentStep > step.number
                     ? 'bg-gradient-to-br'
                     : currentStep === step.number
-                    ? 'bg-gradient-to-br'
-                    : 'bg-gray-300'
-                }`}
+                      ? 'bg-gradient-to-br'
+                      : 'bg-gray-300'
+                  }`}
                 style={currentStep >= step.number ? { backgroundColor: '#6366F1' } : {}}
               >
                 {currentStep > step.number ? '✓' : step.number}
@@ -545,7 +544,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-slate-900 rounded-lg h-80 flex flex-col items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div 
+                    <div
                       className="w-64 h-64 rounded-full border-2 opacity-30"
                       style={{ borderColor: '#6366F1' }}
                     />
@@ -590,9 +589,9 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                     <span className="text-gray-600 text-sm">{detectionProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="h-2 rounded-full transition-all duration-300"
-                      style={{ 
+                      style={{
                         width: `${detectionProgress}%`,
                         backgroundColor: '#6366F1'
                       }}
@@ -671,7 +670,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                     <div className="flex justify-center pt-4">
                       <Button
                         className="text-white rounded-full px-8"
-                        style={{ 
+                        style={{
                           background: 'linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%)'
                         }}
                         onClick={handleStartCalibration}
@@ -684,10 +683,10 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
               )}
 
               {isCalibrating && (
-                <div 
+                <div
                   ref={calibrationRef}
                   className="fixed inset-0 w-screen h-screen cursor-crosshair"
-                  style={{ 
+                  style={{
                     background: 'linear-gradient(135deg, #5B21B6 0%, #DB2777 100%)',
                     zIndex: 9999
                   }}
@@ -696,7 +695,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                     <div className="text-white">
                       <div className="text-sm opacity-80 mb-1">Progress: {targetsCaught} / {totalTargets} targets</div>
                       <div className="w-64 bg-white/20 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-white h-2 rounded-full transition-all duration-300"
                           style={{ width: `${(targetsCaught / totalTargets) * 100}%` }}
                         />
@@ -956,9 +955,9 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                 <p><strong className="text-gray-700">Demo:</strong> Watch what happens when the system detects inactivity:</p>
               </div>
 
-              <div 
-                className="relative p-8 rounded-lg transition-all duration-300" 
-                style={{ 
+              <div
+                className="relative p-8 rounded-lg transition-all duration-300"
+                style={{
                   backgroundColor: '#F9FAFB',
                   border: showRedBorder ? '4px solid #EF4444' : '2px solid #E5E7EB'
                 }}
@@ -979,7 +978,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                      <div 
+                      <div
                         className="text-6xl font-bold transition-colors"
                         style={{ color: inactivityTimer <= 2 ? '#EF4444' : '#6366F1' }}
                       >
@@ -1008,7 +1007,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                   </div>
                 ) : (
                   <div className="text-center space-y-4">
-                    <div 
+                    <div
                       className="text-6xl font-bold mb-2"
                       style={{ color: '#9CA3AF' }}
                     >

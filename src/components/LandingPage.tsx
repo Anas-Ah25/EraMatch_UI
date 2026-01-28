@@ -1,6 +1,6 @@
 import { ArrowRight, CheckCircle, Users, Brain, BarChart3, Shield, Clock, Target, Check, Star } from 'lucide-react';
 import { Button } from './ui/button';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -25,15 +25,15 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
             <CheckCircle size={18} />
             <span className="text-sm">AI-Powered Recruitment Platform</span>
           </div>
-          
+
           <h1 className="text-6xl mb-6" style={{ color: '#1F2937' }}>
             A Smarter Way to
             <br />
             <span style={{ color: '#10B981' }}>Build Your Team</span>
           </h1>
-          
+
           <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-            ERAMATCH revolutionizes recruitment with AI-driven assessments, live interviews, 
+            ERAMATCH revolutionizes recruitment with AI-driven assessments, live interviews,
             and comprehensive analytics. Find the perfect candidate faster than ever before.
           </p>
         </div>
@@ -154,7 +154,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
             <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 hover:shadow-xl transition-all duration-300">
               <h3 className="text-2xl mb-2" style={{ color: '#1F2937' }}>Starter</h3>
               <p className="text-gray-600 text-sm mb-6">For small teams getting started</p>
-              
+
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-5xl" style={{ color: '#1F2937' }}>$199</span>
@@ -163,7 +163,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
                 <p className="text-sm text-gray-500 mt-2">Billed annually or $249/mo monthly</p>
               </div>
 
-              <Button 
+              <Button
                 className="w-full rounded-xl py-6 mb-8 transition-colors duration-200 border-2"
                 style={{ backgroundColor: '#FFFFFF', color: '#6366F1', borderColor: '#6366F1' }}
                 onMouseEnter={(e) => {
@@ -218,7 +218,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
 
               <h3 className="text-2xl mb-2" style={{ color: '#1F2937' }}>Professional</h3>
               <p className="text-gray-600 text-sm mb-6">For growing recruitment teams</p>
-              
+
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-5xl" style={{ color: '#10B981' }}>$499</span>
@@ -227,7 +227,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
                 <p className="text-sm text-gray-500 mt-2">Billed annually or $599/mo monthly</p>
               </div>
 
-              <Button 
+              <Button
                 className="w-full rounded-xl py-6 mb-8 transition-colors duration-200"
                 style={{ backgroundColor: '#10B981', color: '#FFFFFF' }}
                 onMouseEnter={(e) => {
@@ -281,7 +281,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
             <div className="bg-white border-2 border-gray-200 rounded-3xl p-8 hover:shadow-xl transition-all duration-300">
               <h3 className="text-2xl mb-2" style={{ color: '#1F2937' }}>Enterprise</h3>
               <p className="text-gray-600 text-sm mb-6">For large organizations</p>
-              
+
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-5xl" style={{ color: '#1F2937' }}>Custom</span>
@@ -289,7 +289,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
                 <p className="text-sm text-gray-500 mt-2">Tailored to your needs</p>
               </div>
 
-              <Button 
+              <Button
                 className="w-full rounded-xl py-6 mb-8 transition-colors duration-200 border-2"
                 style={{ backgroundColor: '#FFFFFF', color: '#6366F1', borderColor: '#6366F1' }}
                 onMouseEnter={(e) => {
@@ -416,7 +416,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
           <p className="text-xl mb-8" style={{ color: '#9CA3AF' }}>
             Join hundreds of companies already using ERAMATCH to build exceptional teams
           </p>
-          <Button 
+          <Button
             className="rounded-full px-8 py-6 text-lg transition-colors duration-200 flex items-center gap-2 mx-auto"
             style={{ backgroundColor: '#10B981', color: '#FFFFFF' }}
             onMouseEnter={(e) => {
@@ -447,7 +447,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
               </p>
             </div>
             <div className="flex items-center justify-center gap-4">
-              <Button 
+              <Button
                 className="rounded-full px-6 py-3 transition-colors duration-200 border-2"
                 style={{ backgroundColor: '#FFFFFF', color: '#F59E0B', borderColor: '#F59E0B' }}
                 onMouseEnter={(e) => {
@@ -462,7 +462,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
               >
                 Admin Login
               </Button>
-              <Button 
+              <Button
                 className="rounded-full px-6 py-3 transition-colors duration-200"
                 style={{ backgroundColor: '#6366F1', color: '#FFFFFF' }}
                 onMouseEnter={(e) => {
@@ -475,7 +475,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
               >
                 Recruiter Login
               </Button>
-              <Button 
+              <Button
                 className="rounded-full px-6 py-3 transition-colors duration-200 border-2"
                 style={{ backgroundColor: '#FFFFFF', color: '#10B981', borderColor: '#10B981' }}
                 onMouseEnter={(e) => {
@@ -492,7 +492,7 @@ export function LandingPage({ onGetStarted, onViewDesigns, onAdminLogin, onRecru
               </Button>
             </div>
           </div>
-          
+
           {/* Copyright */}
           <div className="flex items-center justify-between">
             <img src={logo} alt="ERAMATCH" className="h-10" />

@@ -3,7 +3,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { ArrowLeft } from 'lucide-react';
-import logo from 'figma:asset/8bd93ed4627c09346a804ff348fc063b132b8b5d.png';
+import logo from '../assets/image-eramatch.png';
 
 interface CandidateLoginPageProps {
   onBack: () => void;
@@ -24,7 +24,7 @@ export function CandidateLoginPage({ onBack, onSignIn }: CandidateLoginPageProps
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F8' }}>
       {/* Back to Home Button - Small, positioned in top-left */}
-      <Button 
+      <Button
         variant="ghost"
         className="absolute top-6 left-6 rounded-full px-4 py-2 text-sm flex items-center gap-2 text-gray-600 hover:text-gray-900 hover:bg-white/50"
         onClick={onBack}
