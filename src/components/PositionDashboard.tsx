@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { ChevronLeft, Filter, Search, X, AlertTriangle, Eye, Users, ArrowUpDown, Download, Network } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, Filter, Search, X, AlertTriangle, Eye, Users, ArrowUpDown, Download, Network, Loader2 } from 'lucide-react';
 import { AdvancedFilterDrawer } from './AdvancedFilterDrawer';
 import { SemanticSearchModal } from './SemanticSearchModal';
 import { EnhancedGroupCreationModal } from './EnhancedGroupCreationModal';
 import { MiniKGTreePopover } from './MiniKGTreePopover';
+import { api } from '../services/api';
 
 interface Candidate {
   id: number;
@@ -47,120 +48,58 @@ export function PositionDashboard({
   onCreateGroup,
   onViewGroup
 }: PositionDashboardProps) {
-  const [candidates, setCandidates] = useState<Candidate[]>([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@email.com',
-      match: 92,
-      score: 95,
-      antiCheating: false,
-      skills: ['React', 'TypeScript', 'Node.js', 'AWS'],
-      lastActivity: '2 hours ago',
-      tags: ['Top Performer', 'Quick Responder'],
-      experienceLevel: 'Senior',
-      seniority: 'Senior',
-      location: 'San Francisco, CA',
-      availability: 'Immediate',
-      education: 'Master\'s Degree',
-      yearsOfExperience: 8,
-      assessmentScore: 95,
-      aiInterviewScore: 92,
-      githubScore: 88,
-      linkedinCompleteness: 95,
-      salaryExpectation: '$120k-$150k'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      match: 85,
-      score: 88,
-      antiCheating: false,
-      skills: ['Python', 'Machine Learning', 'TensorFlow'],
-      lastActivity: '5 hours ago',
-      tags: ['AI Expert'],
-      experienceLevel: 'Mid',
-      seniority: 'Mid-Level',
-      location: 'New York, NY',
-      availability: '2 weeks',
-      education: 'Bachelor\'s Degree',
-      yearsOfExperience: 5,
-      assessmentScore: 88,
-      aiInterviewScore: 86,
-      githubScore: 82,
-      linkedinCompleteness: 90,
-      salaryExpectation: '$100k-$130k'
-    },
-    {
-      id: 3,
-      name: 'Michael Chen',
-      email: 'mchen@email.com',
-      match: 78,
-      score: 82,
-      antiCheating: true,
-      skills: ['Java', 'Spring Boot', 'Microservices'],
-      lastActivity: '1 day ago',
-      tags: ['Backend Specialist'],
-      experienceLevel: 'Mid',
-      seniority: 'Mid-Level',
-      location: 'Austin, TX',
-      availability: '1 month',
-      education: 'Bachelor\'s Degree',
-      yearsOfExperience: 6,
-      assessmentScore: 82,
-      aiInterviewScore: 75,
-      githubScore: 78,
-      linkedinCompleteness: 85,
-      salaryExpectation: '$90k-$120k'
-    },
-    {
-      id: 4,
-      name: 'Emily Davis',
-      email: 'emily.davis@email.com',
-      match: 75,
-      score: 79,
-      antiCheating: false,
-      skills: ['Vue.js', 'JavaScript', 'CSS'],
-      lastActivity: '3 hours ago',
-      tags: ['Frontend Expert'],
-      experienceLevel: 'Junior',
-      seniority: 'Junior',
-      location: 'Seattle, WA',
-      availability: 'Immediate',
-      education: 'Bachelor\'s Degree',
-      yearsOfExperience: 3,
-      assessmentScore: 79,
-      aiInterviewScore: 80,
-      githubScore: 75,
-      linkedinCompleteness: 88,
-      salaryExpectation: '$70k-$90k'
-    },
-    {
-      id: 5,
-      name: 'David Wilson',
-      email: 'dwilson@email.com',
-      match: 68,
-      score: 72,
-      antiCheating: false,
-      skills: ['DevOps', 'Docker', 'Kubernetes'],
-      lastActivity: '12 hours ago',
-      tags: ['DevOps'],
-      experienceLevel: 'Senior',
-      seniority: 'Senior',
-      location: 'Boston, MA',
-      availability: '2 weeks',
-      education: 'Master\'s Degree',
-      yearsOfExperience: 10,
-      assessmentScore: 72,
-      aiInterviewScore: 70,
-      githubScore: 85,
-      linkedinCompleteness: 92,
-      salaryExpectation: '$130k-$160k'
-    }
-  ]);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [filteredCandidates, setFilteredCandidates] = useState<Candidate[]>([]); // Initialize empty
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [filteredCandidates, setFilteredCandidates] = useState(candidates);
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.recruiter.getCandidates();
+        // Since api.ts currently returns [], let's populate it with the mock data if empty (for demo purposes) 
+        // OR better: I will update api.ts to return the rich mock data. 
+        // For this file, I expect 'data' to be the array.
+        setCandidates(data);
+        setFilteredCandidates(data);
+      } catch (error) {
+        console.error("Failed to fetch candidates", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCandidates();
+    fetchCandidates();
+  }, []);
+
+  // Fetch groups
+  const [recentGroups, setRecentGroups] = useState<any[]>([]);
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        // Mock project ID since we don't have it in props (or stick to mock behavior)
+        const groups = await api.recruiter.getProjectGroups('1');
+        // Map to UI specific format if needed, or use as is if API matches
+        // API returns PositionGroup[], UI expects specific fields. 
+        // Let's assume API returns compatible data or map it.
+        // The mockPositionGroups in api.ts has: id, groupName, candidatesCount, status...
+        // UI expects: id, name, candidates, recruiter, progress, status
+        const mappedGroups = groups.map((g: any) => ({
+          id: g.id.toString(),
+          name: g.groupName, // api has groupName
+          candidates: g.candidatesCount,
+          recruiter: g.recruiter || 'Admin', // api has recruiter? mockPositionGroups has recruiter
+          progress: 50, // mock progress
+          status: g.status
+        }));
+        setRecentGroups(mappedGroups);
+      } catch (error) {
+        console.error("Failed to fetch groups");
+      }
+    };
+    fetchGroups();
+  }, []);
+
   const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showSemanticSearch, setShowSemanticSearch] = useState(false);
@@ -172,36 +111,32 @@ export function PositionDashboard({
   const [showSaveFilterDialog, setShowSaveFilterDialog] = useState(false);
   const [filterTemplateName, setFilterTemplateName] = useState('');
   const [savedFilterTemplates, setSavedFilterTemplates] = useState<Array<{ name: string; filters: any }>>([
-    { 
-      name: 'Senior Developers (Remote)', 
-      filters: { 
-        experienceLevel: ['Senior'], 
+    {
+      name: 'Senior Developers (Remote)',
+      filters: {
+        experienceLevel: ['Senior'],
         seniority: [],
         location: ['Remote'],
         availability: [],
         education: [],
         skills: []
-      } 
+      }
     },
-    { 
-      name: 'Mid-Level Engineers', 
-      filters: { 
-        experienceLevel: ['Mid'], 
+    {
+      name: 'Mid-Level Engineers',
+      filters: {
+        experienceLevel: ['Mid'],
         seniority: [],
         location: [],
         availability: [],
         education: [],
         skills: ['React', 'TypeScript']
-      } 
+      }
     },
   ]);
 
-  // Recent groups
-  const recentGroups = [
-    { id: '1', name: 'Senior React Developers Q1', candidates: 8, recruiter: 'John Doe', progress: 62, status: 'Live' as const },
-    { id: '2', name: 'Backend Engineers - Python', candidates: 12, recruiter: 'Jane Smith', progress: 45, status: 'Live' as const },
-    { id: '3', name: 'Full Stack - High Match', candidates: 5, recruiter: 'Mike Johnson', progress: 85, status: 'Paused' as const },
-  ];
+  // Recent groups state handles the data now
+
 
   // Quick filters
   const [quickFilters, setQuickFilters] = useState({
@@ -402,11 +337,10 @@ export function PositionDashboard({
                 </div>
                 <button
                   onClick={() => setShowRecentGroups(!showRecentGroups)}
-                  className={`h-[32px] px-[12px] rounded-[6px] border transition-colors ${
-                    showRecentGroups
-                      ? 'border-[#6366f1] bg-[#f5f3ff] text-[#6366f1]'
-                      : 'border-[#e5e7eb] bg-white hover:bg-[#f9fafb] text-[#374151]'
-                  } font-['Arimo',sans-serif] text-[12px]`}
+                  className={`h-[32px] px-[12px] rounded-[6px] border transition-colors ${showRecentGroups
+                    ? 'border-[#6366f1] bg-[#f5f3ff] text-[#6366f1]'
+                    : 'border-[#e5e7eb] bg-white hover:bg-[#f9fafb] text-[#374151]'
+                    } font-['Arimo',sans-serif] text-[12px]`}
                 >
                   Recent Groups
                 </button>
@@ -436,11 +370,10 @@ export function PositionDashboard({
                 <button
                   key={level}
                   onClick={() => toggleQuickFilter('experienceLevel', level)}
-                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${
-                    quickFilters.experienceLevel.includes(level)
-                      ? 'bg-[#6366f1] text-white'
-                      : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
-                  }`}
+                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${quickFilters.experienceLevel.includes(level)
+                    ? 'bg-[#6366f1] text-white'
+                    : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
+                    }`}
                 >
                   {level}
                 </button>
@@ -451,11 +384,10 @@ export function PositionDashboard({
                 <button
                   key={loc}
                   onClick={() => toggleQuickFilter('location', loc)}
-                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${
-                    quickFilters.location.includes(loc)
-                      ? 'bg-[#6366f1] text-white'
-                      : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
-                  }`}
+                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${quickFilters.location.includes(loc)
+                    ? 'bg-[#6366f1] text-white'
+                    : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
+                    }`}
                 >
                   {loc}
                 </button>
@@ -466,11 +398,10 @@ export function PositionDashboard({
                 <button
                   key={avail}
                   onClick={() => toggleQuickFilter('availability', avail)}
-                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${
-                    quickFilters.availability.includes(avail)
-                      ? 'bg-[#6366f1] text-white'
-                      : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
-                  }`}
+                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${quickFilters.availability.includes(avail)
+                    ? 'bg-[#6366f1] text-white'
+                    : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
+                    }`}
                 >
                   {avail}
                 </button>
@@ -481,11 +412,10 @@ export function PositionDashboard({
                 <button
                   key={skill}
                   onClick={() => toggleQuickFilter('skills', skill)}
-                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${
-                    quickFilters.skills.includes(skill)
-                      ? 'bg-[#10b981] text-white'
-                      : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
-                  }`}
+                  className={`h-[32px] px-[16px] rounded-[16px] font-['Arimo',sans-serif] text-[13px] transition-colors ${quickFilters.skills.includes(skill)
+                    ? 'bg-[#10b981] text-white'
+                    : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
+                    }`}
                 >
                   {skill}
                 </button>
@@ -575,9 +505,8 @@ export function PositionDashboard({
                   {filteredCandidates.map((candidate, index) => (
                     <tr
                       key={candidate.id}
-                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors ${
-                        index === filteredCandidates.length - 1 ? 'border-b-0' : ''
-                      }`}
+                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors ${index === filteredCandidates.length - 1 ? 'border-b-0' : ''
+                        }`}
                     >
                       <td className="p-4">
                         <input
@@ -857,7 +786,7 @@ export function PositionDashboard({
       {/* Recent Groups Panel */}
       {showRecentGroups && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-transparent z-40"
             onClick={() => setShowRecentGroups(false)}
           />
@@ -891,11 +820,10 @@ export function PositionDashboard({
                         {group.candidates} candidates
                       </p>
                     </div>
-                    <span className={`px-[8px] py-[3px] rounded-[6px] font-['Arimo',sans-serif] text-[11px] ${
-                      group.status === 'Live' ? 'bg-[#dcfce7] text-[#10b981]' :
+                    <span className={`px-[8px] py-[3px] rounded-[6px] font-['Arimo',sans-serif] text-[11px] ${group.status === 'Live' ? 'bg-[#dcfce7] text-[#10b981]' :
                       group.status === 'Paused' ? 'bg-[#fef3c7] text-[#f59e0b]' :
-                      'bg-[#f3f4f6] text-[#6b7280]'
-                    }`}>
+                        'bg-[#f3f4f6] text-[#6b7280]'
+                      }`}>
                       {group.status}
                     </span>
                   </div>
@@ -909,7 +837,7 @@ export function PositionDashboard({
                       </span>
                     </div>
                     <div className="w-full h-[4px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-[#6366f1] transition-all"
                         style={{ width: `${group.progress}%` }}
                       />
@@ -919,7 +847,7 @@ export function PositionDashboard({
                     <span className="font-['Arimo',sans-serif] text-[#6b7280]">
                       {group.recruiter}
                     </span>
-                    <button 
+                    <button
                       onClick={() => onViewGroup && onViewGroup(group.id)}
                       className="h-[28px] px-[12px] rounded-[6px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[11px] text-white transition-colors"
                     >

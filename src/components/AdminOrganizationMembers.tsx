@@ -1,21 +1,13 @@
-import { useState } from 'react';
-import { Users, FileText, Briefcase, Search, Filter, ChevronDown, UserPlus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, FileText, Briefcase, Search, Filter, ChevronDown, UserPlus, Loader2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { EditAccessPrivilegesModal } from './EditAccessPrivilegesModal';
 import { toast } from 'sonner';
-
-interface Member {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  position: string;
-  department: string;
-  joinDate: string;
-}
+import { Member } from '../data/mockData';
+import { api } from '../services/api';
 
 interface AdminOrganizationMembersProps {
   onSignOut: () => void;
@@ -40,71 +32,31 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
   const [employeeFirstName, setEmployeeFirstName] = useState('');
   const [employeeLastName, setEmployeeLastName] = useState('');
 
-  const members: Member[] = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@company.com',
-      role: 'Admin',
-      position: 'HR Manager',
-      department: 'Human Resources',
-      joinDate: 'Jan 15, 2023'
-    },
-    {
-      id: 2,
-      name: 'Michael Chen',
-      email: 'michael.chen@company.com',
-      role: 'Member',
-      position: 'Engineering Lead',
-      department: 'Engineering',
-      joinDate: 'Mar 20, 2023'
-    },
-    {
-      id: 3,
-      name: 'Emily Rodriguez',
-      email: 'emily.rodriguez@company.com',
-      role: 'Member',
-      position: 'Senior Designer',
-      department: 'Design',
-      joinDate: 'May 10, 2023'
-    },
-    {
-      id: 4,
-      name: 'David Kim',
-      email: 'david.kim@company.com',
-      role: 'Member',
-      position: 'Marketing Director',
-      department: 'Marketing',
-      joinDate: 'Feb 28, 2023'
-    },
-    {
-      id: 5,
-      name: 'Jessica Martinez',
-      email: 'jessica.martinez@company.com',
-      role: 'Member',
-      position: 'Sales Manager',
-      department: 'Sales',
-      joinDate: 'Jun 18, 2023'
-    },
-    {
-      id: 6,
-      name: 'Robert Martinez',
-      email: 'robert.martinez@company.com',
-      role: 'Employee',
-      position: 'Junior Developer',
-      department: 'Engineering',
-      joinDate: 'Aug 5, 2023'
-    },
-    {
-      id: 7,
-      name: 'Amanda Lee',
-      email: 'amanda.lee@company.com',
-      role: 'Member',
-      position: 'Finance Manager',
-      department: 'Finance',
-      joinDate: 'Apr 12, 2023'
-    }
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [members, setMembers] = useState<Member[]>([]);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.admin.getMembers();
+        setMembers(data);
+      } catch (error) {
+        toast.error('Failed to load members');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMembers();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   const handleEditPrivileges = (member: Member) => {
     setSelectedMember(member);
@@ -133,13 +85,13 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
     // Search filter
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       member.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Position filter
     const matchesPosition = positionFilter === 'all' || member.position === positionFilter;
-    
+
     // Role filter
     const matchesRole = roleFilter === 'all' || member.role === roleFilter;
-    
+
     return matchesSearch && matchesPosition && matchesRole;
   });
 
@@ -180,21 +132,19 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
           <div className="flex gap-8">
             <button
               onClick={() => setActiveTab('members')}
-              className={`pb-3 px-1 font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors ${
-                activeTab === 'members'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              className={`pb-3 px-1 font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors ${activeTab === 'members'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
             >
               Members List
             </button>
             <button
               onClick={() => setActiveTab('register')}
-              className={`pb-3 px-1 font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors ${
-                activeTab === 'register'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              className={`pb-3 px-1 font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors ${activeTab === 'register'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
             >
               Register Employee
             </button>
@@ -320,9 +270,9 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <span 
+                        <span
                           className="px-3 py-1 rounded-full text-xs text-white inline-block"
-                          style={{ 
+                          style={{
                             backgroundColor: member.role === 'Admin' ? '#EF4444' : member.role === 'Member' ? '#6366F1' : '#6B7280'
                           }}
                         >
@@ -365,9 +315,9 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="employeeFirstName">First Name</Label>
-                  <Input 
-                    id="employeeFirstName" 
-                    placeholder="John" 
+                  <Input
+                    id="employeeFirstName"
+                    placeholder="John"
                     value={employeeFirstName}
                     onChange={(e) => setEmployeeFirstName(e.target.value)}
                     className="rounded-lg"
@@ -375,9 +325,9 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="employeeLastName">Last Name</Label>
-                  <Input 
-                    id="employeeLastName" 
-                    placeholder="Doe" 
+                  <Input
+                    id="employeeLastName"
+                    placeholder="Doe"
                     value={employeeLastName}
                     onChange={(e) => setEmployeeLastName(e.target.value)}
                     className="rounded-lg"
@@ -387,10 +337,10 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
 
               <div className="space-y-2">
                 <Label htmlFor="employeeEmail">Email Address</Label>
-                <Input 
-                  id="employeeEmail" 
-                  type="email" 
-                  placeholder="employee@example.com" 
+                <Input
+                  id="employeeEmail"
+                  type="email"
+                  placeholder="employee@example.com"
                   value={employeeEmail}
                   onChange={(e) => setEmployeeEmail(e.target.value)}
                   className="rounded-lg"
@@ -399,10 +349,10 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
 
               <div className="space-y-2">
                 <Label htmlFor="employeePassword">Password</Label>
-                <Input 
-                  id="employeePassword" 
-                  type="password" 
-                  placeholder="Password" 
+                <Input
+                  id="employeePassword"
+                  type="password"
+                  placeholder="Password"
                   value={employeePassword}
                   onChange={(e) => setEmployeePassword(e.target.value)}
                   className="rounded-lg"
@@ -411,10 +361,9 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
 
               <div className="space-y-2">
                 <Label htmlFor="employeeTitle">Title</Label>
-                <select 
+                <select
                   id="employeeTitle"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
-                  style={{ focusRingColor: '#6366F1' }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   value={employeeTitle}
                   onChange={(e) => setEmployeeTitle(e.target.value as 'Technical Recruiter' | 'HR Member')}
                 >
@@ -425,7 +374,7 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
             </div>
 
             <div className="flex justify-end mt-6">
-              <Button 
+              <Button
                 className="text-white rounded-full px-6"
                 style={{ backgroundColor: '#6366F1' }}
                 onClick={handleRegisterEmployee}

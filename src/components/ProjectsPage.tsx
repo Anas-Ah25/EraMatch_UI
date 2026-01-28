@@ -1,4 +1,4 @@
-import { Plus, Filter, ArrowUpDown, Search } from 'lucide-react';
+import { Plus, Filter, ArrowUpDown, Search, Loader2 } from 'lucide-react';
 import { ProjectCard } from './ProjectCard';
 import { ProjectDetailView } from './ProjectDetailView';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
@@ -7,10 +7,14 @@ import { Checkbox } from './ui/checkbox';
 import { Slider } from './ui/slider';
 import { Switch } from './ui/switch';
 import { Button } from './ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import { toast } from 'sonner';
+
+// ... existing imports ...
 
 interface Project {
-  id: number;
+  id: number | string;
   title: string;
   roles: number;
   applicants: number | string;
@@ -18,13 +22,13 @@ interface Project {
   description?: string;
 }
 
-type SortOption = 
-  | 'default' 
-  | 'a-z' 
-  | 'z-a' 
-  | 'opening-asc' 
-  | 'opening-desc' 
-  | 'closing-asc' 
+type SortOption =
+  | 'default'
+  | 'a-z'
+  | 'z-a'
+  | 'opening-asc'
+  | 'opening-desc'
+  | 'closing-asc'
   | 'closing-desc'
   | 'applicants-asc'
   | 'applicants-desc'
@@ -46,21 +50,48 @@ interface ProjectsPageProps {
 }
 
 export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashboard, onCreateAssessment, pendingAssessment, onAssessmentConsumed, onViewDashboard, onViewGroup, returnToGroupsTab = false, initialPosition = '', onPositionSelect }: ProjectsPageProps) {
-  const [projects, setProjects] = useState<Project[]>([
-    // Open projects
-    { id: 1, title: 'Summer Internship', roles: 3, applicants: '999', isOpen: true, description: '' },
-    { id: 2, title: 'Software Engineering II (DevOps Team)', roles: 1, applicants: 30, isOpen: true, description: '' },
-    { id: 3, title: 'Product Migration Project', roles: 7, applicants: 100, isOpen: true, description: '' },
-    { id: 4, title: 'AI team', roles: 3, applicants: 100, isOpen: false, description: '' },
-    // Closed projects
-    { id: 5, title: 'Summer Internship', roles: 3, applicants: '999', isOpen: false, description: '' },
-    { id: 6, title: 'Software Engineering II (DevOps Team)', roles: 1, applicants: 30, isOpen: false, description: '' },
-    { id: 7, title: 'Product Migration Project', roles: 7, applicants: 100, isOpen: false, description: '' },
-    { id: 8, title: 'AI team', roles: 3, applicants: 100, isOpen: false, description: '' },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setIsLoading(true);
+        const [activeProjects, closedProjects] = await Promise.all([
+          api.recruiter.getProjects(),
+          api.recruiter.getClosedProjects()
+        ]);
+
+        const mappedActive = activeProjects.map(p => ({
+          id: p.id,
+          title: p.projectName,
+          roles: p.positionsCount,
+          applicants: p.applicantsCount,
+          isOpen: true,
+          description: ''
+        }));
+
+        const mappedClosed = closedProjects.map(p => ({
+          id: p.id,
+          title: p.projectName,
+          roles: p.positionsCount,
+          applicants: p.totalCandidates,
+          isOpen: false,
+          description: ''
+        }));
+
+        setProjects([...mappedActive, ...mappedClosed]);
+      } catch (error) {
+        toast.error('Failed to load projects');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   // Initialize viewingProject based on initialProjectTitle
-  const initialProject = initialProjectTitle 
+  const initialProject = initialProjectTitle
     ? projects.find(p => p.title === initialProjectTitle) || null
     : null;
 
@@ -68,10 +99,10 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
-  
+
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
-  
+
   const [editProjectName, setEditProjectName] = useState('');
   const [editProjectDescription, setEditProjectDescription] = useState('');
   const [editProjectIsOpen, setEditProjectIsOpen] = useState(false);
@@ -96,22 +127,22 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
     if (searchQuery && !project.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    
+
     // Status filter
     if (!filterIsOpen && project.isOpen) return false;
     if (!filterIsClosed && !project.isOpen) return false;
-    
+
     // Applicants filter
     const applicantsCount = parseApplicants(project.applicants);
     if (applicantsCount < filterApplicantsRange[0] || applicantsCount > filterApplicantsRange[1]) {
       return false;
     }
-    
+
     // Roles filter
     if (project.roles < filterRolesRange[0] || project.roles > filterRolesRange[1]) {
       return false;
     }
-    
+
     return true;
   });
 
@@ -123,45 +154,45 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
         if (a.isOpen && !b.isOpen) return -1;
         if (!a.isOpen && b.isOpen) return 1;
         return 0;
-      
+
       case 'a-z':
         return a.title.localeCompare(b.title);
-      
+
       case 'z-a':
         return b.title.localeCompare(a.title);
-      
+
       case 'opening-asc':
         if (a.isOpen && !b.isOpen) return -1;
         if (!a.isOpen && b.isOpen) return 1;
         return 0;
-      
+
       case 'opening-desc':
         if (!a.isOpen && b.isOpen) return -1;
         if (a.isOpen && !b.isOpen) return 1;
         return 0;
-      
+
       case 'closing-asc':
         if (!a.isOpen && b.isOpen) return -1;
         if (a.isOpen && !b.isOpen) return 1;
         return 0;
-      
+
       case 'closing-desc':
         if (a.isOpen && !b.isOpen) return -1;
         if (!a.isOpen && b.isOpen) return 1;
         return 0;
-      
+
       case 'applicants-asc':
         return parseApplicants(a.applicants) - parseApplicants(b.applicants);
-      
+
       case 'applicants-desc':
         return parseApplicants(b.applicants) - parseApplicants(a.applicants);
-      
+
       case 'roles-asc':
         return a.roles - b.roles;
-      
+
       case 'roles-desc':
         return b.roles - a.roles;
-      
+
       default:
         return 0;
     }
@@ -194,8 +225,8 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
 
   const handleSaveChanges = () => {
     if (editingProject && editProjectName.trim()) {
-      setProjects(projects.map(p => 
-        p.id === editingProject.id 
+      setProjects(projects.map(p =>
+        p.id === editingProject.id
           ? { ...p, title: editProjectName, description: editProjectDescription, isOpen: editProjectIsOpen }
           : p
       ));
@@ -230,7 +261,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
         projectDescription={viewingProject.description}
         onBack={handleBack}
         backLabel="Back"
-        onCreateAssessment={onCreateAssessment || (() => {})}
+        onCreateAssessment={onCreateAssessment || (() => { })}
         pendingAssessment={pendingAssessment}
         onAssessmentConsumed={onAssessmentConsumed}
         onViewDashboard={onViewDashboard}
@@ -254,17 +285,17 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                 Projects
               </p>
             </div>
-            
+
             {/* Toolbar */}
             <div className="h-[42px] flex items-center gap-[16px] relative">
               {/* Add Button */}
-              <button 
+              <button
                 onClick={() => setIsAddDialogOpen(true)}
                 className="w-[36px] h-[36px] rounded-[10px] flex items-center justify-center hover:bg-[#ede9ff] transition-colors"
               >
                 <Plus size={20} className="text-black" strokeWidth={1.67} />
               </button>
-              
+
               {/* Search Input */}
               <div className="relative w-[241.5px] h-[42px]">
                 <input
@@ -276,7 +307,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                 />
                 <Search size={20} className="absolute left-[12px] top-[11px] text-[#aaaaaa]" strokeWidth={1.67} />
               </div>
-              
+
               {/* Filter Button with Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -288,7 +319,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                   <div className="flex flex-col gap-4">
                     {/* Status Checkboxes */}
                     <div className="flex items-center gap-3">
-                      <Checkbox 
+                      <Checkbox
                         id="filter-open"
                         checked={filterIsOpen}
                         onCheckedChange={(checked) => setFilterIsOpen(checked as boolean)}
@@ -298,9 +329,9 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                         Is opened
                       </label>
                     </div>
-                    
+
                     <div className="flex items-center gap-3">
-                      <Checkbox 
+                      <Checkbox
                         id="filter-closed"
                         checked={filterIsClosed}
                         onCheckedChange={(checked) => setFilterIsClosed(checked as boolean)}
@@ -310,7 +341,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                         Is closed
                       </label>
                     </div>
-                    
+
                     {/* Applicants Slider */}
                     <div className="flex flex-col gap-2 pt-2">
                       <div className="flex items-center justify-between">
@@ -330,7 +361,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                         className="w-full [&_[data-slot=slider-range]]:bg-[#10b981] [&_[data-slot=slider-thumb]]:border-[#10b981]"
                       />
                     </div>
-                    
+
                     {/* Roles Slider */}
                     <div className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
@@ -353,7 +384,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                   </div>
                 </PopoverContent>
               </Popover>
-              
+
               {/* Sort Button with Popover */}
               <Popover>
                 <PopoverTrigger asChild>
@@ -379,11 +410,10 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                       <button
                         key={option.value}
                         onClick={() => setSortOption(option.value as SortOption)}
-                        className={`text-left px-3 py-2 rounded-md text-[14px] font-['Arimo',sans-serif] transition-colors ${
-                          sortOption === option.value
-                            ? 'bg-[#ede9ff] text-[#4834ab]'
-                            : 'text-black hover:bg-[#f3f4f6]'
-                        }`}
+                        className={`text-left px-3 py-2 rounded-md text-[14px] font-['Arimo',sans-serif] transition-colors ${sortOption === option.value
+                          ? 'bg-[#ede9ff] text-[#4834ab]'
+                          : 'text-black hover:bg-[#f3f4f6]'
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -429,7 +459,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
               Enter the project name to create a new project.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex flex-col gap-4 py-4">
             <div className="flex flex-col gap-2">
               <label className="text-[14px] font-['Arimo',sans-serif] text-black">
@@ -443,7 +473,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                 className="w-full h-[42px] bg-white rounded-[8px] border border-[#e5e7eb] px-[12px] py-[8px] font-['Arimo',sans-serif] text-[14px] text-black placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#4834ab] focus:border-transparent"
               />
             </div>
-            
+
             <div className="flex flex-col gap-2">
               <label className="text-[14px] font-['Arimo',sans-serif] text-black">
                 Project Description
@@ -489,7 +519,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
               Update the project name and opening status.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex flex-col gap-4 py-4">
             <div className="flex flex-col gap-2">
               <label className="text-[14px] font-['Arimo',sans-serif] text-black">
@@ -503,7 +533,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                 className="w-full h-[42px] bg-white rounded-[8px] border border-[#e5e7eb] px-[12px] py-[8px] font-['Arimo',sans-serif] text-[14px] text-black placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#4834ab] focus:border-transparent"
               />
             </div>
-            
+
             <div className="flex flex-col gap-2">
               <label className="text-[14px] font-['Arimo',sans-serif] text-black">
                 Project Description
@@ -516,7 +546,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                 className="w-full bg-white rounded-[8px] border border-[#e5e7eb] px-[12px] py-[8px] font-['Arimo',sans-serif] text-[14px] text-black placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#4834ab] focus:border-transparent resize-none"
               />
             </div>
-            
+
             <div className="flex items-center justify-between py-2">
               <label className="text-[14px] font-['Arimo',sans-serif] text-black">
                 Currently Open

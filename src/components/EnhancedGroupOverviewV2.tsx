@@ -121,7 +121,7 @@ export function EnhancedGroupOverviewV2({
   const [showMoveStageModal, setShowMoveStageModal] = useState(false);
   const [showRuleBuilderModal, setShowRuleBuilderModal] = useState(false);
   const [showAIInterviewSettingsModal, setShowAIInterviewSettingsModal] = useState(false);
-  
+
   // New state for enhancements
   const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
   const [showSuspectReview, setShowSuspectReview] = useState<number | null>(null);
@@ -139,10 +139,10 @@ export function EnhancedGroupOverviewV2({
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [showFlaggedBatch, setShowFlaggedBatch] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  
+
   // Use recruiterType prop directly instead of state
   const userRole = recruiterType;
-  
+
   // Assessment creation state
   const [showAssessmentCreation, setShowAssessmentCreation] = useState(false);
   const [groupAssessments, setGroupAssessments] = useState<any[]>([]);
@@ -151,13 +151,13 @@ export function EnhancedGroupOverviewV2({
   const [currentStage, setCurrentStage] = useState<string>(filtrationFlow[0] || 'assessment');
   const [stageState, setStageState] = useState<StageState>('not-started');
   const [stageConfigLocked, setStageConfigLocked] = useState(false);
-  
+
   // NEW: Bulk progression modal
   const [showBulkProgressionModal, setShowBulkProgressionModal] = useState(false);
-  
+
   // NEW: Final Decision modal
   const [showFinalDecisionModal, setShowFinalDecisionModal] = useState(false);
-  
+
   // NEW: Technical Acceptance Criteria
   const [acceptanceCriteria, setAcceptanceCriteria] = useState<TechnicalAcceptanceCriteria>({
     minimumTechnicalScore: 70,
@@ -434,7 +434,7 @@ export function EnhancedGroupOverviewV2({
       return candidate;
     });
     setCandidateStatuses(updatedCandidates);
-    
+
     // Log activity
     addActivityLog({
       type: 'candidate-progressed',
@@ -442,22 +442,22 @@ export function EnhancedGroupOverviewV2({
       actorRole: userRole === 'technical' ? 'technical' : 'hr',
       description: `Sent offers to ${selectedCandidateIds.length} candidate(s)`
     });
-    
+
     showToast(`✓ Offers sent successfully to ${selectedCandidateIds.length} candidate(s)`);
   };
 
   const handleExportContacts = (selectedCandidateIds: number[]) => {
     // Get selected candidates data
     const selectedCandidates = candidateStatuses.filter(c => selectedCandidateIds.includes(c.id));
-    
+
     // Create CSV content
     const csvHeaders = 'Name,Email,Phone,Final Score,Position\n';
-    const csvRows = selectedCandidates.map(candidate => 
+    const csvRows = selectedCandidates.map(candidate =>
       `"${candidate.name}","candidate${candidate.id}@example.com","+1-555-${String(candidate.id).padStart(4, '0')}","${candidate.assessmentScore}","${groupName}"`
     ).join('\n');
-    
+
     const csvContent = csvHeaders + csvRows;
-    
+
     // Create download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -468,7 +468,7 @@ export function EnhancedGroupOverviewV2({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     showToast(`✓ Exported ${selectedCandidateIds.length} candidate contact(s)`);
   };
 
@@ -545,7 +545,7 @@ export function EnhancedGroupOverviewV2({
     });
 
     setCandidateStatuses(updatedCandidates);
-    
+
     // Move to next stage
     const currentStepIndex = pipelineSteps.findIndex(s => s.id === currentStage);
     if (currentStepIndex < pipelineSteps.length - 1) {
@@ -597,11 +597,11 @@ export function EnhancedGroupOverviewV2({
     const updatedCandidates = candidateStatuses.map(candidate => {
       const meetsScore = candidate.assessmentScore >= acceptanceCriteria.minimumTechnicalScore;
       const meetsIntegrity = candidate.flags.length === 0 || acceptanceCriteria.allowedIntegrityRisk !== 'none';
-      const meetsVerdict = 
+      const meetsVerdict =
         acceptanceCriteria.requiredVerdict === 'any' ||
         (acceptanceCriteria.requiredVerdict === 'pass' && candidate.technicalVerdict === 'pass') ||
         (acceptanceCriteria.requiredVerdict === 'conditional' && (candidate.technicalVerdict === 'pass' || candidate.technicalVerdict === 'conditional'));
-      
+
       return {
         ...candidate,
         meetsCriteria: meetsScore && meetsIntegrity && meetsVerdict
@@ -669,7 +669,7 @@ export function EnhancedGroupOverviewV2({
       createdBy: assignedRecruiter,
       status: 'draft'
     };
-    
+
     setGroupAssessments([...groupAssessments, newAssessment]);
     setShowAssessmentCreation(false);
     showToast(`Assessment "${assessment.config.title}" created successfully!`);
@@ -677,7 +677,7 @@ export function EnhancedGroupOverviewV2({
 
   const handleToggleCandidateSelection = (candidateId: number) => {
     if (stageState !== 'review-mode') return;
-    
+
     setSelectedCandidates(prev =>
       prev.includes(candidateId)
         ? prev.filter(id => id !== candidateId)
@@ -709,7 +709,7 @@ export function EnhancedGroupOverviewV2({
     // Check if this is the last stage and it's closed - show Final Decision button
     const currentStepIndex = pipelineSteps.findIndex(s => s.id === currentStage);
     const isLastStage = currentStepIndex === pipelineSteps.length - 1;
-    
+
     if (isLastStage && stageState === 'closed') {
       return (
         <button
@@ -839,7 +839,7 @@ export function EnhancedGroupOverviewV2({
           <ChevronLeft size={16} />
           Back to Position Dashboard
         </button>
-        
+
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -861,7 +861,7 @@ export function EnhancedGroupOverviewV2({
             <p className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-3">
               {description || 'No description provided'}
             </p>
-            
+
             {/* Filtration Flow Indicator */}
             <div className="mb-3 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-[8px] border border-emerald-200">
               <div className="flex items-center gap-2 mb-2">
@@ -879,7 +879,7 @@ export function EnhancedGroupOverviewV2({
                   };
                   const info = moduleInfo[moduleType];
                   const Icon = info.icon;
-                  
+
                   return (
                     <div key={moduleType} className="flex items-center gap-2">
                       <div className={`flex items-center gap-1.5 px-2.5 py-1 bg-white border border-${info.color}-200 rounded-[6px]`}>
@@ -904,7 +904,7 @@ export function EnhancedGroupOverviewV2({
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Users size={14} className="text-[#6b7280]" />
               <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
@@ -917,10 +917,10 @@ export function EnhancedGroupOverviewV2({
               </span>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             {getStageActionButton()}
-            <button 
+            <button
               onClick={() => setShowActivityLog(true)}
               className="flex items-center gap-2 h-[40px] px-[16px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] transition-colors"
             >
@@ -944,31 +944,28 @@ export function EnhancedGroupOverviewV2({
             const isCurrentStage = step.id === currentStage;
             const isPastStage = pipelineSteps.findIndex(s => s.id === currentStage) > index;
             const isFutureStage = pipelineSteps.findIndex(s => s.id === currentStage) < index;
-            
+
             return (
               <div
                 key={step.id}
-                className={`p-4 rounded-[12px] border-2 transition-all ${
-                  isCurrentStage
+                className={`p-4 rounded-[12px] border-2 transition-all ${isCurrentStage
                     ? 'border-[#6366f1] bg-[#f5f3ff]'
                     : isPastStage
-                    ? 'border-[#e5e7eb] bg-white opacity-60'
-                    : 'border-[#e5e7eb] bg-white opacity-40'
-                }`}
+                      ? 'border-[#e5e7eb] bg-white opacity-60'
+                      : 'border-[#e5e7eb] bg-white opacity-40'
+                  }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`font-['Arimo',sans-serif] text-[13px] ${
-                    isCurrentStage ? 'text-[#6366f1] font-semibold' : 'text-[#6b7280]'
-                  }`}>
+                  <span className={`font-['Arimo',sans-serif] text-[13px] ${isCurrentStage ? 'text-[#6366f1] font-semibold' : 'text-[#6b7280]'
+                    }`}>
                     {step.name}
                   </span>
                   {step.state !== 'not-started' && (
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                      step.state === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                      step.state === 'closed' ? 'bg-amber-100 text-amber-700' :
-                      step.state === 'review-mode' ? 'bg-purple-100 text-purple-700' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${step.state === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                        step.state === 'closed' ? 'bg-amber-100 text-amber-700' :
+                          step.state === 'review-mode' ? 'bg-purple-100 text-purple-700' :
+                            'bg-gray-100 text-gray-600'
+                      }`}>
                       {step.state.replace('-', ' ')}
                     </span>
                   )}
@@ -977,9 +974,8 @@ export function EnhancedGroupOverviewV2({
                   )}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={`text-[20px] ${
-                    isCurrentStage ? 'text-[#6366f1]' : 'text-[#111827]'
-                  }`}>
+                  <span className={`text-[20px] ${isCurrentStage ? 'text-[#6366f1]' : 'text-[#111827]'
+                    }`}>
                     {step.completed}
                   </span>
                   <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
@@ -989,9 +985,8 @@ export function EnhancedGroupOverviewV2({
                 {!isFutureStage && (
                   <div className="mt-2 h-[4px] bg-[#e5e7eb] rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${
-                        isCurrentStage ? 'bg-[#6366f1]' : 'bg-[#10b981]'
-                      } transition-all`}
+                      className={`h-full ${isCurrentStage ? 'bg-[#6366f1]' : 'bg-[#10b981]'
+                        } transition-all`}
                       style={{ width: `${(step.completed / step.total) * 100}%` }}
                     />
                   </div>
@@ -1019,26 +1014,26 @@ export function EnhancedGroupOverviewV2({
                 </span>
               )}
             </div>
-            
+
             {/* Current Recruiter Type Badge */}
             <div className="flex items-center gap-3">
               <span className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
                 Logged in as:
               </span>
-              <span className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
-                userRole === 'technical'
+              <span className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${userRole === 'technical'
                   ? 'bg-emerald-50 text-[#10b981] border border-emerald-200'
                   : 'bg-indigo-50 text-[#6366f1] border border-indigo-200'
-              }`}>
+                }`}>
                 {userRole === 'technical' ? <Shield size={14} /> : <Users size={14} />}
                 {userRole === 'technical' ? 'Technical Recruiter' : 'HR Recruiter'}
               </span>
             </div>
           </div>
-          
+
           <div className="space-y-3">
             {/* Module Monitoring Dashboard - Technical Recruiter Only */}
-            {userRole === 'technical' && (
+            {/* Module Monitoring Dashboard - Available to both HR and Technical */}
+            {(userRole === 'technical' || userRole === 'recruiter') && (
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowModuleMonitoring('assessment')}
@@ -1131,11 +1126,10 @@ export function EnhancedGroupOverviewV2({
                             <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
                               {assessment.config.title}
                             </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                              assessment.status === 'draft' ? 'bg-gray-200 text-gray-700' :
-                              assessment.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${assessment.status === 'draft' ? 'bg-gray-200 text-gray-700' :
+                                assessment.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
+                                  'bg-blue-100 text-blue-700'
+                              }`}>
                               {assessment.status}
                             </span>
                           </div>
@@ -1197,7 +1191,7 @@ export function EnhancedGroupOverviewV2({
                   Edit Criteria
                 </button>
               </div>
-              
+
               <div className="grid grid-cols-3 gap-3 mb-3">
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-[8px]">
                   <div className="text-[11px] text-blue-700 mb-1">Minimum Technical Score</div>
@@ -1301,11 +1295,10 @@ export function EnhancedGroupOverviewV2({
                 )}
                 <button
                   onClick={() => setShowModuleFilters(!showModuleFilters)}
-                  className={`flex items-center gap-2 h-[36px] px-[14px] rounded-[8px] border transition-colors ${
-                    showModuleFilters
+                  className={`flex items-center gap-2 h-[36px] px-[14px] rounded-[8px] border transition-colors ${showModuleFilters
                       ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
                       : 'bg-white hover:bg-[#f9fafb] border-[#e5e7eb] text-[#111827]'
-                  }`}
+                    }`}
                 >
                   <Filter size={16} />
                   <span className="font-['Arimo',sans-serif] text-[13px]">
@@ -1569,11 +1562,10 @@ export function EnhancedGroupOverviewV2({
                         </td>
                         <td className="p-4 text-center">
                           {candidate.meetsCriteria !== undefined ? (
-                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-medium ${
-                              candidate.meetsCriteria
+                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-medium ${candidate.meetsCriteria
                                 ? 'bg-emerald-100 text-emerald-700'
                                 : 'bg-red-100 text-red-700'
-                            }`}>
+                              }`}>
                               {candidate.meetsCriteria ? (
                                 <><CheckCircle size={12} /> Yes</>
                               ) : (
@@ -1588,15 +1580,14 @@ export function EnhancedGroupOverviewV2({
                           <td className="p-4 text-center">
                             <button
                               onClick={() => setShowVerdictModal(candidate.id)}
-                              className={`px-3 py-1 rounded-full text-[12px] font-medium ${
-                                candidate.technicalVerdict === 'pass'
+                              className={`px-3 py-1 rounded-full text-[12px] font-medium ${candidate.technicalVerdict === 'pass'
                                   ? 'bg-emerald-100 text-emerald-700'
                                   : candidate.technicalVerdict === 'fail'
-                                  ? 'bg-red-100 text-red-700'
-                                  : candidate.technicalVerdict === 'conditional'
-                                  ? 'bg-amber-100 text-amber-700'
-                                  : 'bg-gray-100 text-gray-600 border border-dashed'
-                              }`}
+                                    ? 'bg-red-100 text-red-700'
+                                    : candidate.technicalVerdict === 'conditional'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-gray-100 text-gray-600 border border-dashed'
+                                }`}
                             >
                               {candidate.technicalVerdict ? candidate.technicalVerdict : 'Set Verdict'}
                             </button>
@@ -1615,15 +1606,14 @@ export function EnhancedGroupOverviewV2({
                         </td>
                         <td className="p-4 text-center">
                           {candidate.progressionState && candidate.progressionState !== 'active' ? (
-                            <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${
-                              candidate.progressionState === 'selected'
+                            <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${candidate.progressionState === 'selected'
                                 ? 'bg-blue-100 text-blue-700'
                                 : candidate.progressionState === 'rejected'
-                                ? 'bg-red-100 text-red-700'
-                                : candidate.progressionState === 'on-hold'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
+                                  ? 'bg-red-100 text-red-700'
+                                  : candidate.progressionState === 'on-hold'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : 'bg-gray-100 text-gray-700'
+                              }`}>
                               {candidate.progressionState.replace('-', ' ')}
                             </span>
                           ) : (
@@ -1727,18 +1717,16 @@ export function EnhancedGroupOverviewV2({
                   getCandidateComments(showCommentModal).map((comment) => (
                     <div
                       key={comment.id}
-                      className={`p-4 rounded-[12px] border ${
-                        comment.author === 'technical'
+                      className={`p-4 rounded-[12px] border ${comment.author === 'technical'
                           ? 'bg-emerald-50 border-emerald-200'
                           : 'bg-blue-50 border-blue-200'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${
-                          comment.author === 'technical'
+                        <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${comment.author === 'technical'
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-blue-100 text-blue-700'
-                        }`}>
+                          }`}>
                           {comment.author === 'technical' ? (
                             <><Shield size={10} className="inline mr-1" />Technical</>
                           ) : (
@@ -1865,11 +1853,10 @@ export function EnhancedGroupOverviewV2({
                         <span className="text-[14px] text-[#111827] font-medium">
                           {entry.actor}
                         </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                          entry.actorRole === 'technical'
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${entry.actorRole === 'technical'
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-blue-100 text-blue-700'
-                        }`}>
+                          }`}>
                           {entry.actorRole === 'technical' ? 'Technical' : 'HR'}
                         </span>
                         <span className="text-[12px] text-[#9ca3af]">

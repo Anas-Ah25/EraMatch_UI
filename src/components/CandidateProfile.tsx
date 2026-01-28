@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { ChevronLeft, Github, Mail, Phone, MapPin, Calendar, AlertTriangle, FileText, Video, BarChart3, Network, MessageSquare, Download, CheckCircle, XCircle, TrendingUp, Play, Clock, ThumbsUp, ThumbsDown, Activity, Eye, MessageCircle, ExternalLink, FileCheck, Smile, Frown, Meh } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, Github, Mail, Phone, MapPin, Calendar, AlertTriangle, FileText, Video, BarChart3, Network, MessageSquare, Download, CheckCircle, XCircle, TrendingUp, Play, Clock, ThumbsUp, ThumbsDown, Activity, Eye, MessageCircle, ExternalLink, FileCheck, Smile, Frown, Meh, Loader2 } from 'lucide-react';
 import { KnowledgeGraph } from './KnowledgeGraph';
 import { EnhancedAssessmentReport } from './EnhancedAssessmentReport';
 import { EnhancedAIInterviewReport } from './EnhancedAIInterviewReport';
 import { LiveInterviewTranscript } from './LiveInterviewTranscript';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
+import { api } from '../services/api';
 
 interface CandidateProfileProps {
   candidateId: number;
@@ -25,83 +26,31 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
   const [showVideoTranscript, setShowVideoTranscript] = useState<number | null>(null);
   const [showLiveInterviewTranscript, setShowLiveInterviewTranscript] = useState(false);
 
-  // Mock candidate data
-  const candidate = {
-    id: candidateId,
-    name: 'John Smith',
-    email: 'john.smith@email.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    avatar: null,
-    title: 'Senior Full Stack Developer',
-    experience: 8,
-    skills: ['React', 'TypeScript', 'Node.js', 'AWS', 'Docker', 'PostgreSQL'],
-    education: [
-      {
-        degree: 'Master of Science in Computer Science',
-        school: 'Stanford University',
-        year: '2015-2017'
-      },
-      {
-        degree: 'Bachelor of Science in Software Engineering',
-        school: 'UC Berkeley',
-        year: '2011-2015'
+  const [candidate, setCandidate] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.candidate.getProfile();
+        setCandidate(data);
+      } catch (error) {
+        console.error("Failed to load profile");
+      } finally {
+        setIsLoading(false);
       }
-    ],
-    workHistory: [
-      {
-        title: 'Senior Software Engineer',
-        company: 'Tech Corp',
-        duration: '2020 - Present',
-        description: 'Led development of microservices architecture serving 10M+ users'
-      },
-      {
-        title: 'Software Engineer',
-        company: 'StartupXYZ',
-        duration: '2017 - 2020',
-        description: 'Built and scaled e-commerce platform from 0 to 1M users'
-      }
-    ],
-    antiCheating: false,
-    groupAssigned: true, // Whether candidate has been assigned to a group
-    pipelineStatus: {
-      groupAssignment: { status: 'completed', completedAt: '2025-01-14' },
-      assessment: { status: 'completed', completedAt: '2025-01-15' },
-      aiInterview: { status: 'completed', completedAt: '2025-01-16' },
-      liveInterview: { status: 'completed', completedAt: '2025-01-18' },
-      finalDecision: { status: 'completed', completedAt: '2025-01-20' }
-    },
-    offerStatus: 'sent', // 'sent' | 'accepted' | 'rejected' | null
-    offerAcceptedDate: null,
-    scores: {
-      overall: 95,
-      assessment: 95,
-      aiInterview: 92,
-      github: 88
-    },
-    assessmentData: {
-      completedAt: '2025-01-15',
-      duration: '45 minutes',
-      questionsTotal: 20,
-      questionsCorrect: 19,
-      topicScores: [
-        { topic: 'React', score: 95 },
-        { topic: 'TypeScript', score: 98 },
-        { topic: 'System Design', score: 90 },
-        { topic: 'Algorithms', score: 92 }
-      ]
-    },
-    interviewData: {
-      completedAt: '2025-01-16',
-      duration: '30 minutes',
-      questions: [
-        { question: 'Tell me about your experience with React', score: 9.5 },
-        { question: 'How do you handle state management?', score: 9.0 },
-        { question: 'Describe your deployment process', score: 8.8 }
-      ],
-      overallFeedback: 'Excellent technical knowledge and communication skills. Strong problem-solving abilities.'
-    }
-  };
+    };
+    fetchProfile();
+  }, [candidateId]);
+
+  if (isLoading || !candidate) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#f9fafb]">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   // Mock assessment questions and answers
   const assessmentQuestions = [
@@ -306,21 +255,19 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
 
         {/* Offer Status Banner */}
         {candidate.pipelineStatus.finalDecision.status === 'completed' && (
-          <div className={`rounded-xl border-2 p-6 mb-6 ${
-            candidate.offerStatus === 'sent'
+          <div className={`rounded-xl border-2 p-6 mb-6 ${candidate.offerStatus === 'sent'
               ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300'
               : candidate.offerStatus === 'accepted'
-              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
-              : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-300'
-          }`}>
+                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
+                : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-300'
+            }`}>
             <div className="flex items-start gap-4">
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${
-                candidate.offerStatus === 'sent'
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${candidate.offerStatus === 'sent'
                   ? 'bg-emerald-500'
                   : candidate.offerStatus === 'accepted'
-                  ? 'bg-green-500'
-                  : 'bg-gray-500'
-              }`}>
+                    ? 'bg-green-500'
+                    : 'bg-gray-500'
+                }`}>
                 {candidate.offerStatus === 'sent' || candidate.offerStatus === 'accepted' ? (
                   <Mail className="text-white" size={28} />
                 ) : (
@@ -328,13 +275,12 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 )}
               </div>
               <div className="flex-1">
-                <h3 className={`text-xl font-bold mb-2 ${
-                  candidate.offerStatus === 'sent'
+                <h3 className={`text-xl font-bold mb-2 ${candidate.offerStatus === 'sent'
                     ? 'text-emerald-900'
                     : candidate.offerStatus === 'accepted'
-                    ? 'text-green-900'
-                    : 'text-gray-900'
-                }`}>
+                      ? 'text-green-900'
+                      : 'text-gray-900'
+                  }`}>
                   {candidate.offerStatus === 'sent' && 'Offer Sent'}
                   {candidate.offerStatus === 'accepted' && 'Offer Accepted'}
                   {candidate.offerStatus === 'rejected' && 'Not Selected'}
@@ -389,11 +335,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                         setActiveTab(tab.id as TabType);
                       }
                     }}
-                    className={`flex items-center gap-2 px-[20px] py-[14px] font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors whitespace-nowrap ${
-                      activeTab === tab.id
+                    className={`flex items-center gap-2 px-[20px] py-[14px] font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
                         ? 'border-[#6366f1] text-[#6366f1]'
                         : 'border-transparent text-[#6b7280] hover:text-[#111827]'
-                    }`}
+                      }`}
                   >
                     <Icon size={16} />
                     {tab.label}
@@ -423,18 +368,18 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                       <div className="relative">
                         {/* Progress Line */}
                         <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200" style={{ zIndex: 0 }}>
-                          <div 
+                          <div
                             className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500"
-                            style={{ 
-                              width: candidate.pipelineStatus.liveInterview.status === 'completed' 
-                                ? '100%' 
+                            style={{
+                              width: candidate.pipelineStatus.liveInterview.status === 'completed'
+                                ? '100%'
                                 : candidate.pipelineStatus.liveInterview.status === 'in-progress'
-                                ? '75%'
-                                : candidate.pipelineStatus.aiInterview.status === 'completed'
-                                ? '66%'
-                                : candidate.pipelineStatus.assessment.status === 'completed'
-                                ? '33%'
-                                : '0%'
+                                  ? '75%'
+                                  : candidate.pipelineStatus.aiInterview.status === 'completed'
+                                    ? '66%'
+                                    : candidate.pipelineStatus.assessment.status === 'completed'
+                                      ? '33%'
+                                      : '0%'
                             }}
                           />
                         </div>
@@ -443,11 +388,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                         <div className="relative grid grid-cols-5 gap-4" style={{ zIndex: 1 }}>
                           {/* Group Assignment */}
                           <div className="flex flex-col items-center">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
-                              candidate.pipelineStatus.groupAssignment.status === 'completed'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.groupAssignment.status === 'completed'
                                 ? 'bg-emerald-500 border-emerald-200'
                                 : 'bg-gray-300 border-gray-200'
-                            }`}>
+                              }`}>
                               {candidate.pipelineStatus.groupAssignment.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
                               ) : (
@@ -468,13 +412,12 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
 
                           {/* Assessment */}
                           <div className="flex flex-col items-center">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
-                              candidate.pipelineStatus.assessment.status === 'completed'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.assessment.status === 'completed'
                                 ? 'bg-emerald-500 border-emerald-200'
                                 : candidate.pipelineStatus.assessment.status === 'in-progress'
-                                ? 'bg-indigo-500 border-indigo-200'
-                                : 'bg-gray-300 border-gray-200'
-                            }`}>
+                                  ? 'bg-indigo-500 border-indigo-200'
+                                  : 'bg-gray-300 border-gray-200'
+                              }`}>
                               {candidate.pipelineStatus.assessment.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
                               ) : candidate.pipelineStatus.assessment.status === 'in-progress' ? (
@@ -497,13 +440,12 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
 
                           {/* AI Interview */}
                           <div className="flex flex-col items-center">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
-                              candidate.pipelineStatus.aiInterview.status === 'completed'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.aiInterview.status === 'completed'
                                 ? 'bg-emerald-500 border-emerald-200'
                                 : candidate.pipelineStatus.aiInterview.status === 'in-progress'
-                                ? 'bg-indigo-500 border-indigo-200'
-                                : 'bg-gray-300 border-gray-200'
-                            }`}>
+                                  ? 'bg-indigo-500 border-indigo-200'
+                                  : 'bg-gray-300 border-gray-200'
+                              }`}>
                               {candidate.pipelineStatus.aiInterview.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
                               ) : candidate.pipelineStatus.aiInterview.status === 'in-progress' ? (
@@ -526,13 +468,12 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
 
                           {/* Live Interview */}
                           <div className="flex flex-col items-center">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
-                              candidate.pipelineStatus.liveInterview.status === 'completed'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.liveInterview.status === 'completed'
                                 ? 'bg-emerald-500 border-emerald-200'
                                 : candidate.pipelineStatus.liveInterview.status === 'in-progress'
-                                ? 'bg-indigo-500 border-indigo-200'
-                                : 'bg-gray-300 border-gray-200'
-                            }`}>
+                                  ? 'bg-indigo-500 border-indigo-200'
+                                  : 'bg-gray-300 border-gray-200'
+                              }`}>
                               {candidate.pipelineStatus.liveInterview.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
                               ) : candidate.pipelineStatus.liveInterview.status === 'in-progress' ? (
@@ -560,13 +501,12 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
 
                           {/* Final Decision */}
                           <div className="flex flex-col items-center">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${
-                              candidate.pipelineStatus.finalDecision.status === 'completed'
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.finalDecision.status === 'completed'
                                 ? 'bg-emerald-500 border-emerald-200'
                                 : candidate.pipelineStatus.finalDecision.status === 'in-progress'
-                                ? 'bg-indigo-500 border-indigo-200'
-                                : 'bg-gray-300 border-gray-200'
-                            }`}>
+                                  ? 'bg-indigo-500 border-indigo-200'
+                                  : 'bg-gray-300 border-gray-200'
+                              }`}>
                               {candidate.pipelineStatus.finalDecision.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
                               ) : candidate.pipelineStatus.finalDecision.status === 'in-progress' ? (
@@ -646,13 +586,13 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
             {activeTab === 'resume' && (
               <div className="space-y-6">
                 <h3 className="text-[#111827] mb-4">Parsed Resume Data</h3>
-                
+
                 {/* Resume Summary */}
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-3">Professional Summary</h4>
                   <p className="text-[#374151] text-sm leading-relaxed">
-                    Highly skilled Full Stack Developer with 8+ years of experience building scalable web applications. 
-                    Proven track record of leading development teams, architecting microservices, and delivering 
+                    Highly skilled Full Stack Developer with 8+ years of experience building scalable web applications.
+                    Proven track record of leading development teams, architecting microservices, and delivering
                     high-quality software solutions. Expert in React, TypeScript, Node.js, and cloud technologies.
                   </p>
                 </div>
@@ -740,7 +680,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
             {activeTab === 'github' && (
               <div className="space-y-6">
                 <h3 className="text-[#111827] mb-4">GitHub Profile Analysis</h3>
-                
+
                 {/* GitHub Stats Overview */}
                 <div className="grid grid-cols-4 gap-4">
                   <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
@@ -786,11 +726,11 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                             key={i}
                             className="w-3 h-3 rounded-sm"
                             style={{
-                              backgroundColor: 
+                              backgroundColor:
                                 i % 7 === 0 ? '#ebedf0' :
-                                i % 5 === 0 ? '#9be9a8' :
-                                i % 3 === 0 ? '#40c463' :
-                                i % 2 === 0 ? '#30a14e' : '#216e39'
+                                  i % 5 === 0 ? '#9be9a8' :
+                                    i % 3 === 0 ? '#40c463' :
+                                      i % 2 === 0 ? '#30a14e' : '#216e39'
                             }}
                           />
                         ))}
@@ -804,11 +744,11 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                             key={i}
                             className="w-3 h-3 rounded-sm"
                             style={{
-                              backgroundColor: 
+                              backgroundColor:
                                 i % 6 === 0 ? '#ebedf0' :
-                                i % 4 === 0 ? '#9be9a8' :
-                                i % 3 === 0 ? '#40c463' :
-                                i % 2 === 0 ? '#30a14e' : '#216e39'
+                                  i % 4 === 0 ? '#9be9a8' :
+                                    i % 3 === 0 ? '#40c463' :
+                                      i % 2 === 0 ? '#30a14e' : '#216e39'
                             }}
                           />
                         ))}
@@ -822,11 +762,11 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                             key={i}
                             className="w-3 h-3 rounded-sm"
                             style={{
-                              backgroundColor: 
+                              backgroundColor:
                                 i % 5 === 0 ? '#ebedf0' :
-                                i % 4 === 0 ? '#9be9a8' :
-                                i % 3 === 0 ? '#40c463' :
-                                i % 2 === 0 ? '#30a14e' : '#216e39'
+                                  i % 4 === 0 ? '#9be9a8' :
+                                    i % 3 === 0 ? '#40c463' :
+                                      i % 2 === 0 ? '#30a14e' : '#216e39'
                             }}
                           />
                         ))}
@@ -1349,7 +1289,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                         <div className="w-full h-2 bg-[#e5e7eb] rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
-                            style={{ 
+                            style={{
                               width: `${metric.percentage}%`,
                               backgroundColor: metric.color
                             }}
@@ -1378,8 +1318,8 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
 
             {activeTab === 'knowledge-graph' && (
               <div className="h-[800px]">
-                <KnowledgeGraph 
-                  candidateId={candidateId} 
+                <KnowledgeGraph
+                  candidateId={candidateId}
                   candidateName={candidate.name}
                   onBack={() => setActiveTab('overview')}
                 />
@@ -1406,7 +1346,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 {/* Evaluation Summary */}
                 <div className="bg-white border border-[#e5e7eb] rounded-2xl p-6">
                   <h3 className="text-[#111827] mb-4">Evaluation Summary</h3>
-                  
+
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
                       <div className="text-sm text-gray-500 mb-2">Final Evaluator</div>
@@ -1430,7 +1370,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 {/* Performance Breakdown */}
                 <div className="bg-white border border-[#e5e7eb] rounded-2xl p-6">
                   <h3 className="text-[#111827] mb-4">Performance Breakdown</h3>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="flex items-center justify-between mb-2">
@@ -1640,13 +1580,13 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                     <XCircle size={24} className="text-red-600 flex-shrink-0" />
                   )}
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
                     <div className="text-sm font-medium text-blue-900 mb-1">Candidate's Answer</div>
                     <div className="text-sm text-blue-800">{q.candidateAnswer}</div>
                   </div>
-                  
+
                   <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded">
                     <div className="text-sm font-medium text-emerald-900 mb-1">Correct Answer</div>
                     <div className="text-sm text-emerald-800">{q.correctAnswer}</div>

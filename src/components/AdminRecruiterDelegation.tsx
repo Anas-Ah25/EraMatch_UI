@@ -1,27 +1,10 @@
-import { useState } from 'react';
-import { ChevronDown, X, TrendingUp, TrendingDown, AlertTriangle, ArrowLeft, Eye, ArrowUpDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronDown, X, TrendingUp, TrendingDown, AlertTriangle, ArrowLeft, Eye, ArrowUpDown, Loader2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
-
-interface JobPosition {
-  id: number;
-  jobTitle: string;
-  department: string;
-  assignedHR: string;
-  assignedTechnicalRecruiter: string;
-  candidatesCount: number;
-  status: 'Open' | 'Interview' | 'Closed' | 'On Hold';
-}
-
-interface Project {
-  id: number;
-  projectName: string;
-  positionsCount: number;
-  applicantsCount: number;
-  subGroupsCount: number;
-  openDate: string;
-}
+import { JobPosition, Project } from '../data/mockData';
+import { api } from '../services/api';
 
 interface AdminRecruiterDelegationProps {
   onSignOut: () => void;
@@ -39,124 +22,37 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // Mock data - HR Recruiters
-  const hrRecruiters = [
-    'Sarah Johnson',
-    'David Kim',
-    'Jessica Martinez',
-    'Amanda Lee'
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [hrRecruiters, setHrRecruiters] = useState<string[]>([]);
+  const [technicalRecruiters, setTechnicalRecruiters] = useState<string[]>([]);
+  const [jobPositions, setJobPositions] = useState<JobPosition[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
-  // Mock data - Technical Recruiters
-  const technicalRecruiters = [
-    'Michael Chen',
-    'Emily Rodriguez',
-    'Robert Martinez',
-    'Jane Smith'
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.admin.getRecruiterDelegation();
+        setHrRecruiters(data.hrRecruiters);
+        setTechnicalRecruiters(data.technicalRecruiters);
+        setJobPositions(data.positions);
+        setProjects(data.projects);
+      } catch (error) {
+        toast.error('Failed to load delegation data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
-  // Mock data - Job Positions
-  const [jobPositions, setJobPositions] = useState<JobPosition[]>([
-    {
-      id: 1,
-      jobTitle: 'Senior React Developer',
-      department: 'Engineering',
-      assignedHR: 'Sarah Johnson',
-      assignedTechnicalRecruiter: 'Michael Chen',
-      candidatesCount: 45,
-      status: 'Open'
-    },
-    {
-      id: 2,
-      jobTitle: 'Product Manager',
-      department: 'Product',
-      assignedHR: 'Sarah Johnson',
-      assignedTechnicalRecruiter: 'Emily Rodriguez',
-      candidatesCount: 32,
-      status: 'Interview'
-    },
-    {
-      id: 3,
-      jobTitle: 'DevOps Engineer',
-      department: 'Engineering',
-      assignedHR: 'David Kim',
-      assignedTechnicalRecruiter: 'Michael Chen',
-      candidatesCount: 28,
-      status: 'Open'
-    },
-    {
-      id: 4,
-      jobTitle: 'UX Designer',
-      department: 'Design',
-      assignedHR: 'Sarah Johnson',
-      assignedTechnicalRecruiter: 'Emily Rodriguez',
-      candidatesCount: 19,
-      status: 'Interview'
-    },
-    {
-      id: 5,
-      jobTitle: 'Data Scientist',
-      department: 'Engineering',
-      assignedHR: 'David Kim',
-      assignedTechnicalRecruiter: 'Michael Chen',
-      candidatesCount: 52,
-      status: 'Open'
-    },
-    {
-      id: 6,
-      jobTitle: 'Marketing Manager',
-      department: 'Marketing',
-      assignedHR: 'Jessica Martinez',
-      assignedTechnicalRecruiter: 'Emily Rodriguez',
-      candidatesCount: 0,
-      status: 'Closed'
-    },
-    {
-      id: 7,
-      jobTitle: 'Backend Engineer',
-      department: 'Engineering',
-      assignedHR: 'David Kim',
-      assignedTechnicalRecruiter: 'Michael Chen',
-      candidatesCount: 38,
-      status: 'On Hold'
-    }
-  ]);
-
-  // Mock data - Projects
-  const projects: Project[] = [
-    {
-      id: 1,
-      projectName: 'Q1 Engineering Expansion',
-      positionsCount: 3,
-      applicantsCount: 111,
-      subGroupsCount: 8,
-      openDate: '2025-01-05'
-    },
-    {
-      id: 2,
-      projectName: 'Product Team Growth',
-      positionsCount: 2,
-      applicantsCount: 51,
-      subGroupsCount: 4,
-      openDate: '2025-01-12'
-    },
-    {
-      id: 3,
-      projectName: 'Design & UX Hiring',
-      positionsCount: 1,
-      applicantsCount: 19,
-      subGroupsCount: 2,
-      openDate: '2025-01-20'
-    },
-    {
-      id: 4,
-      projectName: 'Marketing Initiative',
-      positionsCount: 1,
-      applicantsCount: 0,
-      subGroupsCount: 0,
-      openDate: '2024-12-10'
-    }
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   const handleAssignHR = (positionId: number, hrName: string) => {
     setJobPositions(prev =>
@@ -272,9 +168,8 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
                   {projects.map((project, index) => (
                     <tr
                       key={project.id}
-                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${
-                        index === projects.length - 1 ? 'border-b-0' : ''
-                      }`}
+                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${index === projects.length - 1 ? 'border-b-0' : ''
+                        }`}
                       onClick={() => {
                         setSelectedProject(project);
                         setViewMode('positions');
@@ -394,9 +289,8 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
                   {jobPositions.slice(0, selectedProject.positionsCount).map((position, index) => (
                     <tr
                       key={position.id}
-                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${
-                        index === selectedProject.positionsCount - 1 ? 'border-b-0' : ''
-                      }`}
+                      className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${index === selectedProject.positionsCount - 1 ? 'border-b-0' : ''
+                        }`}
                       onClick={() => {
                         setSelectedPosition(position);
                         setViewMode('delegation');
@@ -475,7 +369,7 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
             {/* Left Section - Position Info */}
             <Card className="p-6 rounded-3xl shadow-sm">
               <h3 className="text-gray-900 mb-4">Position Details</h3>
-              
+
               <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: '#F9FAFB' }}>
                 <div className="flex items-center justify-between mb-2">
                   <div>
@@ -484,11 +378,11 @@ export function AdminRecruiterDelegation({ onSignOut }: AdminRecruiterDelegation
                   </div>
                   <div
                     className="h-[28px] rounded-full px-[14px] flex items-center justify-center"
-                    style={{ 
+                    style={{
                       backgroundColor: getStatusBadgeColor(selectedPosition.status) === 'bg-[#10b981] text-white' ? '#10b981' :
-                                      getStatusBadgeColor(selectedPosition.status) === 'bg-[#6366f1] text-white' ? '#6366f1' :
-                                      getStatusBadgeColor(selectedPosition.status) === 'bg-[#6b7280] text-white' ? '#6b7280' :
-                                      getStatusBadgeColor(selectedPosition.status) === 'bg-[#f59e0b] text-white' ? '#f59e0b' : '#e5e7eb'
+                        getStatusBadgeColor(selectedPosition.status) === 'bg-[#6366f1] text-white' ? '#6366f1' :
+                          getStatusBadgeColor(selectedPosition.status) === 'bg-[#6b7280] text-white' ? '#6b7280' :
+                            getStatusBadgeColor(selectedPosition.status) === 'bg-[#f59e0b] text-white' ? '#f59e0b' : '#e5e7eb'
                     }}
                   >
                     <p className="font-['Arimo',sans-serif] text-[13px] text-white">

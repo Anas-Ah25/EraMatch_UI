@@ -1,6 +1,8 @@
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { FileText, Layers, Clock, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { FileText, Layers, Clock, CheckCircle2, ArrowLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import logo from '../assets/image-eramatch.png';
 
 interface CandidateDashboardProps {
@@ -15,32 +17,31 @@ interface CandidateDashboardProps {
 }
 
 export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStartLiveInterview, recordedInterviewCompleted, liveInterviewCompleted, onStartTechnicalAssessment, technicalAssessmentCompleted, onBack }: CandidateDashboardProps) {
-  const assessments = [
-    {
-      id: 1,
-      title: 'Software engineering technical assessment',
-      description: 'Evaluate your technical skills and problem-solving abilities with coding challenges',
-      type: 'assessment',
-      questions: 15,
-      expectedTime: '45 minutes'
-    },
-    {
-      id: 2,
-      title: 'Software engineering live interview',
-      description: 'Real-time interview session with technical experts to assess your skills',
-      type: 'interview',
-      parts: 1,
-      expectedTime: '60 minutes'
-    },
-    {
-      id: 3,
-      title: 'Software engineering recorded interview',
-      description: 'Record your responses to pre-set questions at your own convenience',
-      type: 'interview',
-      parts: 5,
-      expectedTime: '30 minutes'
-    }
-  ];
+  const [assessments, setAssessments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAssessments = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.candidate.getAssessments();
+        setAssessments(data);
+      } catch (error) {
+        console.error("Failed to fetch assessments");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAssessments();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#EDF0F8' }}>
@@ -54,12 +55,12 @@ export function CandidateDashboard({ onSignOut, onStartRecordedInterview, onStar
             <Button
               className="rounded-full px-6 transition-colors duration-200 border"
               style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.currentTarget.style.backgroundColor = '#EF4444';
                 e.currentTarget.style.color = '#FFFFFF';
                 e.currentTarget.style.borderColor = '#EF4444';
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.currentTarget.style.backgroundColor = '#EDF0F8';
                 e.currentTarget.style.color = '#EF4444';
                 e.currentTarget.style.borderColor = '#EF4444';

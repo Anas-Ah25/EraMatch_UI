@@ -9,6 +9,7 @@ import { ArchiveProjectModal } from './ArchiveProjectModal';
 import { ClosePositionModal, type PositionOutcome, type PositionClosureStatus } from './ClosePositionModal';
 import { CompleteProjectModal, type ProjectCompletionData } from './CompleteProjectModal';
 import { toast } from 'sonner';
+import { mockJobPositions, mockProjects } from '../data/mockData';
 
 interface Position {
   id: number;
@@ -41,42 +42,27 @@ interface ProjectDetailViewProps {
   onCompleteProject?: (data: ProjectCompletionData) => void;
 }
 
-// Store positions data for each project
-const projectPositions: { [key: string]: Position[] } = {
-  'Summer Internship': [
-    { id: 1, title: 'Senior Software Engineer', description: '', screeningConditions: '', applicants: 45, isOpen: true },
-    { id: 2, title: 'Frontend Developer', description: '', screeningConditions: '', applicants: 32, isOpen: true },
-    { id: 3, title: 'DevOps Engineer', description: '', screeningConditions: '', applicants: 19, isOpen: true },
-    { id: 4, title: 'Backend Developer', description: '', screeningConditions: '', applicants: 28, isOpen: false },
-  ],
-  'Software Engineering II (DevOps Team)': [
-    { id: 1, title: 'Senior DevOps Engineer', description: '', screeningConditions: '', applicants: 23, isOpen: true },
-    { id: 2, title: 'Cloud Infrastructure Specialist', description: '', screeningConditions: '', applicants: 15, isOpen: true },
-  ],
-  'Product Migration Project': [
-    { id: 1, title: 'Migration Architect', description: '', screeningConditions: '', applicants: 12, isOpen: true },
-    { id: 2, title: 'Senior Backend Developer', description: '', screeningConditions: '', applicants: 34, isOpen: true },
-    { id: 3, title: 'Database Engineer', description: '', screeningConditions: '', applicants: 18, isOpen: true },
-    { id: 4, title: 'QA Engineer', description: '', screeningConditions: '', applicants: 22, isOpen: true },
-    { id: 5, title: 'Technical Writer', description: '', screeningConditions: '', applicants: 8, isOpen: true },
-    { id: 6, title: 'DevOps Specialist', description: '', screeningConditions: '', applicants: 14, isOpen: true },
-    { id: 7, title: 'Product Manager', description: '', screeningConditions: '', applicants: 9, isOpen: false },
-  ],
-  'AI team': [
-    { id: 1, title: 'Machine Learning Engineer', description: '', screeningConditions: '', applicants: 56, isOpen: false },
-    { id: 2, title: 'Data Scientist', description: '', screeningConditions: '', applicants: 31, isOpen: false },
-    { id: 3, title: 'AI Research Scientist', description: '', screeningConditions: '', applicants: 13, isOpen: false },
-  ],
-};
-
 export function ProjectDetailView({ projectTitle, projectDescription, projectStatus, completionDate, onBack, backLabel = 'Back', onCreateAssessment, pendingAssessment, onAssessmentConsumed, onViewDashboard, onViewGroup, returnToGroupsTab, initialPosition, onPositionSelect, onArchiveProject, onCompleteProject }: ProjectDetailViewProps) {
-  // Get positions for this specific project, or use empty array as fallback
-  const initialPositions = projectPositions[projectTitle] || [];
-  
+  // Find project ID from title to filter positions
+  const project = mockProjects.find(p => p.projectName === projectTitle);
+  const projectId = project?.id;
+
+  // Get initial positions from mockData based on projectId
+  const initialPositions: Position[] = mockJobPositions
+    .filter(p => p.projectId === projectId)
+    .map(p => ({
+      id: p.id,
+      title: p.jobTitle,
+      description: `Department: ${p.department}`,
+      screeningConditions: 'Standard screening requirements apply',
+      applicants: p.candidatesCount,
+      isOpen: p.status === 'Open' || p.status === 'Interview'
+    }));
+
   const [positions, setPositions] = useState<Position[]>(initialPositions);
   const [viewingPosition, setViewingPosition] = useState<Position | null>(null);
   const [activeTab, setActiveTab] = useState<'positions' | 'analytics'>('positions');
-  
+
   // Store assessments per position
   const [positionAssessments, setPositionAssessments] = useState<{ [positionId: number]: any[] }>({});
 
@@ -92,20 +78,20 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
   const [editPositionDescription, setEditPositionDescription] = useState('');
   const [editPositionScreening, setEditPositionScreening] = useState('');
   const [editPositionIsOpen, setEditPositionIsOpen] = useState(false);
-  
+
   // Archive modal state
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-  
+
   // Close position modal state
   const [isClosePositionModalOpen, setIsClosePositionModalOpen] = useState(false);
   const [closingPosition, setClosingPosition] = useState<Position | null>(null);
 
   // Complete project modal state
   const [isCompleteProjectModalOpen, setIsCompleteProjectModalOpen] = useState(false);
-  
+
   // Warning modal for archiving active project
   const [showActiveProjectWarning, setShowActiveProjectWarning] = useState(false);
-  
+
   // Track internal project status
   const [internalProjectStatus, setInternalProjectStatus] = useState<'Draft' | 'Active' | 'Complete' | 'Archived'>(projectStatus || 'Active');
 
@@ -141,12 +127,12 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
       setPositions(positions.map(p =>
         p.id === editingPosition.id
           ? {
-              ...p,
-              title: editPositionTitle,
-              description: editPositionDescription,
-              screeningConditions: editPositionScreening,
-              isOpen: editPositionIsOpen
-            }
+            ...p,
+            title: editPositionTitle,
+            description: editPositionDescription,
+            screeningConditions: editPositionScreening,
+            isOpen: editPositionIsOpen
+          }
           : p
       ));
       setIsEditDialogOpen(false);
@@ -164,21 +150,21 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
       setPositions(positions.map(p =>
         p.id === closingPosition.id
           ? {
-              ...p,
-              isOpen: false,
-              closureStatus: outcome.status,
-              closureReason: outcome.reason,
-              closureDate: outcome.closureDate
-            }
+            ...p,
+            isOpen: false,
+            closureStatus: outcome.status,
+            closureReason: outcome.reason,
+            closureDate: outcome.closureDate
+          }
           : p
       ));
-      
+
       // Show success toast
-      const message = outcome.status === 'Filled' 
+      const message = outcome.status === 'Filled'
         ? `Position "${closingPosition.title}" closed as Filled`
         : `Position "${closingPosition.title}" closed as Cancelled`;
       toast.success(message);
-      
+
       setClosingPosition(null);
     }
   };
@@ -199,12 +185,12 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
       setPositions(positions.map(p =>
         p.id === viewingPosition.id
           ? {
-              ...p,
-              title,
-              description,
-              screeningConditions: screening,
-              isOpen
-            }
+            ...p,
+            title,
+            description,
+            screeningConditions: screening,
+            isOpen
+          }
           : p
       ));
       // Update the viewing position with new values
@@ -253,7 +239,7 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
         isOpen={viewingPosition.isOpen}
         onBack={handleBackToPositionsList}
         onSave={handleSaveFromPositionView}
-        onCreateAssessment={onCreateAssessment || (() => {})}
+        onCreateAssessment={onCreateAssessment || (() => { })}
         savedAssessments={positionAssessments[viewingPosition.id] || []}
         onSaveAssessment={(assessment) => {
           setPositionAssessments({
@@ -288,22 +274,21 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
               {(() => {
                 const allPositionsClosed = positions.length > 0 && positions.every(p => p.closureStatus);
                 const canComplete = allPositionsClosed && internalProjectStatus === 'Active';
-                
+
                 return internalProjectStatus === 'Active' ? (
                   <div className="relative group">
-                    <button 
+                    <button
                       onClick={() => canComplete && setIsCompleteProjectModalOpen(true)}
                       disabled={!canComplete}
-                      className={`flex items-center gap-[8px] h-[36px] px-[16px] rounded-[6px] border transition-colors font-['Arimo',sans-serif] text-[14px] ${
-                        canComplete
-                          ? 'border-[#10b981] bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
-                          : 'border-[#e5e7eb] text-[#d1d5db] cursor-not-allowed'
-                      }`}
+                      className={`flex items-center gap-[8px] h-[36px] px-[16px] rounded-[6px] border transition-colors font-['Arimo',sans-serif] text-[14px] ${canComplete
+                        ? 'border-[#10b981] bg-emerald-50 hover:bg-emerald-100 text-emerald-700'
+                        : 'border-[#e5e7eb] text-[#d1d5db] cursor-not-allowed'
+                        }`}
                     >
                       <CheckCircle2 size={16} />
                       Complete Project
                     </button>
-                    
+
                     {/* Tooltip for disabled state */}
                     {!canComplete && (
                       <div className="absolute top-full right-0 mt-[8px] w-[280px] bg-gray-900 text-white text-[12px] px-[12px] py-[8px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
@@ -320,10 +305,10 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
               {/* Archive Button */}
               {(() => {
                 const canArchive = internalProjectStatus === 'Complete';
-                
+
                 return (
                   <div className="relative group">
-                    <button 
+                    <button
                       onClick={() => {
                         if (canArchive) {
                           setIsArchiveModalOpen(true);
@@ -331,16 +316,15 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
                           setShowActiveProjectWarning(true);
                         }
                       }}
-                      className={`flex items-center gap-[8px] h-[36px] px-[16px] rounded-[6px] border transition-colors font-['Arimo',sans-serif] text-[14px] ${
-                        canArchive
-                          ? 'border-[#d1d5db] hover:bg-[#f9fafb] text-[#374151]'
-                          : 'border-[#e5e7eb] text-[#d1d5db] cursor-not-allowed'
-                      }`}
+                      className={`flex items-center gap-[8px] h-[36px] px-[16px] rounded-[6px] border transition-colors font-['Arimo',sans-serif] text-[14px] ${canArchive
+                        ? 'border-[#d1d5db] hover:bg-[#f9fafb] text-[#374151]'
+                        : 'border-[#e5e7eb] text-[#d1d5db] cursor-not-allowed'
+                        }`}
                     >
                       <Archive size={16} />
                       Archive Project
                     </button>
-                    
+
                     {/* Tooltip for disabled state */}
                     {!canArchive && (
                       <div className="absolute top-full right-0 mt-[8px] w-[280px] bg-gray-900 text-white text-[12px] px-[12px] py-[8px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-10">
@@ -364,7 +348,7 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
             {/* Status Badge */}
             {(() => {
               const allPositionsClosed = positions.length > 0 && positions.every(p => p.closureStatus);
-              
+
               if (internalProjectStatus === 'Complete') {
                 return (
                   <div className="inline-flex items-center gap-[6px] h-[28px] px-[12px] rounded-full bg-blue-50 border border-blue-200">
@@ -406,11 +390,10 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
           <div className="flex items-center gap-4 mb-[36px] border-b border-[#e5e7eb]">
             <button
               onClick={() => setActiveTab('positions')}
-              className={`pb-[12px] px-[4px] font-['Arimo',sans-serif] text-[15px] relative ${
-                activeTab === 'positions'
-                  ? 'text-[#6366f1]'
-                  : 'text-[#9ca3af] hover:text-[#6b7280]'
-              } transition-colors`}
+              className={`pb-[12px] px-[4px] font-['Arimo',sans-serif] text-[15px] relative ${activeTab === 'positions'
+                ? 'text-[#6366f1]'
+                : 'text-[#9ca3af] hover:text-[#6b7280]'
+                } transition-colors`}
             >
               Positions
               {activeTab === 'positions' && (
@@ -419,11 +402,10 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`pb-[12px] px-[4px] font-['Arimo',sans-serif] text-[15px] relative flex items-center gap-2 ${
-                activeTab === 'analytics'
-                  ? 'text-[#6366f1]'
-                  : 'text-[#9ca3af] hover:text-[#6b7280]'
-              } transition-colors`}
+              className={`pb-[12px] px-[4px] font-['Arimo',sans-serif] text-[15px] relative flex items-center gap-2 ${activeTab === 'analytics'
+                ? 'text-[#6366f1]'
+                : 'text-[#9ca3af] hover:text-[#6b7280]'
+                } transition-colors`}
             >
               <BarChart3 size={16} />
               Analytics
@@ -518,7 +500,7 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
                       </button>
 
                       {/* View Button */}
-                      <button 
+                      <button
                         onClick={() => handleViewPosition(position)}
                         className="bg-[#6366f1] h-[34px] rounded-[6px] px-[20px] flex items-center justify-center hover:bg-[#5558e3] transition-colors"
                       >
@@ -539,14 +521,14 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
             const totalPositions = positions.length;
             const openPositions = positions.filter(p => p.isOpen).length;
             const closedPositions = positions.filter(p => !p.isOpen).length;
-            
+
             // Mock analytics data - in real app this would come from API
             const totalAssessmentsPassed = Math.floor(totalApplicants * 0.35);
             const totalAiInterviewsPassed = Math.floor(totalApplicants * 0.22);
             const totalLiveInterviewsPassed = Math.floor(totalApplicants * 0.12);
             const totalSelected = Math.floor(totalApplicants * 0.05);
-            
-            const conversionRateAssessment = totalApplicants > 0 
+
+            const conversionRateAssessment = totalApplicants > 0
               ? ((totalAssessmentsPassed / totalApplicants) * 100).toFixed(1)
               : '0';
             const conversionRateAiInterview = totalAssessmentsPassed > 0
@@ -745,8 +727,8 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
                             <span className="text-[14px] font-semibold text-black font-['Arimo',sans-serif]">{position.applicants}</span>
                           </div>
                           <div className="mt-[8px] h-[6px] bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-indigo-500" 
+                            <div
+                              className="h-full bg-indigo-500"
                               style={{ width: `${totalApplicants > 0 ? (position.applicants / totalApplicants) * 100 : 0}%` }}
                             ></div>
                           </div>
@@ -965,7 +947,7 @@ export function ProjectDetailView({ projectTitle, projectDescription, projectSta
         onConfirm={(data) => {
           // Update internal status to Complete
           setInternalProjectStatus('Complete');
-          
+
           if (onCompleteProject) {
             onCompleteProject(data);
           }

@@ -1,39 +1,8 @@
-import { useState } from 'react';
-import { ArrowLeft, Eye, ArrowUpDown, Calendar, Users, FileText, CheckCircle, XCircle, Clock, Briefcase, Award, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Eye, ArrowUpDown, Calendar, Users, FileText, CheckCircle, XCircle, Clock, Briefcase, Award, TrendingUp, Loader2 } from 'lucide-react';
 import { Card } from './ui/card';
-
-interface ClosedProject {
-  id: string;
-  projectName: string;
-  closedDate: string;
-  positionsCount: number;
-  totalCandidates: number;
-  openDate: string;
-}
-
-interface ClosedPosition {
-  id: number;
-  jobTitle: string;
-  projectName: string;
-  closureStatus: 'Filled' | 'Cancelled' | 'On Hold';
-  closedDate: string;
-  closureReason: string;
-  candidatesCount: number;
-  groupsCreated: number;
-  selectedCandidates?: SelectedCandidate[];
-  assessmentsPassed: number;
-  aiInterviewsPassed: number;
-  liveInterviewsPassed: number;
-}
-
-interface SelectedCandidate {
-  id: number;
-  name: string;
-  email: string;
-  selectionDate: string;
-  finalScore: number;
-  position: string;
-}
+import { ClosedProject, ClosedPosition } from '../data/mockData';
+import { api } from '../services/api';
 
 interface AdminClosedPositionsProps {
   onSignOut: () => void;
@@ -48,150 +17,33 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  // Mock data for closed projects
-  const closedProjects: ClosedProject[] = [
-    {
-      id: 'proj-1',
-      projectName: 'Tech Corp Engineering 2024',
-      closedDate: '2024-12-31',
-      positionsCount: 8,
-      totalCandidates: 234,
-      openDate: '2024-01-15'
-    },
-    {
-      id: 'proj-2',
-      projectName: 'Marketing Initiative Q4',
-      closedDate: '2024-11-15',
-      positionsCount: 3,
-      totalCandidates: 86,
-      openDate: '2024-08-10'
-    },
-    {
-      id: 'proj-3',
-      projectName: 'Product Team Expansion',
-      closedDate: '2024-10-20',
-      positionsCount: 5,
-      totalCandidates: 142,
-      openDate: '2024-05-05'
-    },
-    {
-      id: 'proj-4',
-      projectName: 'Sales Department Growth',
-      closedDate: '2024-09-05',
-      positionsCount: 4,
-      totalCandidates: 97,
-      openDate: '2024-03-20'
-    }
-  ];
+  const [isLoading, setIsLoading] = useState(true);
+  const [closedProjects, setClosedProjects] = useState<ClosedProject[]>([]);
+  const [closedPositions, setClosedPositions] = useState<ClosedPosition[]>([]);
 
-  // Mock data for positions within a project
-  const closedPositions: ClosedPosition[] = [
-    {
-      id: 1,
-      jobTitle: 'Senior Frontend Developer',
-      projectName: 'Tech Corp Engineering 2024',
-      closureStatus: 'Filled',
-      closedDate: '2024-03-01',
-      closureReason: 'Position successfully filled with qualified candidate',
-      candidatesCount: 67,
-      groupsCreated: 5,
-      assessmentsPassed: 23,
-      aiInterviewsPassed: 15,
-      liveInterviewsPassed: 8,
-      selectedCandidates: [
-        {
-          id: 1,
-          name: 'Sarah Johnson',
-          email: 'sarah.johnson@email.com',
-          selectionDate: '2024-03-01',
-          finalScore: 94,
-          position: 'Senior Frontend Developer'
-        }
-      ]
-    },
-    {
-      id: 2,
-      jobTitle: 'Backend Engineer',
-      projectName: 'Tech Corp Engineering 2024',
-      closureStatus: 'Filled',
-      closedDate: '2024-04-15',
-      closureReason: 'Two positions filled from candidate pool',
-      candidatesCount: 52,
-      groupsCreated: 4,
-      assessmentsPassed: 19,
-      aiInterviewsPassed: 12,
-      liveInterviewsPassed: 6,
-      selectedCandidates: [
-        {
-          id: 2,
-          name: 'Michael Chen',
-          email: 'michael.chen@email.com',
-          selectionDate: '2024-04-15',
-          finalScore: 91,
-          position: 'Backend Engineer'
-        },
-        {
-          id: 3,
-          name: 'Emily Rodriguez',
-          email: 'emily.rodriguez@email.com',
-          selectionDate: '2024-04-15',
-          finalScore: 88,
-          position: 'Backend Engineer'
-        }
-      ]
-    },
-    {
-      id: 3,
-      jobTitle: 'DevOps Specialist',
-      projectName: 'Tech Corp Engineering 2024',
-      closureStatus: 'Cancelled',
-      closedDate: '2024-05-10',
-      closureReason: 'Budget constraints led to position cancellation',
-      candidatesCount: 38,
-      groupsCreated: 3,
-      assessmentsPassed: 14,
-      aiInterviewsPassed: 8,
-      liveInterviewsPassed: 0,
-      selectedCandidates: []
-    },
-    {
-      id: 4,
-      jobTitle: 'Full Stack Developer',
-      projectName: 'Tech Corp Engineering 2024',
-      closureStatus: 'Filled',
-      closedDate: '2024-06-22',
-      closureReason: 'Excellent candidate selected from talent pool',
-      candidatesCount: 45,
-      groupsCreated: 4,
-      assessmentsPassed: 16,
-      aiInterviewsPassed: 10,
-      liveInterviewsPassed: 5,
-      selectedCandidates: [
-        {
-          id: 4,
-          name: 'David Kim',
-          email: 'david.kim@email.com',
-          selectionDate: '2024-06-22',
-          finalScore: 96,
-          position: 'Full Stack Developer'
-        }
-      ]
-    },
-    {
-      id: 5,
-      jobTitle: 'Mobile Developer (iOS)',
-      projectName: 'Tech Corp Engineering 2024',
-      closureStatus: 'On Hold',
-      closedDate: '2024-07-18',
-      closureReason: 'Waiting for project prioritization decision',
-      candidatesCount: 32,
-      groupsCreated: 2,
-      assessmentsPassed: 11,
-      aiInterviewsPassed: 7,
-      liveInterviewsPassed: 3,
-      selectedCandidates: []
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.admin.getClosedPositions();
+        setClosedProjects(data.projects);
+        setClosedPositions(data.positions);
+      } catch (error) {
+        console.error("Error loading closed positions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   const getPositionsForProject = (projectName: string) => {
     return closedPositions.filter(pos => pos.projectName === projectName);
@@ -286,9 +138,8 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
                     {closedProjects.map((project, index) => (
                       <tr
                         key={project.id}
-                        className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${
-                          index === closedProjects.length - 1 ? 'border-b-0' : ''
-                        }`}
+                        className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${index === closedProjects.length - 1 ? 'border-b-0' : ''
+                          }`}
                         onClick={() => {
                           setSelectedProject(project);
                           setViewMode('positions');
@@ -418,9 +269,8 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
                     {getPositionsForProject(selectedProject.projectName).map((position, index) => (
                       <tr
                         key={position.id}
-                        className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${
-                          index === getPositionsForProject(selectedProject.projectName).length - 1 ? 'border-b-0' : ''
-                        }`}
+                        className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors cursor-pointer ${index === getPositionsForProject(selectedProject.projectName).length - 1 ? 'border-b-0' : ''
+                          }`}
                         onClick={() => {
                           setSelectedPosition(position);
                           setViewMode('details');
@@ -503,7 +353,7 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
             {/* Left Column - Position Overview */}
             <Card className="p-6 rounded-3xl shadow-sm">
               <h3 className="text-gray-900 mb-4">Position Overview</h3>
-              
+
               <div className="mb-6 p-4 rounded-lg bg-[#F9FAFB]">
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -512,10 +362,10 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
                   </div>
                   <div
                     className="h-[28px] rounded-full px-[14px] flex items-center justify-center"
-                    style={{ 
+                    style={{
                       backgroundColor: selectedPosition.closureStatus === 'Filled' ? '#10b981' :
-                                      selectedPosition.closureStatus === 'Cancelled' ? '#ef4444' :
-                                      selectedPosition.closureStatus === 'On Hold' ? '#f59e0b' : '#e5e7eb'
+                        selectedPosition.closureStatus === 'Cancelled' ? '#ef4444' :
+                          selectedPosition.closureStatus === 'On Hold' ? '#f59e0b' : '#e5e7eb'
                     }}
                   >
                     <p className="font-['Arimo',sans-serif] text-[13px] text-white">
@@ -531,10 +381,10 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
                   <div>
                     <p className="text-gray-500 text-xs">Closure Date</p>
                     <p className="text-gray-900 text-sm">
-                      {new Date(selectedPosition.closedDate).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                      {new Date(selectedPosition.closedDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
                       })}
                     </p>
                   </div>
@@ -624,10 +474,10 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
                         <div className="pt-3 border-t border-gray-200">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <Calendar size={14} />
-                            <span>Selected on {new Date(candidate.selectionDate).toLocaleDateString('en-US', { 
-                              year: 'numeric', 
-                              month: 'short', 
-                              day: 'numeric' 
+                            <span>Selected on {new Date(candidate.selectionDate).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
                             })}</span>
                           </div>
                         </div>
@@ -648,7 +498,7 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
               ) : selectedPosition.closureStatus === 'Cancelled' ? (
                 <div>
                   <h3 className="text-gray-900 mb-6">Position Cancelled</h3>
-                  
+
                   <div className="p-4 rounded-lg bg-red-50 mb-6">
                     <div className="flex items-center gap-2 mb-2">
                       <XCircle size={20} className="text-red-600" />
@@ -687,7 +537,7 @@ export function AdminClosedPositions({ onSignOut }: AdminClosedPositionsProps) {
               ) : (
                 <div>
                   <h3 className="text-gray-900 mb-6">Position On Hold</h3>
-                  
+
                   <div className="p-4 rounded-lg bg-amber-50 mb-6">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock size={20} className="text-amber-600" />

@@ -1,6 +1,7 @@
-import { Bell, CheckCircle2, Clock, FileText, Video, Calendar, ArrowRight, AlertCircle, Wrench } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, CheckCircle2, Clock, FileText, Video, Calendar, ArrowRight, AlertCircle, Wrench, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
+import { api } from '../services/api';
 import logo from '../imports/image-eramatch.png';
 
 interface CandidateHomePageProps {
@@ -17,36 +18,42 @@ interface Notification {
   read: boolean;
 }
 
-export function CandidateHomePage({ 
+export function CandidateHomePage({
   onOpenTestingPage,
-  currentStage = 'assessment'
+  currentStage: propStage
 }: CandidateHomePageProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: 'success',
-      title: 'Application Received',
-      message: 'Your application for Senior Software Engineer has been received',
-      time: '2 hours ago',
-      read: false
-    },
-    {
-      id: 2,
-      type: 'info',
-      title: 'Assessment Available',
-      message: 'Technical assessment is now available to complete',
-      time: '5 hours ago',
-      read: false
-    },
-    {
-      id: 3,
-      type: 'warning',
-      title: 'Deadline Reminder',
-      message: 'Complete your assessment within 3 days',
-      time: '1 day ago',
-      read: true
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [currentStage, setCurrentStage] = useState(propStage || 'assessment');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.candidate.getHome();
+        setNotifications((data.notifications as any).map((n: any) => ({
+          ...n,
+          type: n.type as 'success' | 'info' | 'warning'
+        })));
+        if (!propStage && data.currentStage) {
+          setCurrentStage(data.currentStage as 'screening' | 'assessment' | 'ai-interview' | 'live-interview');
+        }
+      } catch (error) {
+        console.error("Failed to load candidate home data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, [propStage]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#fafbfc]">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -78,10 +85,10 @@ export function CandidateHomePage({
       <div className="bg-white border-b border-[#e5e7eb]">
         <div className="max-w-[1200px] mx-auto px-[48px] py-[20px] flex items-center justify-between">
           <div className="flex items-center gap-[12px]">
-            <img 
-              src={logo} 
-              alt="ERAMATCH - A Smarter Recruitment System" 
-              className="h-[40px] w-[201.188px] object-cover" 
+            <img
+              src={logo}
+              alt="ERAMATCH - A Smarter Recruitment System"
+              className="h-[40px] w-[201.188px] object-cover"
             />
           </div>
 
@@ -141,28 +148,26 @@ export function CandidateHomePage({
                   {stages.map((stage, index) => {
                     const status = getStageStatus(stage.id);
                     const Icon = stage.icon;
-                    
+
                     return (
                       <div key={stage.id} className="flex items-center gap-[8px] flex-1">
-                        <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${
-                          status === 'completed' 
-                            ? 'bg-emerald-100' 
-                            : status === 'active'
+                        <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all ${status === 'completed'
+                          ? 'bg-emerald-100'
+                          : status === 'active'
                             ? 'bg-blue-100 border-2 border-blue-500'
                             : 'bg-gray-100'
-                        }`}>
+                          }`}>
                           <Icon size={16} className={
                             status === 'completed'
                               ? 'text-emerald-600'
                               : status === 'active'
-                              ? 'text-blue-600'
-                              : 'text-gray-400'
+                                ? 'text-blue-600'
+                                : 'text-gray-400'
                           } />
                         </div>
                         {index < stages.length - 1 && (
-                          <div className={`h-[2px] flex-1 ${
-                            status === 'completed' ? 'bg-emerald-200' : 'bg-gray-200'
-                          }`}></div>
+                          <div className={`h-[2px] flex-1 ${status === 'completed' ? 'bg-emerald-200' : 'bg-gray-200'
+                            }`}></div>
                         )}
                       </div>
                     );
@@ -189,7 +194,7 @@ export function CandidateHomePage({
                 <h3 className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280] mb-[12px]">
                   Next steps
                 </h3>
-                
+
                 <div className="bg-[#fafbfc] rounded-[10px] p-[20px] border border-[#e5e7eb]">
                   <div className="flex items-start justify-between mb-[12px]">
                     <div className="flex-1">
@@ -201,7 +206,7 @@ export function CandidateHomePage({
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-[16px]">
                       <div className="flex items-center gap-[6px]">
@@ -217,7 +222,7 @@ export function CandidateHomePage({
                         </span>
                       </div>
                     </div>
-                    
+
                     <Button className="bg-[#6366f1] hover:bg-[#5558e3] text-white h-[36px] px-[20px] rounded-[6px] font-['Arimo',sans-serif] text-[14px]">
                       Start Now
                     </Button>
@@ -248,7 +253,7 @@ export function CandidateHomePage({
                   Notifications
                 </h2>
                 {unreadCount > 0 && (
-                  <button 
+                  <button
                     onClick={markAllAsRead}
                     className="font-['Arimo',sans-serif] text-[12px] text-[#6366f1] hover:text-[#5558e3] transition-colors"
                   >
@@ -259,27 +264,25 @@ export function CandidateHomePage({
 
               <div className="space-y-[12px]">
                 {notifications.map((notification) => (
-                  <div 
+                  <div
                     key={notification.id}
-                    className={`p-[16px] rounded-[8px] border ${
-                      notification.read 
-                        ? 'bg-white border-[#e5e7eb]' 
-                        : 'bg-[#eef2ff] border-[#c7d2fe]'
-                    }`}
+                    className={`p-[16px] rounded-[8px] border ${notification.read
+                      ? 'bg-white border-[#e5e7eb]'
+                      : 'bg-[#eef2ff] border-[#c7d2fe]'
+                      }`}
                   >
                     <div className="flex items-start gap-[12px]">
-                      <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 ${
-                        notification.type === 'success' 
-                          ? 'bg-emerald-100' 
-                          : notification.type === 'info'
+                      <div className={`w-[32px] h-[32px] rounded-full flex items-center justify-center shrink-0 ${notification.type === 'success'
+                        ? 'bg-emerald-100'
+                        : notification.type === 'info'
                           ? 'bg-blue-100'
                           : 'bg-amber-100'
-                      }`}>
+                        }`}>
                         {notification.type === 'success' && <CheckCircle2 size={16} className="text-emerald-600" />}
                         {notification.type === 'info' && <Bell size={16} className="text-blue-600" />}
                         {notification.type === 'warning' && <AlertCircle size={16} className="text-amber-600" />}
                       </div>
-                      
+
                       <div className="flex-1 min-w-0">
                         <h4 className="font-['Arimo',sans-serif] text-[13px] text-black font-medium mb-[4px]">
                           {notification.title}
