@@ -21,6 +21,9 @@ import { AlertsNotifications } from './components/common/AlertsNotifications';
 import { CandidateHomePage } from './components/candidate/CandidateHomePage';
 import { CandidateDashboard } from './components/candidate/CandidateDashboard';
 import { EnhancedGroupOverviewV2 } from './components/recruiter/EnhancedGroupOverviewV2';
+import { TechnicalAssessmentFlow } from './components/candidate/TechnicalAssessmentFlow';
+import { RecordedInterviewFlow } from './components/candidate/RecordedInterviewFlow';
+import { LiveInterviewFlow } from './components/candidate/LiveInterviewFlow';
 import { useParams } from 'react-router-dom';
 import React from 'react';
 import { api, PositionGroup } from './services/api';
@@ -87,15 +90,48 @@ const CandidateDashboardWrapper = () => {
         <CandidateDashboard
             onSignOut={() => navigate('/')}
             onBack={() => navigate('/candidate/home')}
-            onStartRecordedInterview={() => console.log('Start Recorded Interview')}
+            onStartRecordedInterview={() => navigate('/candidate/assessment/recorded')}
             recordedInterviewCompleted={false}
-            onStartLiveInterview={() => console.log('Start Live Interview')}
+            onStartLiveInterview={() => navigate('/candidate/assessment/live')}
             liveInterviewCompleted={false}
-            onStartTechnicalAssessment={() => console.log('Start Technical Assessment')}
+            onStartTechnicalAssessment={() => navigate('/candidate/assessment/technical')}
             technicalAssessmentCompleted={false}
         />
     )
 }
+
+const TechnicalAssessmentWrapper = () => {
+    const navigate = useNavigate();
+    return (
+        <TechnicalAssessmentFlow
+            onSignOut={() => navigate('/')}
+            onExit={() => navigate('/candidate/testing')}
+            onCompletion={() => navigate('/candidate/testing')}
+        />
+    );
+};
+
+const RecordedInterviewWrapper = () => {
+    const navigate = useNavigate();
+    return (
+        <RecordedInterviewFlow
+            onSignOut={() => navigate('/')}
+            onExit={() => navigate('/candidate/testing')}
+            onCompletion={() => navigate('/candidate/testing')}
+        />
+    );
+};
+
+const LiveInterviewWrapper = () => {
+    const navigate = useNavigate();
+    return (
+        <LiveInterviewFlow
+            onSignOut={() => navigate('/')}
+            onExit={() => navigate('/candidate/testing')}
+            onCompletion={() => navigate('/candidate/testing')}
+        />
+    );
+};
 
 const CandidateHomePageWrapper = () => {
     const navigate = useNavigate();
@@ -328,5 +364,17 @@ export const router = createBrowserRouter([
     {
         path: "/candidate/testing",
         element: <CandidateDashboardWrapper />
+    },
+    {
+        path: "/candidate/assessment/technical",
+        element: <TechnicalAssessmentWrapper />
+    },
+    {
+        path: "/candidate/assessment/recorded",
+        element: <RecordedInterviewWrapper />
+    },
+    {
+        path: "/candidate/assessment/live",
+        element: <LiveInterviewWrapper />
     }
 ]);

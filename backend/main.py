@@ -691,12 +691,30 @@ def get_candidate_assessments():
         {
             "id": 1,
             "title": 'Software engineering technical assessment',
-            "description": 'Evaluate your technical skills...',
+            "description": 'Evaluate your technical skills through a series of coding challenges and multiple-choice questions.',
             "type": 'assessment',
             "questions": 15,
-            "expectedTime": '45 minutes'
+            "expectedTime": '45 minutes',
+            "parts": 1
         },
-         # ...
+        {
+            "id": 2,
+            "title": 'Behavioral AI Interview',
+            "description": 'Complete a recorded video interview to showcase your communication skills and cultural fit.',
+            "type": 'interview',
+            "questions": 5,
+            "expectedTime": '15 minutes',
+            "parts": 5
+        },
+        {
+            "id": 3,
+            "title": 'Live Technical Interview',
+            "description": 'Real-time video interview with an AI or human interviewer to discuss your technical experience.',
+            "type": 'interview',
+            "questions": 1,
+            "expectedTime": '30 minutes',
+            "parts": 1
+        }
     ]
 
 @app.get("/candidate/profile")
