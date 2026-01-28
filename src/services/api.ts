@@ -6,14 +6,83 @@ import {
     mockClosedPositions,
     mockMembers,
     mockHrRecruiters,
-    mockTechnicalRecruiters,
-    JobPosition,
-    Project,
-    PositionGroup,
-    ClosedProject,
-    ClosedPosition,
-    Member
+    mockTechnicalRecruiters
 } from '../data/mockData';
+
+export interface JobPosition {
+    id: number;
+    jobTitle: string;
+    department: string;
+    assignedHR: string;
+    assignedTechnicalRecruiter: string;
+    candidatesCount: number;
+    status: 'Open' | 'Interview' | 'Closed' | 'On Hold';
+    projectId?: number;
+}
+
+export interface Project {
+    id: number;
+    projectName: string;
+    positionsCount: number;
+    applicantsCount: number;
+    subGroupsCount: number;
+    openDate: string;
+}
+
+export interface PositionGroup {
+    id: number;
+    groupName: string;
+    positionTitle: string;
+    candidatesCount: number;
+    status: 'Active' | 'Processing' | 'Completed' | 'On Hold';
+    createdDate: string;
+    hasAssessment: boolean;
+    hasAIInterview: boolean;
+    hasLiveInterview: boolean;
+}
+
+export interface SelectedCandidate {
+    id: number;
+    name: string;
+    email: string;
+    selectionDate: string;
+    finalScore: number;
+    position: string;
+}
+
+export interface ClosedPosition {
+    id: number;
+    jobTitle: string;
+    projectName: string;
+    closureStatus: 'Filled' | 'Cancelled' | 'On Hold';
+    closedDate: string;
+    closureReason: string;
+    candidatesCount: number;
+    groupsCreated: number;
+    selectedCandidates?: SelectedCandidate[];
+    assessmentsPassed: number;
+    aiInterviewsPassed: number;
+    liveInterviewsPassed: number;
+}
+
+export interface ClosedProject {
+    id: string;
+    projectName: string;
+    closedDate: string;
+    positionsCount: number;
+    totalCandidates: number;
+    openDate: string;
+}
+
+export interface Member {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    position: string;
+    department: string;
+    joinDate: string;
+}
 
 // Simulate network delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -281,6 +350,10 @@ export const api = {
             await delay(400);
             // In a real app, filter by ID. For now return all projects or first one
             return mockProjects[0];
+        },
+        getProjectPositions: async (projectId: number) => {
+            await delay(400);
+            return mockJobPositions.filter(p => p.projectId === projectId);
         },
         getCandidates: async () => {
             await delay(600);
@@ -615,6 +688,390 @@ export const api = {
                     { module: 'Assessment', progress: 100, status: 'completed', time: '18 mins', flags: 2 },
                     { module: 'AI Interview', progress: 100, status: 'completed', time: '12 mins', flags: 2 },
                     { module: 'Live Interview', progress: 0, status: 'pending', time: '-', flags: 0 }
+                ]
+            };
+        },
+        getKnowledgeGraphData: async (candidateId: number) => {
+            await delay(500);
+            // Return comprehensive knowledge graph data for a candidate
+            return {
+                nodes: [
+                    // Candidate (center)
+                    { id: 'candidate-1', type: 'candidate', label: `Candidate ${candidateId}`, data: { id: candidateId }, x: 0, y: 0 },
+
+                    // Skills (verified with levels and scores)
+                    { id: 'skill-1', type: 'skill', label: 'React', data: { yearsExp: 6 }, verified: true, level: 'Expert', score: 95, x: 0, y: 0 },
+                    { id: 'skill-2', type: 'skill', label: 'TypeScript', data: { yearsExp: 5 }, verified: true, level: 'Expert', score: 98, x: 0, y: 0 },
+                    { id: 'skill-3', type: 'skill', label: 'Node.js', data: { yearsExp: 7 }, verified: true, level: 'Advanced', score: 92, x: 0, y: 0 },
+                    { id: 'skill-4', type: 'skill', label: 'AWS', data: { yearsExp: 4 }, verified: true, level: 'Advanced', score: 88, x: 0, y: 0 },
+                    { id: 'skill-5', type: 'skill', label: 'Docker', data: { yearsExp: 3 }, verified: false, level: 'Intermediate', score: 75, x: 0, y: 0 },
+                    { id: 'skill-6', type: 'skill', label: 'Python', data: { yearsExp: 2 }, verified: true, level: 'Intermediate', score: 80, hasIntegrityFlag: true, flagSeverity: 'low', x: 0, y: 0 },
+
+                    // Projects
+                    { id: 'project-1', type: 'project', label: 'E-commerce Platform', data: { duration: '2 years', impact: 'high' }, x: 0, y: 0 },
+                    { id: 'project-2', type: 'project', label: 'Analytics Dashboard', data: { duration: '1 year', impact: 'medium' }, x: 0, y: 0 },
+                    { id: 'project-3', type: 'project', label: 'Mobile App Backend', data: { duration: '1.5 years', impact: 'high' }, x: 0, y: 0 },
+
+                    // Roles
+                    { id: 'role-1', type: 'role', label: 'Senior Software Engineer', data: { duration: '2020-Present' }, x: 0, y: 0 },
+                    { id: 'role-2', type: 'role', label: 'Software Engineer', data: { duration: '2017-2020' }, x: 0, y: 0 },
+
+                    // Companies
+                    { id: 'company-1', type: 'company', label: 'Tech Corp', data: { size: 'Large', industry: 'Technology' }, x: 0, y: 0 },
+                    { id: 'company-2', type: 'company', label: 'StartupXYZ', data: { size: 'Startup', industry: 'E-commerce' }, x: 0, y: 0 },
+
+                    // Education
+                    { id: 'edu-1', type: 'education', label: 'MS Computer Science', data: { school: 'Stanford University', year: '2015-2017' }, x: 0, y: 0 },
+                    { id: 'edu-2', type: 'education', label: 'BS Software Engineering', data: { school: 'UC Berkeley', year: '2011-2015' }, x: 0, y: 0 },
+
+                    // Assessment
+                    { id: 'assessment-1', type: 'assessment', label: 'Technical Assessment', data: { score: 95, completedAt: '2025-01-15' }, score: 95, x: 0, y: 0 },
+
+                    // AI Interview
+                    { id: 'interview-1', type: 'interview', label: 'AI Interview', data: { score: 92, completedAt: '2025-01-16' }, score: 92, x: 0, y: 0 },
+
+                    // GitHub
+                    { id: 'github-1', type: 'github', label: 'react-dashboard', data: { stars: 245, language: 'TypeScript' }, score: 88, x: 0, y: 0 },
+                    { id: 'github-2', type: 'github', label: 'node-api-boilerplate', data: { stars: 128, language: 'JavaScript' }, score: 85, x: 0, y: 0 },
+
+                    // Integrity Flags
+                    { id: 'integrity-1', type: 'integrity', label: 'Minor Inconsistency', data: { module: 'Python Assessment', severity: 'low' }, hasIntegrityFlag: true, flagSeverity: 'low', x: 0, y: 0 },
+
+                    // JD Requirements
+                    { id: 'jd-1', type: 'jd-requirement', label: 'React Expert Required', data: { priority: 'high' }, x: 0, y: 0 },
+                    { id: 'jd-2', type: 'jd-requirement', label: 'Cloud Experience', data: { priority: 'medium' }, x: 0, y: 0 },
+
+                    // Evidence nodes
+                    { id: 'evidence-1', type: 'evidence', label: 'GitHub Contributions', data: { commits: 1245, repos: 12 }, x: 0, y: 0 },
+                    { id: 'evidence-2', type: 'evidence', label: 'Certificate: AWS Solutions Architect', data: { issuer: 'Amazon', year: 2023 }, verified: true, x: 0, y: 0 },
+                    { id: 'evidence-3', type: 'evidence', label: 'LinkedIn Endorsements', data: { count: 24 }, x: 0, y: 0 }
+                ],
+
+                edges: [
+                    // Candidate to top-level entities
+                    { id: 'e1', source: 'candidate-1', target: 'role-1', type: 'related' },
+                    { id: 'e2', source: 'candidate-1', target: 'role-2', type: 'related' },
+                    { id: 'e3', source: 'candidate-1', target: 'edu-1', type: 'related' },
+                    { id: 'e4', source: 'candidate-1', target: 'edu-2', type: 'related' },
+                    { id: 'e5', source: 'candidate-1', target: 'assessment-1', type: 'related' },
+                    { id: 'e6', source: 'candidate-1', target: 'interview-1', type: 'related' },
+
+                    // Role to Company
+                    { id: 'e7', source: 'role-1', target: 'company-1', type: 'related' },
+                    { id: 'e8', source: 'role-2', target: 'company-2', type: 'related' },
+
+                    // Role to Projects
+                    { id: 'e9', source: 'role-1', target: 'project-1', type: 'related' },
+                    { id: 'e10', source: 'role-1', target: 'project-2', type: 'related' },
+                    { id: 'e11', source: 'role-2', target: 'project-3', type: 'related' },
+
+                    // Projects to Skills
+                    { id: 'e12', source: 'project-1', target: 'skill-1', label: 'used', type: 'evidence' },
+                    { id: 'e13', source: 'project-1', target: 'skill-2', label: 'used', type: 'evidence' },
+                    { id: 'e14', source: 'project-1', target: 'skill-3', label: 'used', type: 'evidence' },
+                    { id: 'e15', source: 'project-2', target: 'skill-1', label: 'used', type: 'evidence' },
+                    { id: 'e16', source: 'project-2', target: 'skill-4', label: 'used', type: 'evidence' },
+                    { id: 'e17', source: 'project-3', target: 'skill-3', label: 'used', type: 'evidence' },
+                    { id: 'e18', source: 'project-3', target: 'skill-5', label: 'used', type: 'evidence' },
+
+                    // Assessment to Skills
+                    { id: 'e19', source: 'assessment-1', target: 'skill-1', label: 'tested', type: 'verified' },
+                    { id: 'e20', source: 'assessment-1', target: 'skill-2', label: 'tested', type: 'verified' },
+                    { id: 'e21', source: 'assessment-1', target: 'skill-6', label: 'tested', type: 'verified' },
+
+                    // Interview to Skills
+                    { id: 'e22', source: 'interview-1', target: 'skill-1', label: 'discussed', type: 'verified' },
+                    { id: 'e23', source: 'interview-1', target: 'skill-3', label: 'discussed', type: 'verified' },
+
+                    // GitHub to Skills
+                    { id: 'e24', source: 'github-1', target: 'skill-1', label: 'demonstrates', type: 'evidence' },
+                    { id: 'e25', source: 'github-1', target: 'skill-2', label: 'demonstrates', type: 'evidence' },
+                    { id: 'e26', source: 'github-2', target: 'skill-3', label: 'demonstrates', type: 'evidence' },
+
+                    // Evidence to Skills
+                    { id: 'e27', source: 'evidence-1', target: 'skill-1', label: 'supports', type: 'evidence' },
+                    { id: 'e28', source: 'evidence-2', target: 'skill-4', label: 'certifies', type: 'verified' },
+                    { id: 'e29', source: 'evidence-3', target: 'skill-1', label: 'endorses', type: 'evidence' },
+
+                    // Integrity Flag relationships
+                    { id: 'e30', source: 'integrity-1', target: 'skill-6', label: 'flags', type: 'flagged' },
+                    { id: 'e31', source: 'integrity-1', target: 'assessment-1', label: 'detected in', type: 'flagged' },
+
+                    // JD Requirements to Skills
+                    { id: 'e32', source: 'jd-1', target: 'skill-1', label: 'requires', type: 'required' },
+                    { id: 'e33', source: 'jd-2', target: 'skill-4', label: 'requires', type: 'required' }
+                ]
+            };
+        },
+        getCandidateSkills: async (candidateIds: number[]) => {
+            await delay(600);
+            // Return detected skills for each candidate
+            const skillsData: Record<number, any[]> = {};
+
+            candidateIds.forEach((id, index) => {
+                // Generate different skill sets for different candidates
+                const baseSkills = [
+                    { id: `s${id}-1`, name: 'React', category: 'technical', proficiency: index % 3 === 0 ? 'expert' : 'advanced', yearsOfExperience: 3 + index, source: 'resume' },
+                    { id: `s${id}-2`, name: 'TypeScript', category: 'technical', proficiency: index % 2 === 0 ? 'advanced' : 'intermediate', yearsOfExperience: 2 + index, source: 'assessment' },
+                    { id: `s${id}-3`, name: 'Node.js', category: 'technical', proficiency: 'advanced', yearsOfExperience: 3 + index, source: 'resume' },
+                    { id: `s${id}-4`, name: 'Communication', category: 'interpersonal', proficiency: index % 2 === 0 ? 'expert' : 'advanced', yearsOfExperience: 4 + index, source: 'interview' },
+                    { id: `s${id}-5`, name: 'Problem Solving', category: 'interpersonal', proficiency: 'expert', yearsOfExperience: 5 + index, source: 'interview' }
+                ];
+
+                // Add some variation
+                if (index % 2 === 0) {
+                    baseSkills.push(
+                        { id: `s${id}-6`, name: 'GraphQL', category: 'technical', proficiency: 'intermediate', yearsOfExperience: 2, source: 'resume' },
+                        { id: `s${id}-7`, name: 'Leadership', category: 'interpersonal', proficiency: 'advanced', yearsOfExperience: 3, source: 'interview' }
+                    );
+                }
+
+                if (index % 3 === 0) {
+                    baseSkills.push(
+                        { id: `s${id}-8`, name: 'Python', category: 'technical', proficiency: 'advanced', yearsOfExperience: 4, source: 'resume' },
+                        { id: `s${id}-9`, name: 'Team Collaboration', category: 'interpersonal', proficiency: 'advanced', yearsOfExperience: 4, source: 'interview' }
+                    );
+                }
+
+                skillsData[id] = baseSkills;
+            });
+
+            return skillsData;
+        },
+        // For QuestionBankModal.tsx
+        getQuestionBankVariants: async (type: string) => {
+            await delay(400);
+            // Return full question variants with details (options, test cases, etc.) based on type
+            const MOCK_QUESTIONS: Record<string, any[]> = {
+                mcq: [
+                    {
+                        id: 'qb-mcq-1',
+                        type: 'mcq',
+                        questionText: 'What is the primary purpose of React hooks?',
+                        options: ['State management in functional components', 'Styling components', 'API calls', 'Routing'],
+                        correctAnswer: 0,
+                        difficulty: 'Medium',
+                        tags: ['React', 'Hooks'],
+                        semanticScore: 0.95
+                    },
+                    {
+                        id: 'qb-mcq-2',
+                        type: 'mcq',
+                        questionText: 'Which of the following is NOT a valid HTTP method?',
+                        options: ['GET', 'POST', 'FETCH', 'DELETE'],
+                        correctAnswer: 2,
+                        difficulty: 'Easy',
+                        tags: ['HTTP', 'Web'],
+                        semanticScore: 0.88
+                    },
+                    {
+                        id: 'qb-mcq-3',
+                        type: 'mcq',
+                        questionText: 'What does SQL stand for?',
+                        options: ['Structured Query Language', 'Simple Question Language', 'Sequential Query Logic', 'System Query Language'],
+                        correctAnswer: 0,
+                        difficulty: 'Easy',
+                        tags: ['SQL', 'Database'],
+                        semanticScore: 0.92
+                    },
+                    {
+                        id: 'qb-mcq-4',
+                        type: 'mcq',
+                        questionText: 'In React, what is the purpose of useEffect hook?',
+                        options: ['Handle side effects', 'Manage state', 'Create components', 'Style elements'],
+                        correctAnswer: 0,
+                        difficulty: 'Medium',
+                        tags: ['React', 'Hooks', 'Side Effects'],
+                        semanticScore: 0.90
+                    }
+                ],
+                essay: [
+                    {
+                        id: 'qb-essay-1',
+                        type: 'essay',
+                        questionText: 'Explain the concept of closure in JavaScript with an example.',
+                        maxWords: 300,
+                        rubric: 'Answer should explain that closures are functions that remember their outer scope, provide a clear example, and discuss practical use cases.',
+                        difficulty: 'Medium',
+                        tags: ['JavaScript', 'Closures'],
+                        semanticScore: 0.93
+                    },
+                    {
+                        id: 'qb-essay-2',
+                        type: 'essay',
+                        questionText: 'Describe the SOLID principles and their importance in software design.',
+                        maxWords: 500,
+                        rubric: 'Should cover all 5 SOLID principles with examples and explain their impact on code maintainability.',
+                        difficulty: 'Hard',
+                        tags: ['Design Patterns', 'OOP'],
+                        semanticScore: 0.89
+                    }
+                ],
+                code: [
+                    {
+                        id: 'qb-code-1',
+                        type: 'code',
+                        questionText: 'Write a function to reverse a string without using built-in reverse methods.',
+                        language: 'JavaScript',
+                        codeTemplate: 'function reverseString(str) {\n  // Your code here\n}',
+                        testCases: [
+                            { id: 'tc1', input: '"hello"', expectedOutput: '"olleh"', isHidden: false, points: 10 },
+                            { id: 'tc2', input: '"world"', expectedOutput: '"dlrow"', isHidden: false, points: 10 }
+                        ],
+                        difficulty: 'Easy',
+                        tags: ['Strings', 'Algorithms'],
+                        semanticScore: 0.91
+                    },
+                    {
+                        id: 'qb-code-2',
+                        type: 'code',
+                        questionText: 'Implement a function to find the longest palindromic substring.',
+                        language: 'Python',
+                        codeTemplate: 'def longest_palindrome(s):\n    # Your code here\n    pass',
+                        testCases: [
+                            { id: 'tc1', input: '"babad"', expectedOutput: '"bab" or "aba"', isHidden: false, points: 15 },
+                            { id: 'tc2', input: '"cbbd"', expectedOutput: '"bb"', isHidden: false, points: 15 }
+                        ],
+                        difficulty: 'Hard',
+                        tags: ['Strings', 'Dynamic Programming'],
+                        semanticScore: 0.87
+                    }
+                ]
+            };
+            return MOCK_QUESTIONS[type] || [];
+        },
+        // For GroupCreationPage.tsx
+        getGroupCandidates: async () => {
+            await delay(500);
+            return [
+                { id: 1, name: 'John Smith', email: 'john.smith@email.com', experience: 8, location: 'San Francisco, CA', skills: ['React', 'TypeScript', 'Node.js', 'AWS'], match: 92, starred: false },
+                { id: 2, name: 'Sarah Johnson', email: 'sarah.j@email.com', experience: 6, location: 'New York, NY', skills: ['React', 'JavaScript', 'Python', 'Docker'], match: 88, starred: false },
+                { id: 3, name: 'Michael Chen', email: 'mchen@email.com', experience: 10, location: 'Austin, TX', skills: ['TypeScript', 'Node.js', 'GraphQL', 'MongoDB'], match: 85, starred: false },
+                { id: 4, name: 'Emily Davis', email: 'emily.davis@email.com', experience: 5, location: 'Seattle, WA', skills: ['React', 'TypeScript', 'Redux', 'PostgreSQL'], match: 82, starred: false },
+                { id: 5, name: 'David Wilson', email: 'dwilson@email.com', experience: 7, location: 'San Francisco, CA', skills: ['JavaScript', 'Node.js', 'Express', 'MySQL'], match: 79, starred: false },
+                { id: 6, name: 'Lisa Anderson', email: 'l.anderson@email.com', experience: 4, location: 'Boston, MA', skills: ['React', 'Vue.js', 'CSS', 'HTML'], match: 76, starred: false },
+                { id: 7, name: 'Robert Martinez', email: 'rmartinez@email.com', experience: 9, location: 'Los Angeles, CA', skills: ['Python', 'Django', 'PostgreSQL', 'Redis'], match: 73, starred: false },
+                { id: 8, name: 'Jennifer Taylor', email: 'jtaylor@email.com', experience: 3, location: 'Chicago, IL', skills: ['JavaScript', 'React', 'HTML', 'CSS'], match: 70, starred: false },
+                { id: 9, name: 'James Brown', email: 'jbrown@email.com', experience: 6, location: 'Denver, CO', skills: ['TypeScript', 'Angular', 'RxJS', 'NestJS'], match: 67, starred: false },
+                { id: 10, name: 'Patricia Garcia', email: 'pgarcia@email.com', experience: 5, location: 'Miami, FL', skills: ['React', 'Next.js', 'Tailwind', 'Vercel'], match: 64, starred: false },
+                { id: 11, name: 'Christopher Lee', email: 'clee@email.com', experience: 8, location: 'San Francisco, CA', skills: ['Java', 'Spring', 'Kubernetes', 'AWS'], match: 61, starred: false },
+                { id: 12, name: 'Maria Rodriguez', email: 'mrodriguez@email.com', experience: 4, location: 'Atlanta, GA', skills: ['JavaScript', 'Vue.js', 'Vuex', 'Firebase'], match: 58, starred: false },
+                { id: 13, name: 'Daniel Kim', email: 'dkim@email.com', experience: 7, location: 'Seattle, WA', skills: ['Go', 'Microservices', 'Docker', 'Kubernetes'], match: 55, starred: false },
+                { id: 14, name: 'Amanda White', email: 'awhite@email.com', experience: 5, location: 'Portland, OR', skills: ['React', 'TypeScript', 'GraphQL', 'Apollo'], match: 52, starred: false },
+                { id: 15, name: 'Kevin Thompson', email: 'kthompson@email.com', experience: 6, location: 'Austin, TX', skills: ['Python', 'FastAPI', 'MongoDB', 'Docker'], match: 49, starred: false },
+                { id: 16, name: 'Rachel Kim', email: 'rkim@email.com', experience: 9, location: 'San Francisco, CA', skills: ['React', 'TypeScript', 'AWS', 'Node.js', 'GraphQL'], match: 91, starred: false },
+                { id: 17, name: 'Marcus Johnson', email: 'mjohnson@email.com', experience: 12, location: 'New York, NY', skills: ['Java', 'Spring Boot', 'Microservices', 'Kafka'], match: 89, starred: false },
+                { id: 18, name: 'Sofia Rodriguez', email: 'sofia.r@email.com', experience: 7, location: 'Austin, TX', skills: ['Python', 'Django', 'PostgreSQL', 'AWS'], match: 86, starred: false }
+            ];
+        },
+        // For AIVariantMaker.tsx
+        generateQuestionVariants: async (baseVariant: any, numVariants: number = 3) => {
+            await delay(2000);
+            const variants = [];
+
+            for (let i = 0; i < numVariants; i++) {
+                let variant;
+
+                if (baseVariant.type === 'mcq') {
+                    variant = {
+                        ...baseVariant,
+                        id: `variant-${Date.now()}-${i}`,
+                        questionText: baseVariant.questionText.replace(/\?$/, '') + ` (Variant ${i + 1})?`,
+                        options: baseVariant.options?.map((opt: string) => opt + ` [V${i + 1}]`) || []
+                    };
+                } else if (baseVariant.type === 'essay') {
+                    variant = {
+                        ...baseVariant,
+                        id: `variant-${Date.now()}-${i}`,
+                        questionText: baseVariant.questionText + ` Consider this from a different perspective (Variant ${i + 1}).`,
+                        rubric: `${baseVariant.rubric} [Variant ${i + 1} - slightly different focus]`
+                    };
+                } else { // code
+                    variant = {
+                        ...baseVariant,
+                        id: `variant-${Date.now()}-${i}`,
+                        questionText: baseVariant.questionText + ` [Variant ${i + 1} with modified constraints]`,
+                        testCases: baseVariant.testCases?.map((tc: any) => ({
+                            ...tc,
+                            id: `tc-${Date.now()}-${i}`,
+                            input: `${tc.input}_v${i + 1}`,
+                            expectedOutput: `${tc.expectedOutput}_v${i + 1}`
+                        })) || []
+                    };
+                }
+
+                variants.push(variant);
+            }
+            return variants;
+        },
+        // For ModuleDetailAssessment.tsx
+        getAssessmentDetails: async (candidateId: number) => {
+            await delay(500);
+            return {
+                score: 92,
+                completedDate: '2 Oct, 2025',
+                questions: [
+                    {
+                        id: 1,
+                        text: 'Explain the difference between let, const, and var in JavaScript.',
+                        answer: 'let and const are block-scoped, while var is function-scoped. const cannot be reassigned after declaration, while let can be. var has hoisting behavior that can lead to unexpected results.',
+                        timeSpent: 180,
+                        flagged: false
+                    },
+                    {
+                        id: 2,
+                        text: 'What is the Virtual DOM and how does React use it?',
+                        answer: 'The Virtual DOM is a lightweight copy of the actual DOM. React uses it to optimize rendering by comparing the virtual DOM with the real DOM and only updating what changed.',
+                        timeSpent: 240,
+                        flagged: false
+                    },
+                    {
+                        id: 3,
+                        text: 'Implement a function to debounce API calls.',
+                        answer: 'function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }',
+                        timeSpent: 420,
+                        flagged: true
+                    },
+                    {
+                        id: 4,
+                        text: 'Explain the concept of closures in JavaScript.',
+                        answer: 'A closure is a function that has access to variables in its outer scope, even after the outer function has returned. This allows for data privacy and function factories.',
+                        timeSpent: 200,
+                        flagged: false
+                    },
+                    {
+                        id: 5,
+                        text: 'What are React hooks and why were they introduced?',
+                        answer: 'Hooks are functions that let you use state and lifecycle features in functional components. They were introduced to simplify component logic and make it more reusable without classes.',
+                        timeSpent: 160,
+                        flagged: false
+                    }
+                ],
+                integritySignals: [
+                    {
+                        id: 1,
+                        type: 'tab-switch',
+                        severity: 'high',
+                        timestamp: '14:23:45',
+                        description: 'Candidate switched to another tab during Question 3',
+                        evidence: 'Tab focus lost for 45 seconds'
+                    },
+                    {
+                        id: 2,
+                        type: 'copy-paste',
+                        severity: 'medium',
+                        timestamp: '14:28:12',
+                        description: 'Paste event detected in Question 3 answer field',
+                        evidence: 'Large text block pasted at once'
+                    },
+                    {
+                        id: 3,
+                        type: 'suspicious-timing',
+                        severity: 'low',
+                        timestamp: '14:15:30',
+                        description: 'Unusually fast completion of Question 2',
+                        evidence: 'Completed in 2 minutes (avg: 4 minutes)'
+                    }
                 ]
             };
         },
