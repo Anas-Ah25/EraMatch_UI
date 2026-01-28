@@ -1,8 +1,9 @@
-import { Check, CreditCard, Calendar, Users, Zap, ArrowRight } from 'lucide-react';
-import { useState } from 'react';
+import { Check, CreditCard, Calendar, Users, Zap, ArrowRight, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
+import { api } from '../services/api';
 
 interface AdminSubscriptionManagementProps {
   onSignOut: () => void;
@@ -12,71 +13,38 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isCardUpdateModalOpen, setIsCardUpdateModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [currentPlanState, setCurrentPlanState] = useState('Professional');
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   // Card update form state
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCVC, setCardCVC] = useState('');
   const [cardName, setCardName] = useState('');
 
-  // Current plan details
-  const currentPlan = {
-    name: currentPlanState,
-    price: currentPlanState === 'Starter' ? 249 : currentPlanState === 'Professional' ? 599 : 2000,
-    billingCycle: 'Monthly',
-    nextBillingDate: 'February 20, 2026',
-    teamMembers: currentPlanState === 'Starter' ? 3 : currentPlanState === 'Professional' ? 10 : 'Unlimited',
-    jobPostings: currentPlanState === 'Starter' ? '10' : 'Unlimited',
-    aiInterviews: currentPlanState === 'Starter' ? 100 : currentPlanState === 'Professional' ? 500 : 'Unlimited',
-    storage: currentPlanState === 'Starter' ? '25 GB' : currentPlanState === 'Professional' ? '100 GB' : '1 TB'
-  };
+  // Subscription data from API
+  const [currentPlan, setCurrentPlan] = useState<any>(null);
+  const [usage, setUsage] = useState<any>(null);
+  const [availablePlans, setAvailablePlans] = useState<any[]>([]);
 
-  // Available plans for upgrade
-  const plans = [
-    {
-      name: 'Starter',
-      price: 249,
-      billingCycle: 'month',
-      features: [
-        'Up to 3 team members',
-        '10 job postings',
-        '100 AI interviews/month',
-        '25 GB storage',
-        'Email support'
-      ],
-      isCurrent: currentPlanState === 'Starter'
-    },
-    {
-      name: 'Professional',
-      price: 599,
-      billingCycle: 'month',
-      features: [
-        'Up to 10 team members',
-        'Unlimited job postings',
-        '500 AI interviews/month',
-        '100 GB storage',
-        'Priority support',
-        'Advanced analytics'
-      ],
-      isCurrent: currentPlanState === 'Professional'
-    },
-    {
-      name: 'Enterprise',
-      price: 2000,
-      billingCycle: 'month',
-      features: [
-        'Unlimited team members',
-        'Unlimited job postings',
-        'Unlimited AI interviews',
-        '1 TB storage',
-        '24/7 dedicated support',
-        'Custom integrations',
-        'SLA guarantee'
-      ],
-      isCurrent: currentPlanState === 'Enterprise'
-    }
-  ];
+  // Fetch subscription data from API
+  useEffect(() => {
+    const fetchSubscriptionData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.admin.getSubscriptionPlans();
+        setCurrentPlan(data.currentPlan);
+        setUsage(data.usage);
+        setAvailablePlans(data.availablePlans);
+      } catch (error) {
+        console.error('Failed to fetch subscription data:', error);
+        toast.error('Failed to load subscription data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSubscriptionData();
+  }, []);
 
   const handleUpgrade = (plan: any) => {
     setSelectedPlan(plan);
@@ -89,7 +57,8 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
 
   const handleUpgradeConfirm = () => {
     if (selectedPlan) {
-      setCurrentPlanState(selectedPlan.name);
+      // Update current plan
+      setCurrentPlan({ ...currentPlan, name: selectedPlan.name, price: selectedPlan.price });
       toast.success(`Upgraded to ${selectedPlan.name} plan`);
       setIsUpgradeModalOpen(false);
     }
@@ -99,6 +68,22 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
     toast.success('Card updated successfully');
     setIsCardUpdateModalOpen(false);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  if (!currentPlan || !usage || !availablePlans.length) {
+    return (
+      <div className="px-12 py-8">
+        <div className="text-center text-gray-500">No subscription data available</div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-12 py-8">
@@ -132,8 +117,8 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
               <Users size={20} className="text-indigo-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-500 mb-1">Team Members</div>
-              <div className="text-lg font-semibold text-gray-900">{currentPlan.teamMembers}</div>
+              <div className="text-sm text-gray-500 mb-1">Active Positions</div>
+              <div className="text-lg font-semibold text-gray-900">{usage.activePositions}/{usage.maxPositions}</div>
             </div>
           </div>
 
@@ -142,8 +127,8 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
               <Zap size={20} className="text-emerald-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-500 mb-1">Job Postings</div>
-              <div className="text-lg font-semibold text-gray-900">{currentPlan.jobPostings}</div>
+              <div className="text-sm text-gray-500 mb-1">Candidates</div>
+              <div className="text-lg font-semibold text-gray-900">{usage.candidatesProcessed}/{usage.maxCandidates}</div>
             </div>
           </div>
 
@@ -152,8 +137,8 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
               <CreditCard size={20} className="text-purple-600" />
             </div>
             <div>
-              <div className="text-sm text-gray-500 mb-1">AI Interviews</div>
-              <div className="text-lg font-semibold text-gray-900">{currentPlan.aiInterviews}/mo</div>
+              <div className="text-sm text-gray-500 mb-1">Storage</div>
+              <div className="text-lg font-semibold text-gray-900">{usage.storageUsed}GB/{usage.maxStorage}GB</div>
             </div>
           </div>
 
@@ -173,25 +158,24 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
       <div className="mb-8">
         <h2 className="text-2xl font-semibold text-gray-900 mb-6">Available Plans</h2>
         <div className="grid grid-cols-3 gap-6">
-          {plans.map((plan) => (
+          {availablePlans.map((plan: any) => (
             <div
-              key={plan.name}
-              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all ${
-                plan.isCurrent
-                  ? 'border-indigo-600 ring-2 ring-indigo-100'
-                  : 'border-gray-200 hover:border-indigo-300'
-              }`}
+              key={plan.id}
+              className={`bg-white rounded-2xl p-6 shadow-sm border-2 transition-all ${plan.recommended
+                ? 'border-indigo-600 ring-2 ring-indigo-100'
+                : 'border-gray-200 hover:border-indigo-300'
+                }`}
             >
               <div className="mb-6">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-bold text-gray-900">${plan.price}</span>
-                  <span className="text-gray-500">/{plan.billingCycle}</span>
+                  <span className="text-gray-500">/month</span>
                 </div>
               </div>
 
               <ul className="space-y-3 mb-6">
-                {plan.features.map((feature, index) => (
+                {plan.features.map((feature: string, index: number) => (
                   <li key={index} className="flex items-start gap-2">
                     <Check size={18} className="text-indigo-600 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-gray-600">{feature}</span>
@@ -200,15 +184,14 @@ export function AdminSubscriptionManagement({ onSignOut }: AdminSubscriptionMana
               </ul>
 
               <button
-                disabled={plan.isCurrent}
-                className={`w-full h-12 rounded-lg font-medium transition-all ${
-                  plan.isCurrent
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-2'
-                }`}
+                disabled={plan.name === currentPlan.name}
+                className={`w-full h-12 rounded-lg font-medium transition-all ${plan.name === currentPlan.name
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 flex items-center justify-center gap-2'
+                  }`}
                 onClick={() => handleUpgrade(plan)}
               >
-                {plan.isCurrent ? (
+                {plan.name === currentPlan.name ? (
                   'Current Plan'
                 ) : (
                   <>

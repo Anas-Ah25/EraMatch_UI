@@ -52,113 +52,16 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
     );
   }
 
-  // Mock assessment questions and answers
-  const assessmentQuestions = [
-    {
-      id: 1,
-      question: 'What is the main purpose of React hooks?',
-      candidateAnswer: 'React hooks allow functional components to use state and lifecycle features that were previously only available in class components. They provide a more direct API to the React concepts we already know.',
-      correctAnswer: 'React hooks let you use state and other React features without writing a class. They allow functional components to have state, lifecycle methods, and side effects.',
-      isCorrect: true,
-      topic: 'React'
-    },
-    {
-      id: 2,
-      question: 'Explain the difference between interface and type in TypeScript.',
-      candidateAnswer: 'Interfaces can be extended and merged, while types are more flexible and can represent unions, intersections, and primitives. Interfaces are better for object shapes that might be extended.',
-      correctAnswer: 'Interfaces can be extended and merged through declaration merging. Types are more flexible, supporting unions, intersections, primitives, and mapped types. Both can describe object shapes.',
-      isCorrect: true,
-      topic: 'TypeScript'
-    },
-    {
-      id: 3,
-      question: 'What is the time complexity of binary search?',
-      candidateAnswer: 'O(n)',
-      correctAnswer: 'O(log n)',
-      isCorrect: false,
-      topic: 'Algorithms'
-    },
-    {
-      id: 4,
-      question: 'How does event delegation work in JavaScript?',
-      candidateAnswer: 'Event delegation uses event bubbling to handle events at a higher level in the DOM. Instead of adding event listeners to multiple child elements, you add a single listener to a parent element.',
-      correctAnswer: 'Event delegation leverages event bubbling by placing an event listener on a parent element to handle events from child elements. This improves performance and works with dynamically added elements.',
-      isCorrect: true,
-      topic: 'JavaScript'
-    },
-    {
-      id: 5,
-      question: 'What is a closure in JavaScript?',
-      candidateAnswer: 'A closure is when a function has access to variables from its outer scope, even after the outer function has returned. It creates a private scope.',
-      correctAnswer: 'A closure is a function that has access to variables in its outer (enclosing) lexical scope, even after the outer function has returned. Closures are created every time a function is created.',
-      isCorrect: true,
-      topic: 'JavaScript'
-    }
-  ];
-
-  // Mock video interview data
-  const videoInterviewQuestions = [
-    {
-      id: 1,
-      question: 'Tell me about your experience with React and modern front-end development.',
-      videoUrl: '#',
-      transcript: 'I\'ve been working with React for over 5 years now. I started with class components and lifecycle methods, then transitioned to functional components and hooks. I\'ve built several large-scale applications using React, Redux for state management, and modern tools like Webpack and Vite for bundling. I\'m also experienced with TypeScript, which I believe is essential for maintaining large codebases. Recently, I\'ve been exploring Next.js for server-side rendering and static site generation.',
-      duration: '2:45',
-      score: 9.5
-    },
-    {
-      id: 2,
-      question: 'How do you approach debugging complex issues in production?',
-      videoUrl: '#',
-      transcript: 'When dealing with production issues, I follow a systematic approach. First, I try to reproduce the issue in a staging environment. I use logging services like Sentry or DataDog to track errors and understand the context. I also leverage browser DevTools and React DevTools for client-side issues. For backend issues, I check server logs and database queries. I believe in implementing proper error boundaries in React and comprehensive logging throughout the application.',
-      duration: '2:20',
-      score: 9.0
-    },
-    {
-      id: 3,
-      question: 'Describe a challenging technical problem you solved recently.',
-      videoUrl: '#',
-      transcript: 'Recently, I tackled a performance issue where our dashboard was taking 8-10 seconds to load. I used React Profiler to identify components that were re-rendering unnecessarily. I implemented React.memo for expensive components, used useMemo and useCallback hooks appropriately, and optimized our Redux selectors with reselect. I also implemented code splitting and lazy loading for routes. These optimizations reduced the load time to under 2 seconds.',
-      duration: '3:10',
-      score: 9.8
-    }
-  ];
-
-  // Mock live interview data with emotion indicators
-  const liveInterviewData = {
-    duration: '45:32',
-    completedAt: '2025-01-18',
-    overallConfidence: 85,
-    overallCorrectness: 88,
-    emotionMetrics: [
-      { emotion: 'Confident', percentage: 68, color: '#10b981', icon: 'smile' },
-      { emotion: 'Engaged', percentage: 82, color: '#6366f1', icon: 'activity' },
-      { emotion: 'Calm', percentage: 75, color: '#8b5cf6', icon: 'meh' },
-      { emotion: 'Enthusiastic', percentage: 71, color: '#f59e0b', icon: 'trending-up' }
-    ],
-    transcript: `Interviewer: Good morning! Thank you for joining us today. Let's start with you telling me a bit about your background.
-
-Candidate: Good morning! Thank you for having me. I've been working as a full-stack developer for about 8 years now. I started my career at a startup where I learned to wear multiple hats - from frontend development with React to backend services with Node.js and databases. Currently, I'm at Tech Corp where I lead a team of developers building microservices architecture.
-
-Interviewer: That sounds great. Can you walk me through how you would design a scalable notification system?
-
-Candidate: Absolutely. I would start by identifying the requirements - what types of notifications, expected volume, delivery channels (email, SMS, push), and latency requirements. For scalability, I'd use a message queue like RabbitMQ or AWS SQS to decouple the notification generation from delivery. I'd implement a worker pool to process notifications asynchronously. For storage, I'd use a combination of a fast cache like Redis for recent notifications and a database like PostgreSQL for persistence. I'd also implement retry logic with exponential backoff and dead letter queues for failed notifications.
-
-Interviewer: Excellent. How would you handle rate limiting?
-
-Candidate: Rate limiting is crucial to prevent abuse and ensure fair usage. I'd implement it at multiple levels. At the API gateway level, I'd use a token bucket algorithm to limit requests per user. For notifications specifically, I'd implement per-channel limits - for example, no more than 3 emails per hour to the same user unless it's critical. I'd use Redis to track counts with time-based keys that expire. I'd also implement circuit breakers to protect downstream services.
-
-Interviewer: Great answers. Let's talk about your experience with testing. What's your approach?
-
-Candidate: I'm a strong believer in comprehensive testing. I follow the testing pyramid - lots of unit tests, some integration tests, and fewer end-to-end tests. For React components, I use React Testing Library focusing on user behavior rather than implementation details. For API testing, I use Jest with supertest. I also implement contract testing for microservices communication. Code coverage is important, but I focus more on testing critical paths and edge cases. I also advocate for TDD when it makes sense, especially for complex business logic.
-
-Interviewer: How do you stay updated with new technologies?
-
-Candidate: I'm very passionate about continuous learning. I follow several tech blogs and newsletters like JavaScript Weekly and Node Weekly. I'm active on GitHub and contribute to open source projects when I can. I also attend local meetups and conferences. Recently, I've been exploring new patterns in React like server components and studying system design principles. I believe in learning by building, so I often create side projects to experiment with new technologies.
-
-Interviewer: Perfect. Do you have any questions for us?
-
-Candidate: Yes, I'd love to know more about the team structure and how you approach technical decision-making. Also, what are the biggest technical challenges the team is currently facing?`
+  // Use data from API response
+  const assessmentQuestions = candidate.assessmentQuestions || [];
+  const videoInterviewQuestions = candidate.videoInterviewQuestions || [];
+  const liveInterviewData = candidate.liveInterviewData || {
+    duration: '0:00',
+    completedAt: '',
+    overallConfidence: 0,
+    overallCorrectness: 0,
+    emotionMetrics: [],
+    transcript: ''
   };
 
   const tabs = [
@@ -189,7 +92,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
         <div className="bg-white rounded-[12px] border border-[#e5e7eb] p-8 mb-6">
           <div className="flex items-start gap-6">
             <div className="w-[100px] h-[100px] rounded-[16px] bg-gradient-to-br from-[#6366f1] to-[#8b5cf6] flex items-center justify-center text-white text-[36px]">
-              {candidate.name.split(' ').map(n => n[0]).join('')}
+              {candidate.name.split(' ').map((n: string) => n[0]).join('')}
             </div>
             <div className="flex-1">
               <div className="flex items-start justify-between mb-4">
@@ -256,17 +159,17 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
         {/* Offer Status Banner */}
         {candidate.pipelineStatus.finalDecision.status === 'completed' && (
           <div className={`rounded-xl border-2 p-6 mb-6 ${candidate.offerStatus === 'sent'
-              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300'
-              : candidate.offerStatus === 'accepted'
-                ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
-                : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-300'
+            ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300'
+            : candidate.offerStatus === 'accepted'
+              ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-400'
+              : 'bg-gradient-to-r from-gray-50 to-slate-50 border-gray-300'
             }`}>
             <div className="flex items-start gap-4">
               <div className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${candidate.offerStatus === 'sent'
-                  ? 'bg-emerald-500'
-                  : candidate.offerStatus === 'accepted'
-                    ? 'bg-green-500'
-                    : 'bg-gray-500'
+                ? 'bg-emerald-500'
+                : candidate.offerStatus === 'accepted'
+                  ? 'bg-green-500'
+                  : 'bg-gray-500'
                 }`}>
                 {candidate.offerStatus === 'sent' || candidate.offerStatus === 'accepted' ? (
                   <Mail className="text-white" size={28} />
@@ -276,10 +179,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
               </div>
               <div className="flex-1">
                 <h3 className={`text-xl font-bold mb-2 ${candidate.offerStatus === 'sent'
-                    ? 'text-emerald-900'
-                    : candidate.offerStatus === 'accepted'
-                      ? 'text-green-900'
-                      : 'text-gray-900'
+                  ? 'text-emerald-900'
+                  : candidate.offerStatus === 'accepted'
+                    ? 'text-green-900'
+                    : 'text-gray-900'
                   }`}>
                   {candidate.offerStatus === 'sent' && 'Offer Sent'}
                   {candidate.offerStatus === 'accepted' && 'Offer Accepted'}
@@ -336,8 +239,8 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                       }
                     }}
                     className={`flex items-center gap-2 px-[20px] py-[14px] font-['Arimo',sans-serif] text-[14px] border-b-2 transition-colors whitespace-nowrap ${activeTab === tab.id
-                        ? 'border-[#6366f1] text-[#6366f1]'
-                        : 'border-transparent text-[#6b7280] hover:text-[#111827]'
+                      ? 'border-[#6366f1] text-[#6366f1]'
+                      : 'border-transparent text-[#6b7280] hover:text-[#111827]'
                       }`}
                   >
                     <Icon size={16} />
@@ -389,8 +292,8 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                           {/* Group Assignment */}
                           <div className="flex flex-col items-center">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.groupAssignment.status === 'completed'
-                                ? 'bg-emerald-500 border-emerald-200'
-                                : 'bg-gray-300 border-gray-200'
+                              ? 'bg-emerald-500 border-emerald-200'
+                              : 'bg-gray-300 border-gray-200'
                               }`}>
                               {candidate.pipelineStatus.groupAssignment.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
@@ -413,10 +316,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                           {/* Assessment */}
                           <div className="flex flex-col items-center">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.assessment.status === 'completed'
-                                ? 'bg-emerald-500 border-emerald-200'
-                                : candidate.pipelineStatus.assessment.status === 'in-progress'
-                                  ? 'bg-indigo-500 border-indigo-200'
-                                  : 'bg-gray-300 border-gray-200'
+                              ? 'bg-emerald-500 border-emerald-200'
+                              : candidate.pipelineStatus.assessment.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
                               }`}>
                               {candidate.pipelineStatus.assessment.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
@@ -441,10 +344,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                           {/* AI Interview */}
                           <div className="flex flex-col items-center">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.aiInterview.status === 'completed'
-                                ? 'bg-emerald-500 border-emerald-200'
-                                : candidate.pipelineStatus.aiInterview.status === 'in-progress'
-                                  ? 'bg-indigo-500 border-indigo-200'
-                                  : 'bg-gray-300 border-gray-200'
+                              ? 'bg-emerald-500 border-emerald-200'
+                              : candidate.pipelineStatus.aiInterview.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
                               }`}>
                               {candidate.pipelineStatus.aiInterview.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
@@ -469,10 +372,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                           {/* Live Interview */}
                           <div className="flex flex-col items-center">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.liveInterview.status === 'completed'
-                                ? 'bg-emerald-500 border-emerald-200'
-                                : candidate.pipelineStatus.liveInterview.status === 'in-progress'
-                                  ? 'bg-indigo-500 border-indigo-200'
-                                  : 'bg-gray-300 border-gray-200'
+                              ? 'bg-emerald-500 border-emerald-200'
+                              : candidate.pipelineStatus.liveInterview.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
                               }`}>
                               {candidate.pipelineStatus.liveInterview.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
@@ -502,10 +405,10 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                           {/* Final Decision */}
                           <div className="flex flex-col items-center">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 ${candidate.pipelineStatus.finalDecision.status === 'completed'
-                                ? 'bg-emerald-500 border-emerald-200'
-                                : candidate.pipelineStatus.finalDecision.status === 'in-progress'
-                                  ? 'bg-indigo-500 border-indigo-200'
-                                  : 'bg-gray-300 border-gray-200'
+                              ? 'bg-emerald-500 border-emerald-200'
+                              : candidate.pipelineStatus.finalDecision.status === 'in-progress'
+                                ? 'bg-indigo-500 border-indigo-200'
+                                : 'bg-gray-300 border-gray-200'
                               }`}>
                               {candidate.pipelineStatus.finalDecision.status === 'completed' ? (
                                 <CheckCircle size={24} className="text-white" />
@@ -535,7 +438,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div>
                   <h3 className="text-[#111827] mb-4">Skills</h3>
                   <div className="flex flex-wrap gap-2">
-                    {candidate.skills.map((skill, i) => (
+                    {candidate.skills.map((skill: string, i: number) => (
                       <span
                         key={i}
                         className="px-[16px] py-[8px] bg-[#ede9fe] text-[#6366f1] rounded-[8px] font-['Arimo',sans-serif] text-[14px]"
@@ -549,7 +452,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div>
                   <h3 className="text-[#111827] mb-4">Work Experience</h3>
                   <div className="space-y-4">
-                    {candidate.workHistory.map((job, i) => (
+                    {candidate.workHistory.map((job: any, i: number) => (
                       <div key={i} className="border-l-2 border-[#6366f1] pl-4">
                         <div className="font-['Arimo',sans-serif] text-[16px] text-[#111827] mb-1">
                           {job.title}
@@ -568,7 +471,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div>
                   <h3 className="text-[#111827] mb-4">Education</h3>
                   <div className="space-y-3">
-                    {candidate.education.map((edu, i) => (
+                    {candidate.education.map((edu: any, i: number) => (
                       <div key={i}>
                         <div className="font-['Arimo',sans-serif] text-[15px] text-[#111827]">
                           {edu.degree}
@@ -591,9 +494,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-3">Professional Summary</h4>
                   <p className="text-[#374151] text-sm leading-relaxed">
-                    Highly skilled Full Stack Developer with 8+ years of experience building scalable web applications.
-                    Proven track record of leading development teams, architecting microservices, and delivering
-                    high-quality software solutions. Expert in React, TypeScript, Node.js, and cloud technologies.
+                    {candidate.resumeSummary}
                   </p>
                 </div>
 
@@ -604,25 +505,25 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                     <div>
                       <div className="text-xs text-[#6b7280] mb-2">Frontend</div>
                       <div className="space-y-1">
-                        <div className="text-sm text-[#111827]">React, TypeScript</div>
-                        <div className="text-sm text-[#111827]">Next.js, Vue.js</div>
-                        <div className="text-sm text-[#111827]">Tailwind CSS</div>
+                        {candidate.techSkills?.frontend.map((s: string, i: number) => (
+                          <div key={i} className="text-sm text-[#111827]">{s}</div>
+                        ))}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs text-[#6b7280] mb-2">Backend</div>
                       <div className="space-y-1">
-                        <div className="text-sm text-[#111827]">Node.js, Express</div>
-                        <div className="text-sm text-[#111827]">PostgreSQL, MongoDB</div>
-                        <div className="text-sm text-[#111827]">GraphQL, REST APIs</div>
+                        {candidate.techSkills?.backend.map((s: string, i: number) => (
+                          <div key={i} className="text-sm text-[#111827]">{s}</div>
+                        ))}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs text-[#6b7280] mb-2">DevOps</div>
                       <div className="space-y-1">
-                        <div className="text-sm text-[#111827]">AWS, Docker</div>
-                        <div className="text-sm text-[#111827]">CI/CD, Jenkins</div>
-                        <div className="text-sm text-[#111827]">Kubernetes</div>
+                        {candidate.techSkills?.devops.map((s: string, i: number) => (
+                          <div key={i} className="text-sm text-[#111827]">{s}</div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -632,7 +533,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-4">Work Experience</h4>
                   <div className="space-y-5">
-                    {candidate.workHistory.map((job, i) => (
+                    {candidate.workHistory.map((job: any, i: number) => (
                       <div key={i} className="border-l-2 border-[#6366f1] pl-4">
                         <div className="flex items-start justify-between mb-2">
                           <div>
@@ -651,7 +552,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-4">Education</h4>
                   <div className="space-y-4">
-                    {candidate.education.map((edu, i) => (
+                    {candidate.education.map((edu: any, i: number) => (
                       <div key={i}>
                         <div className="font-medium text-[#111827] text-sm">{edu.degree}</div>
                         <div className="text-[#6b7280] text-xs">{edu.school} • {edu.year}</div>
@@ -664,14 +565,12 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-4">Certifications</h4>
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      <span className="text-sm text-[#374151]">AWS Certified Solutions Architect</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      <span className="text-sm text-[#374151]">Professional Scrum Master (PSM I)</span>
-                    </div>
+                    {candidate.certifications?.map((cert: string, i: number) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                        <span className="text-sm text-[#374151]">{cert}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -688,28 +587,28 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                       <Github className="w-4 h-4 text-[#6b7280]" />
                       <div className="text-xs text-[#6b7280]">Public Repos</div>
                     </div>
-                    <div className="text-2xl font-semibold text-[#111827]">47</div>
+                    <div className="text-2xl font-semibold text-[#111827]">{candidate.githubStats?.publicRepos}</div>
                   </div>
                   <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Activity className="w-4 h-4 text-[#6b7280]" />
                       <div className="text-xs text-[#6b7280]">Total Stars</div>
                     </div>
-                    <div className="text-2xl font-semibold text-[#111827]">1,243</div>
+                    <div className="text-2xl font-semibold text-[#111827]">{candidate.githubStats?.totalStars}</div>
                   </div>
                   <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-4 h-4 text-[#6b7280]" />
                       <div className="text-xs text-[#6b7280]">Followers</div>
                     </div>
-                    <div className="text-2xl font-semibold text-[#111827]">342</div>
+                    <div className="text-2xl font-semibold text-[#111827]">{candidate.githubStats?.followers}</div>
                   </div>
                   <div className="bg-white border border-[#e5e7eb] rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar className="w-4 h-4 text-[#6b7280]" />
                       <div className="text-xs text-[#6b7280]">Contributions (2024)</div>
                     </div>
-                    <div className="text-2xl font-semibold text-[#111827]">1,847</div>
+                    <div className="text-2xl font-semibold text-[#111827]">{candidate.githubStats?.contributionsLastYear}</div>
                   </div>
                 </div>
 
@@ -1120,7 +1019,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div>
                   <h3 className="text-[#111827] mb-4">Topic Scores</h3>
                   <div className="space-y-3">
-                    {candidate.assessmentData.topicScores.map((topic, i) => (
+                    {candidate.assessmentData?.topicScores.map((topic: any, i: number) => (
                       <div key={i}>
                         <div className="flex items-center justify-between mb-2">
                           <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
@@ -1163,7 +1062,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div>
                   <h3 className="text-[#111827] mb-4">Video Responses</h3>
                   <div className="space-y-4">
-                    {videoInterviewQuestions.map((q, i) => (
+                    {videoInterviewQuestions.map((q: any, i: number) => (
                       <div key={i} className="bg-white border border-[#e5e7eb] rounded-[12px] p-5">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
@@ -1270,7 +1169,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
                 <div>
                   <h3 className="text-[#111827] mb-4">Overall Emotion Metrics</h3>
                   <div className="grid grid-cols-2 gap-4">
-                    {liveInterviewData.emotionMetrics.map((metric, i) => (
+                    {liveInterviewData.emotionMetrics.map((metric: any, i: number) => (
                       <div key={i} className="bg-white border border-[#e5e7eb] rounded-[12px] p-5">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-3">
@@ -1562,7 +1461,7 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
             <DialogTitle className="text-2xl">Assessment Questions & Answers</DialogTitle>
           </DialogHeader>
           <div className="space-y-6 mt-4">
-            {assessmentQuestions.map((q, i) => (
+            {assessmentQuestions.map((q: any, i: number) => (
               <div key={q.id} className="border border-[#e5e7eb] rounded-lg p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -1604,20 +1503,20 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
           <DialogHeader>
             <DialogTitle>Video Response</DialogTitle>
           </DialogHeader>
-          {showVideoResponse && videoInterviewQuestions.find(q => q.id === showVideoResponse) && (
+          {showVideoResponse && videoInterviewQuestions.find((q: any) => q.id === showVideoResponse) && (
             <div className="mt-4">
               <div className="bg-gray-100 rounded-lg aspect-video flex items-center justify-center mb-4">
                 <div className="text-center">
                   <Play size={64} className="text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600">Video Player Placeholder</p>
                   <p className="text-sm text-gray-500 mt-1">
-                    Duration: {videoInterviewQuestions.find(q => q.id === showVideoResponse)?.duration}
+                    Duration: {videoInterviewQuestions.find((q: any) => q.id === showVideoResponse)?.duration}
                   </p>
                 </div>
               </div>
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
                 <h4 className="font-medium text-indigo-900 mb-2">Question</h4>
-                <p className="text-indigo-800">{videoInterviewQuestions.find(q => q.id === showVideoResponse)?.question}</p>
+                <p className="text-indigo-800">{videoInterviewQuestions.find((q: any) => q.id === showVideoResponse)?.question}</p>
               </div>
             </div>
           )}
@@ -1630,16 +1529,16 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
           <DialogHeader>
             <DialogTitle>Video Response Transcript</DialogTitle>
           </DialogHeader>
-          {showVideoTranscript && videoInterviewQuestions.find(q => q.id === showVideoTranscript) && (
+          {showVideoTranscript && videoInterviewQuestions.find((q: any) => q.id === showVideoTranscript) && (
             <div className="mt-4">
               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
                 <h4 className="font-medium text-indigo-900 mb-2">Question</h4>
-                <p className="text-indigo-800">{videoInterviewQuestions.find(q => q.id === showVideoTranscript)?.question}</p>
+                <p className="text-indigo-800">{videoInterviewQuestions.find((q: any) => q.id === showVideoTranscript)?.question}</p>
               </div>
               <div className="bg-white border border-gray-200 rounded-lg p-6">
                 <h4 className="font-medium text-gray-900 mb-3">Transcript</h4>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                  {videoInterviewQuestions.find(q => q.id === showVideoTranscript)?.transcript}
+                  {videoInterviewQuestions.find((q: any) => q.id === showVideoTranscript)?.transcript}
                 </p>
               </div>
             </div>
@@ -1682,11 +1581,11 @@ Candidate: Yes, I'd love to know more about the team structure and how you appro
             <div className="bg-white border border-[#e5e7eb] rounded-xl p-6">
               <h4 className="font-semibold text-gray-900 mb-4 text-lg">Full Transcript</h4>
               <div className="space-y-4 text-gray-700 leading-relaxed">
-                {liveInterviewData.transcript.split('\n\n').map((paragraph, i) => {
+                {liveInterviewData.transcript.split('\n\n').map((paragraph: string, i: number) => {
                   const lines = paragraph.split('\n');
                   return (
                     <div key={i} className="space-y-2">
-                      {lines.map((line, j) => {
+                      {lines.map((line: string, j: number) => {
                         if (line.startsWith('Interviewer:')) {
                           return (
                             <p key={j} className="font-semibold text-indigo-600">

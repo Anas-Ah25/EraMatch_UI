@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { X, Users, Sparkles, Calendar, Send, Video, TrendingUp, Edit, GripVertical, FileText, MessageSquare, UserCheck, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Users, Sparkles, Calendar, Send, Video, TrendingUp, Edit, GripVertical, FileText, MessageSquare, UserCheck, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface FiltrationModule {
   id: string;
@@ -18,9 +19,9 @@ interface EnhancedGroupCreationModalProps {
   onEditFilters?: () => void;
 }
 
-export function EnhancedGroupCreationModal({ 
-  selectedCount, 
-  onClose, 
+export function EnhancedGroupCreationModal({
+  selectedCount,
+  onClose,
   onCreate,
   filterSummary = [],
   onEditFilters
@@ -29,15 +30,11 @@ export function EnhancedGroupCreationModal({
   const [description, setDescription] = useState('');
   const [assignedRecruiter, setAssignedRecruiter] = useState('');
   const [pipelineTemplate, setPipelineTemplate] = useState('custom');
-  
+
   // NEW: Filtration flow configuration
-  const [filtrationModules, setFiltrationModules] = useState<FiltrationModule[]>([
-    { id: 'assessment', type: 'assessment', name: 'Technical Assessment', icon: FileText, enabled: true, order: 0 },
-    { id: 'ai-interview', type: 'ai-interview', name: 'AI Video Interview', icon: Video, enabled: true, order: 1 },
-    { id: 'live-interview', type: 'live-interview', name: 'Live Interview', icon: MessageSquare, enabled: false, order: 2 }
-  ]);
+  const [filtrationModules, setFiltrationModules] = useState<FiltrationModule[]>([]);
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
-  
+
   const [immediateActions, setImmediateActions] = useState({
     sendAssessment: false,
     scheduleAssessment: false,
@@ -49,15 +46,45 @@ export function EnhancedGroupCreationModal({
   });
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
 
-  const recruiters = [
-    'John Doe - Senior Recruiter',
-    'Jane Smith - Technical Recruiter',
-    'Mike Johnson - Lead Recruiter',
-    'Sarah Williams - HR Manager'
-  ];
+  const [recruiters, setRecruiters] = useState<{ id: string, name: string, role: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const [recruitersData, modulesData] = await Promise.all([
+          api.recruiter.getRecruiters(),
+          api.recruiter.getPipelineModules()
+        ]);
+
+        setRecruiters(recruitersData);
+
+        // Map icons to modules
+        const iconMap: Record<string, any> = {
+          'assessment': FileText,
+          'ai-interview': Video,
+          'live-interview': MessageSquare
+        };
+
+        const mappedModules = modulesData.map((m: any, index: number) => ({
+          ...m,
+          icon: iconMap[m.type] || FileText,
+          order: index
+        }));
+
+        setFiltrationModules(mappedModules);
+      } catch (error) {
+        console.error('Failed to fetch modal data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const toggleModule = (moduleId: string) => {
-    setFiltrationModules(filtrationModules.map(m => 
+    setFiltrationModules(filtrationModules.map(m =>
       m.id === moduleId ? { ...m, enabled: !m.enabled } : m
     ));
   };
@@ -72,14 +99,14 @@ export function EnhancedGroupCreationModal({
 
   const handleDrop = (targetModuleId: string) => {
     if (!draggedModule || draggedModule === targetModuleId) return;
-    
+
     const draggedIndex = filtrationModules.findIndex(m => m.id === draggedModule);
     const targetIndex = filtrationModules.findIndex(m => m.id === targetModuleId);
-    
+
     const newModules = [...filtrationModules];
     const [removed] = newModules.splice(draggedIndex, 1);
     newModules.splice(targetIndex, 0, removed);
-    
+
     // Update order
     setFiltrationModules(newModules.map((m, index) => ({ ...m, order: index })));
     setDraggedModule(null);
@@ -87,13 +114,13 @@ export function EnhancedGroupCreationModal({
 
   const handleCreate = () => {
     if (!groupName.trim()) return;
-    
+
     // Get enabled modules in order
     const enabledModules = filtrationModules
       .filter(m => m.enabled)
       .sort((a, b) => a.order - b.order)
       .map(m => m.type);
-    
+
     onCreate({
       groupName,
       description,
@@ -107,9 +134,22 @@ export function EnhancedGroupCreationModal({
 
   const enabledCount = filtrationModules.filter(m => m.enabled).length;
 
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-[16px] w-full max-w-[900px] h-[400px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 text-[#6366f1] animate-spin" />
+            <p className="text-[#6b7280] font-medium font-['Arimo',sans-serif]">Loading configurations...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div 
+      <div
         className="bg-white rounded-[16px] w-full max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
         style={{ animationDuration: '200ms' }}
       >
@@ -208,11 +248,15 @@ export function EnhancedGroupCreationModal({
               className="w-full h-[44px] px-[14px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent bg-white"
             >
               <option value="">Select a recruiter...</option>
-              {recruiters.map((recruiter, index) => (
-                <option key={index} value={recruiter}>
-                  {recruiter}
-                </option>
-              ))}
+              {isLoading ? (
+                <option disabled>Loading recruiters...</option>
+              ) : (
+                recruiters.map((recruiter) => (
+                  <option key={recruiter.id} value={recruiter.name}>
+                    {recruiter.name} - {recruiter.role}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -244,30 +288,27 @@ export function EnhancedGroupCreationModal({
                     onDragStart={() => handleDragStart(module.id)}
                     onDragOver={handleDragOver}
                     onDrop={() => handleDrop(module.id)}
-                    className={`flex items-center gap-3 p-4 rounded-[8px] border-2 transition-all ${
-                      module.enabled
-                        ? 'bg-white border-[#10b981] cursor-move hover:shadow-md'
-                        : 'bg-[#f9fafb] border-[#e5e7eb] opacity-60'
-                    } ${draggedModule === module.id ? 'opacity-50 scale-95' : ''}`}
+                    className={`flex items-center gap-3 p-4 rounded-[8px] border-2 transition-all ${module.enabled
+                      ? 'bg-white border-[#10b981] cursor-move hover:shadow-md'
+                      : 'bg-[#f9fafb] border-[#e5e7eb] opacity-60'
+                      } ${draggedModule === module.id ? 'opacity-50 scale-95' : ''}`}
                   >
                     {/* Drag Handle */}
                     {module.enabled && (
                       <GripVertical size={18} className="text-[#9ca3af] flex-shrink-0" />
                     )}
-                    
+
                     {/* Order Badge */}
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0 ${
-                      module.enabled 
-                        ? 'bg-[#10b981] text-white' 
-                        : 'bg-[#e5e7eb] text-[#9ca3af]'
-                    }`}>
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold flex-shrink-0 ${module.enabled
+                      ? 'bg-[#10b981] text-white'
+                      : 'bg-[#e5e7eb] text-[#9ca3af]'
+                      }`}>
                       {module.enabled ? filtrationModules.filter(m => m.enabled && m.order < module.order).length + 1 : '—'}
                     </div>
 
                     {/* Icon */}
-                    <div className={`w-9 h-9 rounded-[8px] flex items-center justify-center flex-shrink-0 ${
-                      module.enabled ? 'bg-[#10b981]/10' : 'bg-[#e5e7eb]'
-                    }`}>
+                    <div className={`w-9 h-9 rounded-[8px] flex items-center justify-center flex-shrink-0 ${module.enabled ? 'bg-[#10b981]/10' : 'bg-[#e5e7eb]'
+                      }`}>
                       <Icon size={18} className={module.enabled ? 'text-[#10b981]' : 'text-[#9ca3af]'} />
                     </div>
 
@@ -277,22 +318,18 @@ export function EnhancedGroupCreationModal({
                         {module.name}
                       </div>
                       <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
-                        {module.type === 'assessment' && 'Technical skills evaluation'}
-                        {module.type === 'ai-interview' && 'AI-powered video screening'}
-                        {module.type === 'live-interview' && 'Real-time interview session'}
+                        {(module as any).description}
                       </div>
                     </div>
 
                     {/* Toggle */}
                     <button
                       onClick={() => toggleModule(module.id)}
-                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${
-                        module.enabled ? 'bg-[#10b981]' : 'bg-[#e5e7eb]'
-                      }`}
+                      className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${module.enabled ? 'bg-[#10b981]' : 'bg-[#e5e7eb]'
+                        }`}
                     >
-                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${
-                        module.enabled ? 'translate-x-6' : 'translate-x-0.5'
-                      }`} />
+                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${module.enabled ? 'translate-x-6' : 'translate-x-0.5'
+                        }`} />
                     </button>
                   </div>
                 );
@@ -404,21 +441,19 @@ export function EnhancedGroupCreationModal({
                   <div className="flex gap-2 mt-2 ml-[37px]">
                     <button
                       onClick={() => setImmediateActions({ ...immediateActions, aiInterviewType: 'immediate' })}
-                      className={`flex-1 h-[32px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${
-                        immediateActions.aiInterviewType === 'immediate'
-                          ? 'bg-[#6366f1] text-white'
-                          : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'
-                      }`}
+                      className={`flex-1 h-[32px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${immediateActions.aiInterviewType === 'immediate'
+                        ? 'bg-[#6366f1] text-white'
+                        : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'
+                        }`}
                     >
                       Immediate
                     </button>
                     <button
                       onClick={() => setImmediateActions({ ...immediateActions, aiInterviewType: 'schedule' })}
-                      className={`flex-1 h-[32px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${
-                        immediateActions.aiInterviewType === 'schedule'
-                          ? 'bg-[#6366f1] text-white'
-                          : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'
-                      }`}
+                      className={`flex-1 h-[32px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${immediateActions.aiInterviewType === 'schedule'
+                        ? 'bg-[#6366f1] text-white'
+                        : 'bg-white border border-[#e5e7eb] text-[#374151] hover:bg-[#f9fafb]'
+                        }`}
                     >
                       Schedule
                     </button>

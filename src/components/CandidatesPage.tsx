@@ -1,17 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Filter, Archive, BarChart3, Users, Calendar, TrendingUp, ChevronDown, X, Download, Clock } from 'lucide-react';
+import { api } from '../services/api';
 
 interface Candidate {
   id: number;
   name: string;
   email: string;
-  position: string;
-  project: string;
+  position?: string;
+  project?: string;
   status: 'active' | 'archived';
   score: number;
-  hiringRound: string;
+  hiringRound?: string;
   archivedDate?: Date;
-  source: string;
+  source?: string;
+  seniority?: string;
+  location?: string;
 }
 
 interface CandidatesPageProps {
@@ -24,18 +27,39 @@ export function CandidatesPage({ onBack }: CandidatesPageProps) {
   const [activeView, setActiveView] = useState<'active' | 'archived'>('active');
   const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual data
-  const [candidates, setCandidates] = useState<Candidate[]>([
-    { id: 1, name: 'Sarah Chen', email: 'sarah.chen@email.com', position: 'Senior React Developer', project: 'Frontend Team Expansion', status: 'active', score: 92, hiringRound: 'Q1 2025', source: 'LinkedIn' },
-    { id: 2, name: 'Michael Torres', email: 'm.torres@email.com', position: 'Backend Engineer', project: 'Platform Infrastructure', status: 'active', score: 88, hiringRound: 'Q1 2025', source: 'Referral' },
-    { id: 3, name: 'Emma Watson', email: 'e.watson@email.com', position: 'Full Stack Developer', project: 'Mobile App Development', status: 'active', score: 85, hiringRound: 'Q4 2024', source: 'Job Board' },
-    { id: 4, name: 'James Kim', email: 'james.k@email.com', position: 'DevOps Engineer', project: 'Cloud Migration', status: 'active', score: 90, hiringRound: 'Q1 2025', source: 'Direct Apply' },
-    { id: 5, name: 'Lisa Anderson', email: 'l.anderson@email.com', position: 'Senior React Developer', project: 'Frontend Team Expansion', status: 'archived', score: 78, hiringRound: 'Q3 2024', archivedDate: new Date('2024-10-15'), source: 'LinkedIn' },
-    { id: 6, name: 'Robert Martinez', email: 'r.martinez@email.com', position: 'Backend Engineer', project: 'Platform Infrastructure', status: 'archived', score: 82, hiringRound: 'Q3 2024', archivedDate: new Date('2024-10-20'), source: 'Referral' },
-    { id: 7, name: 'Jennifer Taylor', email: 'j.taylor@email.com', position: 'Data Scientist', project: 'AI/ML Initiative', status: 'archived', score: 88, hiringRound: 'Q2 2024', archivedDate: new Date('2024-07-30'), source: 'Direct Apply' },
-    { id: 8, name: 'David Lee', email: 'd.lee@email.com', position: 'Product Manager', project: 'Product Strategy', status: 'archived', score: 85, hiringRound: 'Q2 2024', archivedDate: new Date('2024-08-10'), source: 'Job Board' },
-  ]);
+  // Fetch candidates from API
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      try {
+        setLoading(true);
+        const data = await api.recruiter.getCandidates();
+        // Map API data to include status and additional fields
+        const mappedCandidates: Candidate[] = data.map(c => ({
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          position: c.seniority || 'Not specified',
+          project: 'General Pool', // In real app, would come from API
+          status: 'active',
+          score: c.match,
+          hiringRound: 'Q1 2025',
+          source: 'LinkedIn',
+          seniority: c.seniority,
+          location: c.location
+        }));
+        setCandidates(mappedCandidates);
+      } catch (error) {
+        console.error('Failed to fetch candidates:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCandidates();
+  }, []);
 
   const activeCandidates = candidates.filter(c => c.status === 'active');
   const archivedCandidates = candidates.filter(c => c.status === 'archived');
@@ -45,7 +69,7 @@ export function CandidatesPage({ onBack }: CandidatesPageProps) {
   const filteredCandidates = displayedCandidates.filter(candidate =>
     candidate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     candidate.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    candidate.position.toLowerCase().includes(searchQuery.toLowerCase())
+    (candidate.position?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   const handleToggleSelect = (id: number) => {
@@ -81,11 +105,13 @@ export function CandidatesPage({ onBack }: CandidatesPageProps) {
       ? Math.round(archivedCandidates.reduce((sum, c) => sum + c.score, 0) / archivedCandidates.length)
       : 0,
     byRound: archivedCandidates.reduce((acc, c) => {
-      acc[c.hiringRound] = (acc[c.hiringRound] || 0) + 1;
+      const round = c.hiringRound || 'Unknown';
+      acc[round] = (acc[round] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
     bySource: archivedCandidates.reduce((acc, c) => {
-      acc[c.source] = (acc[c.source] || 0) + 1;
+      const source = c.source || 'Unknown';
+      acc[source] = (acc[source] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
   };
@@ -108,21 +134,19 @@ export function CandidatesPage({ onBack }: CandidatesPageProps) {
             <div className="flex items-center gap-2 bg-white rounded-[10px] p-1 border border-[#e5e7eb]">
               <button
                 onClick={() => setActiveView('active')}
-                className={`h-[36px] px-[16px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${
-                  activeView === 'active'
-                    ? 'bg-[#6366f1] text-white'
-                    : 'text-[#6b7280] hover:text-[#111827]'
-                }`}
+                className={`h-[36px] px-[16px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${activeView === 'active'
+                  ? 'bg-[#6366f1] text-white'
+                  : 'text-[#6b7280] hover:text-[#111827]'
+                  }`}
               >
                 Active ({activeCandidates.length})
               </button>
               <button
                 onClick={() => setActiveView('archived')}
-                className={`h-[36px] px-[16px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${
-                  activeView === 'archived'
-                    ? 'bg-[#6366f1] text-white'
-                    : 'text-[#6b7280] hover:text-[#111827]'
-                }`}
+                className={`h-[36px] px-[16px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${activeView === 'archived'
+                  ? 'bg-[#6366f1] text-white'
+                  : 'text-[#6b7280] hover:text-[#111827]'
+                  }`}
               >
                 Archived ({archivedCandidates.length})
               </button>
@@ -163,11 +187,10 @@ export function CandidatesPage({ onBack }: CandidatesPageProps) {
             </div>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-2 h-[44px] px-[16px] rounded-[10px] border transition-colors ${
-                showFilters
-                  ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
-                  : 'bg-white border-[#e5e7eb] hover:bg-[#f9fafb]'
-              }`}
+              className={`flex items-center gap-2 h-[44px] px-[16px] rounded-[10px] border transition-colors ${showFilters
+                ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
+                : 'bg-white border-[#e5e7eb] hover:bg-[#f9fafb]'
+                }`}
             >
               <Filter size={18} />
               <span className="font-['Arimo',sans-serif] text-[14px]">Filters</span>

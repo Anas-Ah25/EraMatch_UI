@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Plus, Filter, BookOpen, Code, Database, Globe, Cpu, ArrowLeft, Edit2, Trash2, Copy, Star, Clock, ChevronDown, Download, Upload, Tag } from 'lucide-react';
+import { api } from '../services/api';
 
 interface Question {
   id: string;
@@ -27,114 +28,25 @@ export function QuestionBankPage({ onBack }: QuestionBankPageProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock question data
-  const questions: Question[] = [
-    {
-      id: '1',
-      text: 'Explain the difference between useMemo and useCallback in React.',
-      category: 'React',
-      difficulty: 'Medium',
-      type: 'Essay',
-      tags: ['React', 'Hooks', 'Performance'],
-      usageCount: 45,
-      avgScore: 78,
-      createdAt: '2024-01-15',
-      createdBy: 'Sarah Johnson',
-      isFavorite: true
-    },
-    {
-      id: '2',
-      text: 'Write a function to implement debounce in JavaScript.',
-      category: 'JavaScript',
-      difficulty: 'Medium',
-      type: 'Code',
-      tags: ['JavaScript', 'Functions', 'Performance'],
-      usageCount: 89,
-      avgScore: 72,
-      createdAt: '2024-01-10',
-      createdBy: 'Michael Chen',
-      isFavorite: false
-    },
-    {
-      id: '3',
-      text: 'What is the purpose of the virtual DOM in React?',
-      category: 'React',
-      difficulty: 'Easy',
-      type: 'Multiple Choice',
-      tags: ['React', 'Fundamentals'],
-      usageCount: 123,
-      avgScore: 85,
-      createdAt: '2024-01-05',
-      createdBy: 'Sarah Johnson',
-      isFavorite: true
-    },
-    {
-      id: '4',
-      text: 'Design a RESTful API for a blog platform with posts and comments.',
-      category: 'System Design',
-      difficulty: 'Hard',
-      type: 'Essay',
-      tags: ['API', 'System Design', 'Backend'],
-      usageCount: 34,
-      avgScore: 68,
-      createdAt: '2024-01-20',
-      createdBy: 'David Kim',
-      isFavorite: false
-    },
-    {
-      id: '5',
-      text: 'Implement a binary search algorithm in TypeScript.',
-      category: 'Algorithms',
-      difficulty: 'Medium',
-      type: 'Code',
-      tags: ['Algorithms', 'TypeScript', 'Search'],
-      usageCount: 67,
-      avgScore: 75,
-      createdAt: '2024-01-18',
-      createdBy: 'Michael Chen',
-      isFavorite: true
-    },
-    {
-      id: '6',
-      text: 'What are the ACID properties in database transactions?',
-      category: 'Database',
-      difficulty: 'Medium',
-      type: 'Multiple Choice',
-      tags: ['Database', 'Transactions', 'SQL'],
-      usageCount: 56,
-      avgScore: 81,
-      createdAt: '2024-01-12',
-      createdBy: 'Sarah Johnson',
-      isFavorite: false
-    },
-    {
-      id: '7',
-      text: 'Explain the difference between Promise.all() and Promise.race().',
-      category: 'JavaScript',
-      difficulty: 'Easy',
-      type: 'Essay',
-      tags: ['JavaScript', 'Async', 'Promises'],
-      usageCount: 78,
-      avgScore: 82,
-      createdAt: '2024-01-08',
-      createdBy: 'David Kim',
-      isFavorite: false
-    },
-    {
-      id: '8',
-      text: 'Design a URL shortener service like bit.ly.',
-      category: 'System Design',
-      difficulty: 'Hard',
-      type: 'Essay',
-      tags: ['System Design', 'Scalability', 'Architecture'],
-      usageCount: 29,
-      avgScore: 65,
-      createdAt: '2024-01-22',
-      createdBy: 'Michael Chen',
-      isFavorite: true
-    }
-  ];
+  // Fetch questions from API
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setLoading(true);
+        const data = await api.recruiter.getQuestionBank();
+        setQuestions(data as Question[]);
+      } catch (error) {
+        console.error('Failed to fetch questions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, []);
 
   const categories = [
     { id: 'all', label: 'All Categories', icon: BookOpen, count: questions.length },
@@ -147,11 +59,11 @@ export function QuestionBankPage({ onBack }: QuestionBankPageProps) {
 
   const filteredQuestions = questions.filter(q => {
     const matchesSearch = q.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         q.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+      q.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesCategory = selectedCategory === 'all' || q.category === selectedCategory;
     const matchesDifficulty = selectedDifficulty === 'all' || q.difficulty === selectedDifficulty;
     const matchesType = selectedType === 'all' || q.type === selectedType;
-    
+
     return matchesSearch && matchesCategory && matchesDifficulty && matchesType;
   });
 
@@ -176,7 +88,7 @@ export function QuestionBankPage({ onBack }: QuestionBankPageProps) {
             <ArrowLeft size={20} />
             <span className="text-sm">Back</span>
           </button>
-          
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-[#111827] mb-2">Question Bank</h1>
@@ -263,21 +175,19 @@ export function QuestionBankPage({ onBack }: QuestionBankPageProps) {
                     <button
                       key={category.id}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${
-                        selectedCategory === category.id
-                          ? 'bg-indigo-50 text-indigo-700'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${selectedCategory === category.id
+                        ? 'bg-indigo-50 text-indigo-700'
+                        : 'text-gray-700 hover:bg-gray-50'
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={18} />
                         <span className="text-sm">{category.label}</span>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        selectedCategory === category.id
-                          ? 'bg-indigo-100 text-indigo-700'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${selectedCategory === category.id
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'bg-gray-100 text-gray-600'
+                        }`}>
                         {category.count}
                       </span>
                     </button>
@@ -304,9 +214,8 @@ export function QuestionBankPage({ onBack }: QuestionBankPageProps) {
                 </div>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${
-                    showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center gap-2 px-4 py-2.5 border rounded-lg transition-colors ${showFilters ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
                 >
                   <Filter size={18} />
                   <span className="text-sm">Filters</span>

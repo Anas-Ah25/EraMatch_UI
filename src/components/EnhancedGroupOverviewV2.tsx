@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3, Target, Video } from 'lucide-react';
+import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity, MoreVertical, Flag, Filter, X, ChevronDown, Plus, UserCog, Shield, Lock, MessageSquare, FileText, CheckSquare, Ban, Archive, AlertTriangle, BarChart3, Target, Video, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SuspectReviewPage } from './SuspectReviewPage';
 import { CreateAdvancedAssessment } from './CreateAdvancedAssessment';
@@ -8,6 +8,8 @@ import { ModuleMonitoringDashboard } from './ModuleMonitoringDashboard';
 import { StartStageModal } from './StartStageModal';
 import { BulkProgressionModal } from './BulkProgressionModal';
 import { FinalDecisionModal } from './FinalDecisionModal';
+import { api } from '../services/api';
+import { useEffect } from 'react';
 
 interface EnhancedGroupOverviewV2Props {
   groupId: string;
@@ -95,6 +97,8 @@ interface CandidateStatus {
   meetsCriteria?: boolean;
   progressionState?: 'selected' | 'rejected' | 'on-hold' | 'archived' | 'active';
   overrideApplied?: boolean;
+  email?: string;
+  phone?: string;
 }
 
 export function EnhancedGroupOverviewV2({
@@ -176,16 +180,7 @@ export function EnhancedGroupOverviewV2({
   const [showVerdictModal, setShowVerdictModal] = useState<number | null>(null);
 
   // NEW: Activity log
-  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([
-    {
-      id: 'log-1',
-      type: 'criteria-defined',
-      actor: 'System',
-      actorRole: 'technical',
-      description: 'Initial acceptance criteria set',
-      timestamp: new Date(Date.now() - 86400000),
-    }
-  ]);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
   const [showActivityLog, setShowActivityLog] = useState(false);
 
   // NEW: Overrides tracking
@@ -196,174 +191,82 @@ export function EnhancedGroupOverviewV2({
   const [showStageResults, setShowStageResults] = useState(false);
   const [showModuleMonitoring, setShowModuleMonitoring] = useState<'assessment' | 'ai-interview' | null>(null);
 
-  // NEW: Generate dynamic pipeline based on filtrationFlow configuration
-  const generatePipeline = (): PipelineStep[] => {
-    const moduleMap: Record<string, { name: string; icon: any }> = {
-      'assessment': { name: 'Technical Assessment', icon: FileText },
-      'ai-interview': { name: 'AI Interview', icon: Video },
-      'live-interview': { name: 'Live Interview', icon: MessageSquare }
+  // NEW: Pipeline steps state
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([]);
+  const [candidateStatuses, setCandidateStatuses] = useState<CandidateStatus[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.recruiter.getGroupDetails(groupId);
+
+        // Map pipeline stages
+        const moduleMap: Record<string, { name: string; icon: any }> = {
+          'assessment': { name: 'Technical Assessment', icon: FileText },
+          'ai-interview': { name: 'AI Interview', icon: Video },
+          'live-interview': { name: 'Live Interview', icon: MessageSquare },
+          'review': { name: 'Review', icon: CheckSquare },
+          'offer': { name: 'Offer', icon: Send }
+        };
+
+        const steps: PipelineStep[] = data.pipelineStages.map((stage: any) => ({
+          id: stage.id || stage.name.toLowerCase().replace(' ', '-'),
+          name: stage.name,
+          completed: stage.completed,
+          total: stage.total,
+          pending: stage.pending,
+          state: (stage.state as StageState) || 'not-started'
+        }));
+
+        setPipelineSteps(steps);
+
+        // Map candidates
+        const candidates: CandidateStatus[] = data.candidates.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone || `+1-555-${String(c.id).padStart(4, '0')}`,
+          avatar: c.name.split(' ').map((n: string) => n[0]).join(''),
+          assessment: (c.pipelineStatus.assessment as any) || 'not-started',
+          aiInterview: (c.pipelineStatus.aiInterview as any) || 'not-started',
+          liveInterview: (c.pipelineStatus.liveInterview as any) || 'not-started',
+          review: (c.pipelineStatus.review as any) || 'not-started',
+          offer: (c.pipelineStatus.offer as any) || 'not-started',
+          assessmentScore: c.assessmentScore || 0,
+          aiInterviewScore: c.aiInterviewScore || 0,
+          flags: c.flags || [],
+          currentStage: c.currentStage || 'Assessment',
+          technicalVerdict: c.technicalVerdict,
+          meetsCriteria: c.meetsCriteria,
+          progressionState: c.progressionState || 'active',
+          overrideApplied: c.overrideApplied
+        }));
+
+        setCandidateStatuses(candidates);
+
+        if (data.acceptanceCriteria) {
+          setAcceptanceCriteria(data.acceptanceCriteria as TechnicalAcceptanceCriteria);
+        }
+
+        if (data.activityLog) {
+          setActivityLog(data.activityLog.map((log: any) => ({
+            ...log,
+            timestamp: new Date(log.timestamp)
+          })));
+        }
+
+      } catch (error) {
+        console.error('Failed to fetch enhanced group details:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    const steps: PipelineStep[] = filtrationFlow.map((moduleType, index) => ({
-      id: moduleType,
-      name: moduleMap[moduleType]?.name || moduleType,
-      completed: 6 - index * 2,
-      total: 8,
-      pending: 2 + index * 2,
-      state: index === 0 ? 'not-started' as StageState : 'not-started' as StageState
-    }));
-
-    // Always add review and offer stages at the end
-    steps.push(
-      { id: 'review', name: 'Review', completed: 1, total: 8, pending: 7, state: 'not-started' },
-      { id: 'offer', name: 'Offer', completed: 0, total: 8, pending: 8, state: 'not-started' }
-    );
-
-    return steps;
-  };
-
-  // Mock pipeline data with stage states - NOW DYNAMIC
-  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>(generatePipeline());
-
-  // Mock candidate status data with new fields
-  const [candidateStatuses, setCandidateStatuses] = useState<CandidateStatus[]>([
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      avatar: 'SC',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'completed',
-      review: 'completed',
-      offer: 'pending',
-      assessmentScore: 92,
-      aiInterviewScore: 88,
-      flags: [],
-      currentStage: 'Offer',
-      technicalVerdict: 'pass',
-      meetsCriteria: true,
-      progressionState: 'active'
-    },
-    {
-      id: 2,
-      name: 'Michael Rodriguez',
-      avatar: 'MR',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'pending',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 85,
-      aiInterviewScore: 82,
-      flags: [],
-      currentStage: 'Live Interview',
-      technicalVerdict: 'pass',
-      meetsCriteria: true,
-      progressionState: 'active'
-    },
-    {
-      id: 3,
-      name: 'Emma Thompson',
-      avatar: 'ET',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 88,
-      aiInterviewScore: 90,
-      flags: [],
-      currentStage: 'AI Interview',
-      technicalVerdict: 'pass',
-      meetsCriteria: true,
-      progressionState: 'active'
-    },
-    {
-      id: 4,
-      name: 'James Wilson',
-      avatar: 'JW',
-      assessment: 'completed',
-      aiInterview: 'pending',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 78,
-      aiInterviewScore: 0,
-      flags: ['Suspicious Activity', 'Tab Switch'],
-      currentStage: 'Assessment',
-      technicalVerdict: 'conditional',
-      meetsCriteria: true,
-      progressionState: 'active'
-    },
-    {
-      id: 5,
-      name: 'Olivia Martinez',
-      avatar: 'OM',
-      assessment: 'completed',
-      aiInterview: 'not-started',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 95,
-      aiInterviewScore: 0,
-      flags: [],
-      currentStage: 'Assessment',
-      technicalVerdict: 'pass',
-      meetsCriteria: true,
-      progressionState: 'active'
-    },
-    {
-      id: 6,
-      name: 'David Kim',
-      avatar: 'DK',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 81,
-      aiInterviewScore: 79,
-      flags: [],
-      currentStage: 'AI Interview',
-      technicalVerdict: 'pass',
-      meetsCriteria: true,
-      progressionState: 'active'
-    },
-    {
-      id: 7,
-      name: 'Sophie Anderson',
-      avatar: 'SA',
-      assessment: 'pending',
-      aiInterview: 'not-started',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 0,
-      aiInterviewScore: 0,
-      flags: [],
-      currentStage: 'Assessment',
-      technicalVerdict: undefined,
-      meetsCriteria: undefined,
-      progressionState: 'active'
-    },
-    {
-      id: 8,
-      name: 'Alex Johnson',
-      avatar: 'AJ',
-      assessment: 'completed',
-      aiInterview: 'not-started',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 65,
-      aiInterviewScore: 0,
-      flags: [],
-      currentStage: 'Assessment',
-      technicalVerdict: 'fail',
-      meetsCriteria: false,
-      progressionState: 'active'
-    }
-  ]);
+    fetchData();
+  }, [groupId]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -453,7 +356,7 @@ export function EnhancedGroupOverviewV2({
     // Create CSV content
     const csvHeaders = 'Name,Email,Phone,Final Score,Position\n';
     const csvRows = selectedCandidates.map(candidate =>
-      `"${candidate.name}","candidate${candidate.id}@example.com","+1-555-${String(candidate.id).padStart(4, '0')}","${candidate.assessmentScore}","${groupName}"`
+      `"${candidate.name}","${candidate.email}","${candidate.phone}","${candidate.assessmentScore}","${groupName}"`
     ).join('\n');
 
     const csvContent = csvHeaders + csvRows;
@@ -828,6 +731,17 @@ export function EnhancedGroupOverviewV2({
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#f8fafc]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-[#6366f1] animate-spin" />
+          <p className="text-[#64748b] font-medium">Loading group details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f9fafb]">
       {/* Header */}
@@ -949,10 +863,10 @@ export function EnhancedGroupOverviewV2({
               <div
                 key={step.id}
                 className={`p-4 rounded-[12px] border-2 transition-all ${isCurrentStage
-                    ? 'border-[#6366f1] bg-[#f5f3ff]'
-                    : isPastStage
-                      ? 'border-[#e5e7eb] bg-white opacity-60'
-                      : 'border-[#e5e7eb] bg-white opacity-40'
+                  ? 'border-[#6366f1] bg-[#f5f3ff]'
+                  : isPastStage
+                    ? 'border-[#e5e7eb] bg-white opacity-60'
+                    : 'border-[#e5e7eb] bg-white opacity-40'
                   }`}
               >
                 <div className="flex items-center justify-between mb-2">
@@ -962,9 +876,9 @@ export function EnhancedGroupOverviewV2({
                   </span>
                   {step.state !== 'not-started' && (
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${step.state === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                        step.state === 'closed' ? 'bg-amber-100 text-amber-700' :
-                          step.state === 'review-mode' ? 'bg-purple-100 text-purple-700' :
-                            'bg-gray-100 text-gray-600'
+                      step.state === 'closed' ? 'bg-amber-100 text-amber-700' :
+                        step.state === 'review-mode' ? 'bg-purple-100 text-purple-700' :
+                          'bg-gray-100 text-gray-600'
                       }`}>
                       {step.state.replace('-', ' ')}
                     </span>
@@ -1021,8 +935,8 @@ export function EnhancedGroupOverviewV2({
                 Logged in as:
               </span>
               <span className={`flex items-center gap-1.5 h-[32px] px-[12px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${userRole === 'technical'
-                  ? 'bg-emerald-50 text-[#10b981] border border-emerald-200'
-                  : 'bg-indigo-50 text-[#6366f1] border border-indigo-200'
+                ? 'bg-emerald-50 text-[#10b981] border border-emerald-200'
+                : 'bg-indigo-50 text-[#6366f1] border border-indigo-200'
                 }`}>
                 {userRole === 'technical' ? <Shield size={14} /> : <Users size={14} />}
                 {userRole === 'technical' ? 'Technical Recruiter' : 'HR Recruiter'}
@@ -1127,8 +1041,8 @@ export function EnhancedGroupOverviewV2({
                               {assessment.config.title}
                             </span>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${assessment.status === 'draft' ? 'bg-gray-200 text-gray-700' :
-                                assessment.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
-                                  'bg-blue-100 text-blue-700'
+                              assessment.status === 'published' ? 'bg-emerald-100 text-emerald-700' :
+                                'bg-blue-100 text-blue-700'
                               }`}>
                               {assessment.status}
                             </span>
@@ -1296,8 +1210,8 @@ export function EnhancedGroupOverviewV2({
                 <button
                   onClick={() => setShowModuleFilters(!showModuleFilters)}
                   className={`flex items-center gap-2 h-[36px] px-[14px] rounded-[8px] border transition-colors ${showModuleFilters
-                      ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
-                      : 'bg-white hover:bg-[#f9fafb] border-[#e5e7eb] text-[#111827]'
+                    ? 'bg-[#f5f3ff] border-[#6366f1] text-[#6366f1]'
+                    : 'bg-white hover:bg-[#f9fafb] border-[#e5e7eb] text-[#111827]'
                     }`}
                 >
                   <Filter size={16} />
@@ -1563,8 +1477,8 @@ export function EnhancedGroupOverviewV2({
                         <td className="p-4 text-center">
                           {candidate.meetsCriteria !== undefined ? (
                             <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-medium ${candidate.meetsCriteria
-                                ? 'bg-emerald-100 text-emerald-700'
-                                : 'bg-red-100 text-red-700'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-red-100 text-red-700'
                               }`}>
                               {candidate.meetsCriteria ? (
                                 <><CheckCircle size={12} /> Yes</>
@@ -1581,12 +1495,12 @@ export function EnhancedGroupOverviewV2({
                             <button
                               onClick={() => setShowVerdictModal(candidate.id)}
                               className={`px-3 py-1 rounded-full text-[12px] font-medium ${candidate.technicalVerdict === 'pass'
-                                  ? 'bg-emerald-100 text-emerald-700'
-                                  : candidate.technicalVerdict === 'fail'
-                                    ? 'bg-red-100 text-red-700'
-                                    : candidate.technicalVerdict === 'conditional'
-                                      ? 'bg-amber-100 text-amber-700'
-                                      : 'bg-gray-100 text-gray-600 border border-dashed'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : candidate.technicalVerdict === 'fail'
+                                  ? 'bg-red-100 text-red-700'
+                                  : candidate.technicalVerdict === 'conditional'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-gray-100 text-gray-600 border border-dashed'
                                 }`}
                             >
                               {candidate.technicalVerdict ? candidate.technicalVerdict : 'Set Verdict'}
@@ -1607,12 +1521,12 @@ export function EnhancedGroupOverviewV2({
                         <td className="p-4 text-center">
                           {candidate.progressionState && candidate.progressionState !== 'active' ? (
                             <span className={`px-3 py-1 rounded-full text-[12px] font-medium ${candidate.progressionState === 'selected'
-                                ? 'bg-blue-100 text-blue-700'
-                                : candidate.progressionState === 'rejected'
-                                  ? 'bg-red-100 text-red-700'
-                                  : candidate.progressionState === 'on-hold'
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : 'bg-gray-100 text-gray-700'
+                              ? 'bg-blue-100 text-blue-700'
+                              : candidate.progressionState === 'rejected'
+                                ? 'bg-red-100 text-red-700'
+                                : candidate.progressionState === 'on-hold'
+                                  ? 'bg-yellow-100 text-yellow-700'
+                                  : 'bg-gray-100 text-gray-700'
                               }`}>
                               {candidate.progressionState.replace('-', ' ')}
                             </span>
@@ -1718,14 +1632,14 @@ export function EnhancedGroupOverviewV2({
                     <div
                       key={comment.id}
                       className={`p-4 rounded-[12px] border ${comment.author === 'technical'
-                          ? 'bg-emerald-50 border-emerald-200'
-                          : 'bg-blue-50 border-blue-200'
+                        ? 'bg-emerald-50 border-emerald-200'
+                        : 'bg-blue-50 border-blue-200'
                         }`}
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${comment.author === 'technical'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-blue-100 text-blue-700'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-blue-100 text-blue-700'
                           }`}>
                           {comment.author === 'technical' ? (
                             <><Shield size={10} className="inline mr-1" />Technical</>
@@ -1854,8 +1768,8 @@ export function EnhancedGroupOverviewV2({
                           {entry.actor}
                         </span>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${entry.actorRole === 'technical'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-blue-100 text-blue-700'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-blue-100 text-blue-700'
                           }`}>
                           {entry.actorRole === 'technical' ? 'Technical' : 'HR'}
                         </span>

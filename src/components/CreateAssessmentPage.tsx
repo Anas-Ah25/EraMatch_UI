@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Sparkles, Trash2, Plus, ChevronLeft, X, Edit2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, Trash2, Plus, ChevronLeft, X, Edit2, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 export interface Question {
   id: string;
@@ -16,46 +17,16 @@ interface CreateAssessmentPageProps {
   initialQuestions?: Question[];
 }
 
-const generateInitialQuestions = (): Question[] => {
-  const questionTemplates = [
-    { type: 'Multiple Choice', question: 'What is the best practice for software development?', options: ['Test-Driven Development', 'Code Reviews', 'Continuous Integration', 'All of the above'] },
-    { type: 'Multiple Choice', question: 'Which data structure is best for LIFO operations?', options: ['Array', 'Stack', 'Queue', 'Tree'] },
-    { type: 'Multiple Choice', question: 'What is the time complexity of binary search?', options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'] },
-    { type: 'Coding', question: 'Write a function to reverse a string in JavaScript.' },
-    { type: 'Coding', question: 'Implement a function to check if a number is prime.' },
-    { type: 'Coding', question: 'Create a function to find the factorial of a number.' },
-    { type: 'Essay', question: 'Discuss the advantages and disadvantages of microservices architecture.' },
-    { type: 'Multiple Choice', question: 'Which HTTP method is used to update a resource?', options: ['GET', 'POST', 'PUT', 'DELETE'] },
-    { type: 'Multiple Choice', question: 'What does REST stand for?', options: ['Representational State Transfer', 'Remote State Transfer', 'Real State Transfer', 'Responsive State Transfer'] },
-    { type: 'Multiple Choice', question: 'Which database is a NoSQL database?', options: ['MySQL', 'PostgreSQL', 'MongoDB', 'Oracle'] },
-    { type: 'Coding', question: 'Write a function to merge two sorted arrays.' },
-    { type: 'Essay', question: 'Explain the concept of RESTful API design and its best practices.' },
-    { type: 'Multiple Choice', question: 'What is a closure in JavaScript?', options: ['A function with access to outer scope', 'A loop structure', 'A class method', 'An async function'] },
-    { type: 'Coding', question: 'Implement a function to find duplicates in an array.' },
-    { type: 'Multiple Choice', question: 'Which principle is NOT part of SOLID?', options: ['Single Responsibility', 'Open/Closed', 'Dynamic Programming', 'Interface Segregation'] },
-    { type: 'Essay', question: 'Describe the differences between SQL and NoSQL databases.' },
-    { type: 'Coding', question: 'Write a function to implement debounce.' },
-    { type: 'Multiple Choice', question: 'What is the purpose of Git?', options: ['Version control', 'Database management', 'Web hosting', 'Code compilation'] },
-    { type: 'Essay', question: 'Explain the concept of dependency injection and its benefits.' },
-    { type: 'Coding', question: 'Create a function to flatten a nested array.' },
-  ];
 
-  return questionTemplates.map((template, index) => ({
-    id: `q-${Date.now()}-${index}`,
-    type: template.type as any,
-    question: template.question,
-    options: template.options,
-  }));
-};
-
-export function CreateAssessmentPage({ 
-  onBack, 
+export function CreateAssessmentPage({
+  onBack,
   onSave,
   initialTitle = '',
-  initialQuestions 
+  initialQuestions
 }: CreateAssessmentPageProps) {
   const [title, setTitle] = useState(initialTitle || 'Technical Assessment');
-  const [questions, setQuestions] = useState<Question[]>(initialQuestions || generateInitialQuestions());
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions || []);
+  const [isLoading, setIsLoading] = useState(!initialQuestions);
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [newQuestionType, setNewQuestionType] = useState<Question['type']>('Multiple Choice');
   const [newQuestionText, setNewQuestionText] = useState('');
@@ -63,6 +34,33 @@ export function CreateAssessmentPage({
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   const [editQuestionText, setEditQuestionText] = useState('');
   const [editQuestionOptions, setEditQuestionOptions] = useState<string[]>([]);
+
+  // Fetch assessment templates from API
+  useEffect(() => {
+    if (!initialQuestions) {
+      const fetchTemplates = async () => {
+        try {
+          setIsLoading(true);
+          const templates = await api.recruiter.getAssessmentTemplates();
+          // Map API templates to Question format
+          const mappedQuestions: Question[] = templates.map((template: any) => ({
+            id: template.id,
+            type: template.type as Question['type'],
+            question: template.question,
+            options: template.options,
+            correctAnswer: template.correctAnswer
+          }));
+          setQuestions(mappedQuestions);
+        } catch (error) {
+          console.error('Failed to fetch assessment templates:', error);
+          setQuestions([]);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchTemplates();
+    }
+  }, [initialQuestions]);
 
   const handleDeleteQuestion = (id: string) => {
     setQuestions(questions.filter(q => q.id !== id));
@@ -165,7 +163,7 @@ export function CreateAssessmentPage({
       {/* Header */}
       <div className="px-8 py-6 border-b border-[#e5e7eb] sticky top-0 z-10">
         <div className="flex items-center justify-between mb-6">
-          <button 
+          <button
             onClick={onBack}
             className="flex items-center gap-2 text-[#9ca3af] hover:text-black transition-colors"
           >
@@ -190,7 +188,7 @@ export function CreateAssessmentPage({
         <h1 className="font-['Arimo',sans-serif] text-[32px] text-black mb-6">
           Create Assessment
         </h1>
-        
+
         <div>
           <label className="font-['Arimo',sans-serif] text-[14px] text-black mb-2 block">
             Assessment Title
@@ -229,7 +227,7 @@ export function CreateAssessmentPage({
               <h3 className="font-['Arimo',sans-serif] text-[20px] text-black mb-4">
                 Add New Question
               </h3>
-              
+
               <div className="mb-4">
                 <label className="font-['Arimo',sans-serif] text-[14px] text-black mb-2 block">
                   Question Type

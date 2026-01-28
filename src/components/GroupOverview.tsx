@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, Users, Sparkles, Send, Calendar, MoveRight, Download, Edit, UserPlus, UserMinus, TrendingUp, AlertTriangle, Eye } from 'lucide-react';
+import { api } from '../services/api';
 
 interface GroupOverviewProps {
   groupId: string;
@@ -41,54 +42,27 @@ export function GroupOverview({
   onBack,
   onViewCandidate
 }: GroupOverviewProps) {
-  const [candidates] = useState<GroupCandidate[]>([
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@email.com',
-      score: 95,
-      antiCheating: false,
-      pipelineStatus: {
-        assessment: 'completed',
-        interview: 'completed',
-        review: 'pending',
-        offer: 'not-started'
-      }
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      score: 88,
-      antiCheating: false,
-      pipelineStatus: {
-        assessment: 'completed',
-        interview: 'pending',
-        review: 'not-started',
-        offer: 'not-started'
-      }
-    },
-    {
-      id: 3,
-      name: 'Michael Chen',
-      email: 'mchen@email.com',
-      score: 82,
-      antiCheating: true,
-      pipelineStatus: {
-        assessment: 'completed',
-        interview: 'not-started',
-        review: 'not-started',
-        offer: 'not-started'
-      }
-    }
-  ]);
+  const [candidates, setCandidates] = useState<GroupCandidate[]>([]);
+  const [pipelineStages, setPipelineStages] = useState<PipelineStage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const pipelineStages: PipelineStage[] = [
-    { name: 'Assessment', completed: 3, pending: 0, total: 3 },
-    { name: 'Interview', completed: 1, pending: 1, total: 3 },
-    { name: 'Review', completed: 0, pending: 1, total: 3 },
-    { name: 'Offer', completed: 0, pending: 0, total: 3 }
-  ];
+  // Fetch group details from API
+  useEffect(() => {
+    const fetchGroupDetails = async () => {
+      try {
+        setLoading(true);
+        const data = await api.recruiter.getGroupDetails(groupId);
+        setCandidates(data.candidates as GroupCandidate[]);
+        setPipelineStages(data.pipelineStages);
+      } catch (error) {
+        console.error('Failed to fetch group details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroupDetails();
+  }, [groupId]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -120,7 +94,7 @@ export function GroupOverview({
             <ChevronLeft size={20} />
             <span className="font-['Arimo',sans-serif] text-[14px]">Back to Position Dashboard</span>
           </button>
-          
+
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-start gap-4">
               <div className="w-[56px] h-[56px] rounded-[12px] bg-[#6366f1] flex items-center justify-center">
@@ -311,9 +285,8 @@ export function GroupOverview({
                 {candidates.map((candidate, index) => (
                   <tr
                     key={candidate.id}
-                    className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors ${
-                      index === candidates.length - 1 ? 'border-b-0' : ''
-                    }`}
+                    className={`border-b border-[#e5e7eb] hover:bg-[#f9fafb] transition-colors ${index === candidates.length - 1 ? 'border-b-0' : ''
+                      }`}
                   >
                     <td className="p-4">
                       <span className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">

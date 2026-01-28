@@ -54,115 +54,6 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   const [showAssessmentInactivityAlert, setShowAssessmentInactivityAlert] = useState(false);
   const [assessmentRedBorder, setAssessmentRedBorder] = useState(false);
 
-  // Questions array
-  const questions = [
-    {
-      id: 1,
-      type: 'essay',
-      question: 'Explain the difference between SQL and NoSQL databases. When would you choose one over the other?',
-      points: 10
-    },
-    {
-      id: 2,
-      type: 'mcq',
-      question: 'Which of the following is NOT a valid HTTP method?',
-      options: ['GET', 'POST', 'FETCH', 'DELETE'],
-      correctAnswer: 2,
-      points: 5
-    },
-    {
-      id: 3,
-      type: 'coding',
-      question: 'Write a function that returns the factorial of a given number n. Handle edge cases.',
-      starterCode: 'function factorial(n) {\n  // Your code here\n}',
-      points: 15
-    },
-    {
-      id: 4,
-      type: 'mcq',
-      question: 'What does the acronym "REST" stand for in web services?',
-      options: ['Remote Execution State Transfer', 'Representational State Transfer', 'Rapid Execution Service Technology', 'Resource Exchange State Transfer'],
-      correctAnswer: 1,
-      points: 5
-    },
-    {
-      id: 5,
-      type: 'essay',
-      question: 'Describe the concept of "Big O" notation and explain why it is important in algorithm analysis.',
-      points: 10
-    },
-    {
-      id: 6,
-      type: 'coding',
-      question: 'Implement a function to reverse a string without using built-in reverse methods.',
-      starterCode: 'function reverseString(str) {\n  // Your code here\n}',
-      points: 10
-    },
-    {
-      id: 7,
-      type: 'mcq',
-      question: 'Which data structure uses LIFO (Last In First Out) principle?',
-      options: ['Queue', 'Stack', 'Array', 'Linked List'],
-      correctAnswer: 1,
-      points: 5
-    },
-    {
-      id: 8,
-      type: 'essay',
-      question: 'What are the main principles of Object-Oriented Programming? Explain each briefly.',
-      points: 10
-    },
-    {
-      id: 9,
-      type: 'coding',
-      question: 'Write a function to check if a given string is a palindrome (reads the same forwards and backwards).',
-      starterCode: 'function isPalindrome(str) {\n  // Your code here\n}',
-      points: 15
-    },
-    {
-      id: 10,
-      type: 'mcq',
-      question: 'What is the time complexity of binary search?',
-      options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
-      correctAnswer: 1,
-      points: 5
-    },
-    {
-      id: 11,
-      type: 'essay',
-      question: 'Explain what a RESTful API is and describe the key constraints that make an API RESTful.',
-      points: 10
-    },
-    {
-      id: 12,
-      type: 'coding',
-      question: 'Create a function that finds the maximum number in an array without using Math.max().',
-      starterCode: 'function findMax(arr) {\n  // Your code here\n}',
-      points: 10
-    },
-    {
-      id: 13,
-      type: 'mcq',
-      question: 'Which of the following is a JavaScript framework?',
-      options: ['Django', 'Flask', 'React', 'Laravel'],
-      correctAnswer: 2,
-      points: 5
-    },
-    {
-      id: 14,
-      type: 'essay',
-      question: 'What is the difference between synchronous and asynchronous programming? Provide examples of when each is appropriate.',
-      points: 10
-    },
-    {
-      id: 15,
-      type: 'coding',
-      question: 'Write a function that removes duplicate values from an array and returns a new array with unique values only.',
-      starterCode: 'function removeDuplicates(arr) {\n  // Your code here\n}',
-      points: 15
-    }
-  ];
-
   // Inactivity detection countdown
   useEffect(() => {
     if (showInactivityAlert && inactivityTimer > 0) {
@@ -299,10 +190,10 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
             <div key={step.number} className="flex flex-col items-center w-20">
               <div
                 className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all ${currentStep > step.number
+                  ? 'bg-gradient-to-br'
+                  : currentStep === step.number
                     ? 'bg-gradient-to-br'
-                    : currentStep === step.number
-                      ? 'bg-gradient-to-br'
-                      : 'bg-gray-300'
+                    : 'bg-gray-300'
                   }`}
                 style={currentStep >= step.number ? { backgroundColor: '#6366F1' } : {}}
               >

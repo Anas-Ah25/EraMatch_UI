@@ -1,12 +1,14 @@
-import { ChevronLeft, Pencil, Filter, ArrowUpDown, Star, Plus, Sparkles, Share2, Edit2, Trash2, Users, Download, Upload, Calendar, X } from 'lucide-react';
+import { ChevronLeft, Pencil, Filter, ArrowUpDown, Star, Plus, Sparkles, Share2, Edit2, Trash2, Users, Download, Upload, Calendar, X, Loader2 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Switch } from './ui/switch';
 import { Question } from './CreateAssessmentPage';
 import { GroupCreationPage } from './GroupCreationPage';
 import { FiltrationFlowConfigModal } from './FiltrationFlowConfigModal';
 import { CandidateProfile } from './CandidateProfile';
+import { SimpleGroupCreationModal } from './SimpleGroupCreationModal';
 
 interface Candidate {
   id: number;
@@ -42,13 +44,13 @@ interface PositionDetailViewProps {
   initialActiveTab?: 'candidates' | 'groups' | 'insights';
 }
 
-export function PositionDetailView({ 
-  positionTitle, 
-  projectTitle, 
-  description, 
+export function PositionDetailView({
+  positionTitle,
+  projectTitle,
+  description,
   screeningConditions,
   isOpen = true,
-  onBack, 
+  onBack,
   onSave,
   onCreateAssessment,
   onSaveAssessment,
@@ -57,21 +59,15 @@ export function PositionDetailView({
   onViewGroup,
   initialActiveTab = 'candidates'
 }: PositionDetailViewProps) {
-  const [candidates, setCandidates] = useState<Candidate[]>([
-    { id: 1, name: 'John Smith', email: 'john.smith@email.com', score: 95, match: 92, color: '#10b981', starred: false, selected: false },
-    { id: 2, name: 'Sarah Johnson', email: 'sarah.j@email.com', score: 88, match: 85, color: '#10b981', starred: false, selected: false },
-    { id: 3, name: 'Michael Chen', email: 'mchen@email.com', score: 82, match: 78, color: '#f59e0b', starred: false, selected: false },
-    { id: 4, name: 'Emily Davis', email: 'emily.davis@email.com', score: 79, match: 75, color: '#f59e0b', starred: false, selected: false },
-    { id: 5, name: 'David Wilson', email: 'dwilson@email.com', score: 72, match: 68, color: '#f59e0b', starred: false, selected: false },
-    { id: 6, name: 'Lisa Anderson', email: 'l.anderson@email.com', score: 68, match: 65, color: '#f59e0b', starred: false, selected: false },
-    { id: 7, name: 'Robert Martinez', email: 'rmartinez@email.com', score: 65, match: 62, color: '#ffa366', starred: false, selected: false },
-    { id: 8, name: 'Jennifer Taylor', email: 'jtaylor@email.com', score: 61, match: 58, color: '#ffa366', starred: false, selected: false },
-    { id: 9, name: 'James Brown', email: 'jbrown@email.com', score: 58, match: 55, color: '#ffa366', starred: false, selected: false },
-    { id: 10, name: 'Patricia Garcia', email: 'pgarcia@email.com', score: 54, match: 51, color: '#ffa366', starred: false, selected: false },
-    { id: 11, name: 'Christopher Lee', email: 'clee@email.com', score: 51, match: 48, color: '#ffa366', starred: false, selected: false },
-    { id: 12, name: 'Maria Rodriguez', email: 'mrodriguez@email.com', score: 48, match: 45, color: '#ffa366', starred: false, selected: false },
-  ]);
-
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [fittingData, setFittingData] = useState<any[]>([]);
+  const [scoreData, setScoreData] = useState<any[]>([]);
+  const [skillDistribution, setSkillDistribution] = useState<any[]>([]);
+  const [seniorityDistribution, setSeniorityDistribution] = useState<any[]>([]);
+  const [universityDistribution, setUniversityDistribution] = useState<any[]>([]);
+  const [availabilityDistribution, setAvailabilityDistribution] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editPositionTitle, setEditPositionTitle] = useState(positionTitle);
   const [editPositionDescription, setEditPositionDescription] = useState(description || '');
@@ -89,38 +85,41 @@ export function PositionDetailView({
   // Assessment management - use savedAssessments from props
   const assessments = savedAssessments;
 
-  // Mock groups data
-  const groups = [
-    { id: '1', name: 'Senior React Developers Q1 2025', candidateCount: 8, recruiter: 'John Doe', stage: 'Live Interview', progress: 62, lastUpdated: '2 hours ago', status: 'Live' as const },
-    { id: '2', name: 'Backend Engineers - Python Focus', candidateCount: 12, recruiter: 'Jane Smith', stage: 'Assessment', progress: 45, lastUpdated: '1 day ago', status: 'Live' as const },
-    { id: '3', name: 'Full Stack - High Match', candidateCount: 5, recruiter: 'Mike Johnson', stage: 'Review', progress: 85, lastUpdated: '3 days ago', status: 'Paused' as const },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Using a mock positionId '1' for now since it's not in props
+        const [details, insights] = await Promise.all([
+          api.recruiter.getPositionDetails('1'),
+          api.recruiter.getPositionInsights('1')
+        ]);
 
-  // Pie chart data - reordered to create better visual flow
-  const fittingData = [
-    { name: 'Excellent (80-100%): 2', value: 2, color: '#10b981', label: 'Excellent (80-100%): 2' },
-    { name: 'Poor (<40%): 0', value: 1, color: '#ff9a76', label: 'Poor (<40%): 0' }, // Added value of 1 for visibility
-    { name: 'Fair (40-59%): 4', value: 4, color: '#ffa366', label: 'Fair (40-59%): 4' },
-    { name: 'Good (60-79%): 4', value: 4, color: '#f59e0b', label: 'Good (60-79%): 4' },
-  ];
-
-  // Bar chart data
-  const scoreData = [
-    { range: '0-20', count: 0 },
-    { range: '20-40', count: 0 },
-    { range: '40-60', count: 3 },
-    { range: '60-80', count: 4 },
-    { range: '80-100', count: 3 },
-  ];
+        setCandidates(details.candidates);
+        setGroups(details.groups);
+        setFittingData(insights.fittingData);
+        setScoreData(insights.scoreData);
+        setSkillDistribution(insights.skillDistribution);
+        setSeniorityDistribution(insights.seniorityDistribution);
+        setUniversityDistribution(insights.universityDistribution);
+        setAvailabilityDistribution(insights.availabilityDistribution);
+      } catch (error) {
+        console.error('Failed to fetch position data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const toggleStar = (id: number) => {
-    setCandidates(candidates.map(c => 
+    setCandidates(candidates.map(c =>
       c.id === id ? { ...c, starred: !c.starred } : c
     ));
   };
 
   const toggleSelect = (id: number) => {
-    setCandidates(candidates.map(c => 
+    setCandidates(candidates.map(c =>
       c.id === id ? { ...c, selected: !c.selected } : c
     ));
   };
@@ -160,6 +159,17 @@ export function PositionDetailView({
       </div>
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#edf0f8]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 text-[#6366f1] animate-spin" />
+          <p className="text-[#64748b] font-medium font-['Arimo',sans-serif]">Loading position details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full w-full bg-[#edf0f8]">
@@ -211,31 +221,28 @@ export function PositionDetailView({
           <div className="flex gap-1">
             <button
               onClick={() => setActiveTab('candidates')}
-              className={`h-[48px] px-[24px] font-['Arimo',sans-serif] text-[15px] border-b-2 transition-colors ${
-                activeTab === 'candidates'
-                  ? 'border-[#6366f1] text-[#6366f1]'
-                  : 'border-transparent text-[#6b7280] hover:text-[#111827]'
-              }`}
+              className={`h-[48px] px-[24px] font-['Arimo',sans-serif] text-[15px] border-b-2 transition-colors ${activeTab === 'candidates'
+                ? 'border-[#6366f1] text-[#6366f1]'
+                : 'border-transparent text-[#6b7280] hover:text-[#111827]'
+                }`}
             >
               Candidates
             </button>
             <button
               onClick={() => setActiveTab('groups')}
-              className={`h-[48px] px-[24px] font-['Arimo',sans-serif] text-[15px] border-b-2 transition-colors ${
-                activeTab === 'groups'
-                  ? 'border-[#6366f1] text-[#6366f1]'
-                  : 'border-transparent text-[#6b7280] hover:text-[#111827]'
-              }`}
+              className={`h-[48px] px-[24px] font-['Arimo',sans-serif] text-[15px] border-b-2 transition-colors ${activeTab === 'groups'
+                ? 'border-[#6366f1] text-[#6366f1]'
+                : 'border-transparent text-[#6b7280] hover:text-[#111827]'
+                }`}
             >
               Groups
             </button>
             <button
               onClick={() => setActiveTab('insights')}
-              className={`h-[48px] px-[24px] font-['Arimo',sans-serif] text-[15px] border-b-2 transition-colors ${
-                activeTab === 'insights'
-                  ? 'border-[#6366f1] text-[#6366f1]'
-                  : 'border-transparent text-[#6b7280] hover:text-[#111827]'
-              }`}
+              className={`h-[48px] px-[24px] font-['Arimo',sans-serif] text-[15px] border-b-2 transition-colors ${activeTab === 'insights'
+                ? 'border-[#6366f1] text-[#6366f1]'
+                : 'border-transparent text-[#6b7280] hover:text-[#111827]'
+                }`}
             >
               Insights
             </button>
@@ -246,221 +253,221 @@ export function PositionDetailView({
         {activeTab === 'candidates' && (
           <div className="w-full">
             <div className="flex items-center justify-between mb-4">
-            <h2 className="font-['Arimo',sans-serif] text-[20px] text-black">
-              Candidates
-            </h2>
-          </div>
-
-          {/* Import Candidates Section */}
-          <div className="bg-white rounded-[12px] p-6 shadow-sm mb-6">
-            <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-4">
-              Import Candidates
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => setShowZipUploadModal(true)}
-                className="flex items-center gap-3 p-4 rounded-[8px] border-2 border-[#e5e7eb] hover:border-[#6366f1] hover:bg-[#f9fafb] transition-all"
-              >
-                <Upload size={20} className="text-[#6366f1]" />
-                <div className="text-left">
-                  <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                    Upload CVs (.zip)
-                  </div>
-                  <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
-                    Drag & drop or browse
-                  </div>
-                </div>
-              </button>
-              <button
-                onClick={() => setShowGoogleDriveModal(true)}
-                className="flex items-center gap-3 p-4 rounded-[8px] border-2 border-[#e5e7eb] hover:border-[#6366f1] hover:bg-[#f9fafb] transition-all"
-              >
-                <Calendar size={20} className="text-[#10b981]" />
-                <div className="text-left">
-                  <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
-                    Schedule Data Import
-                  </div>
-                  <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
-                    Google Drive integration
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Data Board */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
-            {/* Total Candidates */}
-            <div className="bg-white rounded-[12px] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Total Candidates
-                </h4>
-                <Users size={18} className="text-[#6366f1]" />
-              </div>
-              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
-                {candidates.length}
-              </p>
+              <h2 className="font-['Arimo',sans-serif] text-[20px] text-black">
+                Candidates
+              </h2>
             </div>
 
-            {/* Groups Created */}
-            <div className="bg-white rounded-[12px] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Groups Created
-                </h4>
-                <Users size={18} className="text-[#10b981]" />
-              </div>
-              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
-                {groups.length}
-              </p>
-            </div>
-
-            {/* Assigned Candidates */}
-            <div className="bg-white rounded-[12px] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Assigned
-                </h4>
-                <div className="w-[8px] h-[8px] rounded-full bg-[#10b981]"></div>
-              </div>
-              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
-                {groups.reduce((sum, g) => sum + g.candidateCount, 0)}
-              </p>
-            </div>
-
-            {/* Unassigned Candidates */}
-            <div className="bg-white rounded-[12px] p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
-                  Unassigned
-                </h4>
-                <div className="w-[8px] h-[8px] rounded-full bg-[#f59e0b]"></div>
-              </div>
-              <p className="font-['Arimo',sans-serif] text-[28px] text-black">
-                {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)}
-              </p>
-            </div>
-          </div>
-
-          {/* Group Distribution */}
-          <div className="bg-white rounded-[12px] p-6 shadow-sm mb-6">
-            <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-4">
-              Candidates by Group
-            </h3>
-            {groups.length > 0 ? (
-              <div className="space-y-3">
-                {groups.map((group) => (
-                  <div key={group.id}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
-                        {group.name}
-                      </span>
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                        {group.candidateCount} candidates
-                      </span>
-                    </div>
-                    <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#6366f1]"
-                        style={{ width: `${(group.candidateCount / candidates.length) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-                {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0) > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
-                        Unassigned
-                      </span>
-                      <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
-                        {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)} candidates
-                      </span>
-                    </div>
-                    <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-[#f59e0b]"
-                        style={{ width: `${((candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)) / candidates.length) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] text-center py-4">
-                No groups created yet. Create a group to organize candidates.
-              </p>
-            )}
-          </div>
-
-          {/* All Candidates List */}
-          <div className="bg-white rounded-[12px] p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-['Arimo',sans-serif] text-[18px] text-black">
-                All Candidates ({candidates.length})
+            {/* Import Candidates Section */}
+            <div className="bg-white rounded-[12px] p-6 shadow-sm mb-6">
+              <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-4">
+                Import Candidates
               </h3>
-              <div className="flex items-center gap-2">
-                <button className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-[#f3f4f6] transition-colors">
-                  <Filter size={18} className="text-[#6366f1]" strokeWidth={1.5} />
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setShowZipUploadModal(true)}
+                  className="flex items-center gap-3 p-4 rounded-[8px] border-2 border-[#e5e7eb] hover:border-[#6366f1] hover:bg-[#f9fafb] transition-all"
+                >
+                  <Upload size={20} className="text-[#6366f1]" />
+                  <div className="text-left">
+                    <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                      Upload CVs (.zip)
+                    </div>
+                    <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
+                      Drag & drop or browse
+                    </div>
+                  </div>
                 </button>
-                <button className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-[#f3f4f6] transition-colors">
-                  <ArrowUpDown size={18} className="text-[#6366f1]" strokeWidth={1.5} />
+                <button
+                  onClick={() => setShowGoogleDriveModal(true)}
+                  className="flex items-center gap-3 p-4 rounded-[8px] border-2 border-[#e5e7eb] hover:border-[#6366f1] hover:bg-[#f9fafb] transition-all"
+                >
+                  <Calendar size={20} className="text-[#10b981]" />
+                  <div className="text-left">
+                    <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827]">
+                      Schedule Data Import
+                    </div>
+                    <div className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
+                      Google Drive integration
+                    </div>
+                  </div>
                 </button>
               </div>
             </div>
 
-            <div className="max-h-[500px] overflow-y-auto pr-2">
-              <div className="flex flex-col gap-3">
-                {candidates.map((candidate) => (
-                  <div
-                    key={candidate.id}
-                    className="flex items-center gap-4 p-4 rounded-[10px] bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={candidate.selected}
-                      onChange={() => toggleSelect(candidate.id)}
-                      className="w-[18px] h-[18px] rounded-[3px] border border-[#d1d5db] text-[#6366f1] focus:ring-2 focus:ring-[#6366f1] focus:ring-offset-0 cursor-pointer accent-[#6366f1]"
-                    />
-                    <div className={`w-[4px] h-[44px] rounded-full`} style={{ backgroundColor: candidate.color }}></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-['Arimo',sans-serif] text-[15px] text-black">
-                        {candidate.name}
-                      </p>
-                      <p className="font-['Arimo',sans-serif] text-[13px] text-[#9ca3af]">
-                        {candidate.email}
-                      </p>
-                    </div>
-                    <div className="text-right mr-4">
-                      <p className="font-['Arimo',sans-serif] text-[15px] text-black">
-                        Score: {candidate.score}
-                      </p>
-                      <p className="font-['Arimo',sans-serif] text-[13px] text-[#9ca3af]">
-                        Match: {candidate.match}%
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => toggleStar(candidate.id)}
-                      className="flex items-center justify-center w-[32px] h-[32px] hover:bg-white rounded-[4px] transition-colors"
-                    >
-                      <Star
-                        size={22}
-                        className={candidate.starred ? 'text-[#f59e0b] fill-[#f59e0b]' : 'text-[#d1d5db]'}
-                        strokeWidth={1.5}
-                      />
-                    </button>
-                    <button 
-                      onClick={() => setViewingCandidateId(candidate.id)}
-                      className="h-[40px] px-[20px] rounded-[8px] bg-[#5b21b6] hover:bg-[#6d28d9] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
-                    >
-                      View Report
-                    </button>
-                  </div>
-                ))}
+            {/* Quick Data Board */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              {/* Total Candidates */}
+              <div className="bg-white rounded-[12px] p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                    Total Candidates
+                  </h4>
+                  <Users size={18} className="text-[#6366f1]" />
+                </div>
+                <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                  {candidates.length}
+                </p>
+              </div>
+
+              {/* Groups Created */}
+              <div className="bg-white rounded-[12px] p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                    Groups Created
+                  </h4>
+                  <Users size={18} className="text-[#10b981]" />
+                </div>
+                <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                  {groups.length}
+                </p>
+              </div>
+
+              {/* Assigned Candidates */}
+              <div className="bg-white rounded-[12px] p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                    Assigned
+                  </h4>
+                  <div className="w-[8px] h-[8px] rounded-full bg-[#10b981]"></div>
+                </div>
+                <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                  {groups.reduce((sum, g) => sum + g.candidateCount, 0)}
+                </p>
+              </div>
+
+              {/* Unassigned Candidates */}
+              <div className="bg-white rounded-[12px] p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
+                    Unassigned
+                  </h4>
+                  <div className="w-[8px] h-[8px] rounded-full bg-[#f59e0b]"></div>
+                </div>
+                <p className="font-['Arimo',sans-serif] text-[28px] text-black">
+                  {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)}
+                </p>
               </div>
             </div>
-          </div>
+
+            {/* Group Distribution */}
+            <div className="bg-white rounded-[12px] p-6 shadow-sm mb-6">
+              <h3 className="font-['Arimo',sans-serif] text-[18px] text-black mb-4">
+                Candidates by Group
+              </h3>
+              {groups.length > 0 ? (
+                <div className="space-y-3">
+                  {groups.map((group) => (
+                    <div key={group.id}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
+                          {group.name}
+                        </span>
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {group.candidateCount} candidates
+                        </span>
+                      </div>
+                      <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#6366f1]"
+                          style={{ width: `${(group.candidateCount / candidates.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0) > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#374151]">
+                          Unassigned
+                        </span>
+                        <span className="font-['Arimo',sans-serif] text-[14px] text-[#6b7280]">
+                          {candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)} candidates
+                        </span>
+                      </div>
+                      <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#f59e0b]"
+                          style={{ width: `${((candidates.length - groups.reduce((sum, g) => sum + g.candidateCount, 0)) / candidates.length) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] text-center py-4">
+                  No groups created yet. Create a group to organize candidates.
+                </p>
+              )}
+            </div>
+
+            {/* All Candidates List */}
+            <div className="bg-white rounded-[12px] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-['Arimo',sans-serif] text-[18px] text-black">
+                  All Candidates ({candidates.length})
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-[#f3f4f6] transition-colors">
+                    <Filter size={18} className="text-[#6366f1]" strokeWidth={1.5} />
+                  </button>
+                  <button className="flex items-center justify-center w-[32px] h-[32px] rounded-[6px] hover:bg-[#f3f4f6] transition-colors">
+                    <ArrowUpDown size={18} className="text-[#6366f1]" strokeWidth={1.5} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="max-h-[500px] overflow-y-auto pr-2">
+                <div className="flex flex-col gap-3">
+                  {candidates.map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className="flex items-center gap-4 p-4 rounded-[10px] bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={candidate.selected}
+                        onChange={() => toggleSelect(candidate.id)}
+                        className="w-[18px] h-[18px] rounded-[3px] border border-[#d1d5db] text-[#6366f1] focus:ring-2 focus:ring-[#6366f1] focus:ring-offset-0 cursor-pointer accent-[#6366f1]"
+                      />
+                      <div className={`w-[4px] h-[44px] rounded-full`} style={{ backgroundColor: candidate.color }}></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-['Arimo',sans-serif] text-[15px] text-black">
+                          {candidate.name}
+                        </p>
+                        <p className="font-['Arimo',sans-serif] text-[13px] text-[#9ca3af]">
+                          {candidate.email}
+                        </p>
+                      </div>
+                      <div className="text-right mr-4">
+                        <p className="font-['Arimo',sans-serif] text-[15px] text-black">
+                          Score: {candidate.score}
+                        </p>
+                        <p className="font-['Arimo',sans-serif] text-[13px] text-[#9ca3af]">
+                          Match: {candidate.match}%
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => toggleStar(candidate.id)}
+                        className="flex items-center justify-center w-[32px] h-[32px] hover:bg-white rounded-[4px] transition-colors"
+                      >
+                        <Star
+                          size={22}
+                          className={candidate.starred ? 'text-[#f59e0b] fill-[#f59e0b]' : 'text-[#d1d5db]'}
+                          strokeWidth={1.5}
+                        />
+                      </button>
+                      <button
+                        onClick={() => setViewingCandidateId(candidate.id)}
+                        className="h-[40px] px-[20px] rounded-[8px] bg-[#5b21b6] hover:bg-[#6d28d9] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
+                      >
+                        View Report
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -487,7 +494,7 @@ export function PositionDetailView({
                   <h2 className="font-['Arimo',sans-serif] text-[20px] text-black">
                     Candidate Groups
                   </h2>
-                  <button 
+                  <button
                     onClick={() => setShowGroupCreationPage(true)}
                     className="flex items-center gap-2 h-[40px] px-[20px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] transition-colors"
                   >
@@ -509,7 +516,7 @@ export function PositionDetailView({
                     <p className="font-['Arimo',sans-serif] text-[14px] text-[#9ca3af] mb-6 max-w-[400px] mx-auto">
                       Create candidate groups to organize and track subsets of candidates through your recruitment pipeline.
                     </p>
-                    <button 
+                    <button
                       onClick={() => setShowGroupCreationPage(true)}
                       className="h-[44px] px-[24px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[14px] text-white transition-colors"
                     >
@@ -526,11 +533,10 @@ export function PositionDetailView({
                               <h3 className="font-['Arimo',sans-serif] text-[17px] text-black">
                                 {group.name}
                               </h3>
-                              <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
-                                group.status === 'Live' ? 'bg-[#dcfce7] text-[#10b981]' :
+                              <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${group.status === 'Live' ? 'bg-[#dcfce7] text-[#10b981]' :
                                 group.status === 'Paused' ? 'bg-[#fef3c7] text-[#f59e0b]' :
-                                'bg-[#f3f4f6] text-[#6b7280]'
-                              }`}>
+                                  'bg-[#f3f4f6] text-[#6b7280]'
+                                }`}>
                                 {group.status}
                               </span>
                             </div>
@@ -555,14 +561,14 @@ export function PositionDetailView({
                             </span>
                           </div>
                           <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-[#6366f1] transition-all"
                               style={{ width: `${group.progress}%` }}
                             />
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={() => onViewGroup && onViewGroup(group.id)}
                             className="h-[36px] px-[16px] rounded-[8px] bg-[#6366f1] hover:bg-[#5558e3] font-['Arimo',sans-serif] text-[13px] text-white transition-colors"
                           >
@@ -637,33 +643,26 @@ export function PositionDetailView({
                       </ResponsiveContainer>
 
                       {/* Labels positioned around the pie */}
-                      {/* Top Right - Excellent */}
-                      <div className="absolute" style={{ top: '40px', right: '-80px' }}>
-                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#10b981' }}>
-                          Excellent (80-100%): 2
-                        </span>
-                      </div>
+                      {fittingData.map((item, index) => {
+                        // Position labels based on index for simplicity in this specific layout
+                        // 0: Excellent (Top Right), 1: Good (Left), 2: Fair (Bottom), 3: Poor (Right)
+                        // This matches the order in the mock data
+                        const positions = [
+                          { top: '40px', right: '-120px' }, // Excellent
+                          { top: '120px', left: '-80px' },   // Good
+                          { bottom: '-8px', left: '50%', transform: 'translateX(-50%)' }, // Fair
+                          { top: '120px', right: '-70px' }  // Poor
+                        ];
+                        const pos = positions[index] || {};
 
-                      {/* Right - Poor */}
-                      <div className="absolute" style={{ top: '120px', right: '-70px' }}>
-                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#ff9a76' }}>
-                          Poor {'(<40%):'} 0
-                        </span>
-                      </div>
-
-                      {/* Bottom Center - Fair */}
-                      <div className="absolute" style={{ bottom: '-8px', left: '50%', transform: 'translateX(-50%)' }}>
-                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#ffa366' }}>
-                          Fair (40-59%): 4
-                        </span>
-                      </div>
-
-                      {/* Left - Good */}
-                      <div className="absolute" style={{ top: '120px', left: '-80px' }}>
-                        <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: '#f59e0b' }}>
-                          Good (60-79%): 4
-                        </span>
-                      </div>
+                        return (
+                          <div key={index} className="absolute" style={pos}>
+                            <span className="font-['Arimo',sans-serif] text-[14px] whitespace-nowrap" style={{ color: item.color }}>
+                              {item.name} ({index === 3 ? '<40%' : index === 2 ? '40-59%' : index === 1 ? '60-79%' : '80-100%'}): {item.value}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -679,23 +678,23 @@ export function PositionDetailView({
                     <ResponsiveContainer width="100%" height={340}>
                       <BarChart data={scoreData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" vertical={true} horizontal={true} />
-                        <XAxis 
-                          dataKey="range" 
+                        <XAxis
+                          dataKey="range"
                           axisLine={{ stroke: '#6b7280' }}
                           tickLine={false}
                           tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
                         />
-                        <YAxis 
+                        <YAxis
                           axisLine={{ stroke: '#6b7280' }}
                           tickLine={false}
                           tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
                           domain={[0, 4]}
                           ticks={[0, 1, 2, 3, 4]}
                         />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: '#374151', 
-                            border: 'none', 
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#374151',
+                            border: 'none',
                             borderRadius: '6px',
                             color: 'white',
                             fontSize: '12px',
@@ -719,12 +718,7 @@ export function PositionDetailView({
                   Skill Distribution
                 </h3>
                 <div className="space-y-3">
-                  {[
-                    { skill: 'React', count: 8, percentage: 67 },
-                    { skill: 'TypeScript', count: 7, percentage: 58 },
-                    { skill: 'Node.js', count: 6, percentage: 50 },
-                    { skill: 'AWS', count: 5, percentage: 42 },
-                  ].map((item, index) => (
+                  {skillDistribution.map((item, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
@@ -735,7 +729,7 @@ export function PositionDetailView({
                         </span>
                       </div>
                       <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-[#10b981]"
                           style={{ width: `${item.percentage}%` }}
                         />
@@ -751,11 +745,7 @@ export function PositionDetailView({
                   Seniority Distribution
                 </h3>
                 <div className="space-y-3">
-                  {[
-                    { level: 'Senior', count: 4, percentage: 33 },
-                    { level: 'Mid-Level', count: 5, percentage: 42 },
-                    { level: 'Junior', count: 3, percentage: 25 },
-                  ].map((item, index) => (
+                  {seniorityDistribution.map((item, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
@@ -766,7 +756,7 @@ export function PositionDetailView({
                         </span>
                       </div>
                       <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-[#6366f1]"
                           style={{ width: `${item.percentage}%` }}
                         />
@@ -782,12 +772,7 @@ export function PositionDetailView({
                   University Distribution
                 </h3>
                 <div className="space-y-3">
-                  {[
-                    { university: 'Stanford University', count: 3 },
-                    { university: 'MIT', count: 2 },
-                    { university: 'UC Berkeley', count: 2 },
-                    { university: 'Other', count: 5 },
-                  ].map((item, index) => (
+                  {universityDistribution.map((item, index) => (
                     <div key={index} className="flex items-center justify-between">
                       <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
                         {item.university}
@@ -806,22 +791,18 @@ export function PositionDetailView({
                   Availability Distribution
                 </h3>
                 <div className="space-y-3">
-                  {[
-                    { availability: 'Immediate', count: 4, percentage: 33 },
-                    { availability: '2 weeks', count: 5, percentage: 42 },
-                    { availability: '1 month', count: 3, percentage: 25 },
-                  ].map((item, index) => (
+                  {availabilityDistribution.map((item, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-['Arimo',sans-serif] text-[13px] text-[#374151]">
-                          {item.availability}
+                          {(item as any).availability}
                         </span>
                         <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
                           {item.count} candidates ({item.percentage}%)
                         </span>
                       </div>
                       <div className="w-full h-[6px] bg-[#e5e7eb] rounded-full overflow-hidden">
-                        <div 
+                        <div
                           className="h-full bg-[#f59e0b]"
                           style={{ width: `${item.percentage}%` }}
                         />
@@ -841,12 +822,12 @@ export function PositionDetailView({
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart data={scoreData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
-                    <XAxis 
-                      dataKey="range" 
+                    <XAxis
+                      dataKey="range"
                       axisLine={{ stroke: '#6b7280' }}
                       tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
                     />
-                    <YAxis 
+                    <YAxis
                       axisLine={{ stroke: '#6b7280' }}
                       tick={{ fill: '#6b7280', fontSize: 13, fontFamily: 'Arimo, sans-serif' }}
                     />
@@ -1109,7 +1090,7 @@ export function PositionDetailView({
       {/* Candidate Profile View */}
       {viewingCandidateId !== null && (
         <div className="fixed inset-0 bg-[#edf0f8] z-50">
-          <CandidateProfile 
+          <CandidateProfile
             candidateId={viewingCandidateId}
             onBack={() => setViewingCandidateId(null)}
           />

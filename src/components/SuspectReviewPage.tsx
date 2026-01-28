@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, Play, Pause, SkipForward, AlertTriangle, Flag, Mail, X, FileText, Clock, User, Video } from 'lucide-react';
 import { motion } from 'motion/react';
+import { api } from '../services/api';
 
 interface FlagEvent {
   id: number;
@@ -35,64 +36,37 @@ export function SuspectReviewPage({
 }: SuspectReviewPageProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration] = useState(720); // 12 minutes in seconds
+  const [duration, setDuration] = useState(0);
   const [selectedFlag, setSelectedFlag] = useState<number | null>(null);
   const [showEscalateModal, setShowEscalateModal] = useState(false);
   const [showJustificationModal, setShowJustificationModal] = useState(false);
   const [showMarkReviewedModal, setShowMarkReviewedModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
+  const [flags, setFlags] = useState<FlagEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [flagStatuses, setFlagStatuses] = useState<Record<number, 'pending' | 'cleared' | 'escalated'>>({});
 
-  const flags: FlagEvent[] = [
-    {
-      id: 1,
-      timestamp: 245,
-      timeDisplay: '04:05',
-      event: 'Tab Switch Detected',
-      severity: 'high',
-      module: 'Assessment',
-      evidence: 'Tab focus lost for 45 seconds during Question 3',
-      notes: '',
-      status: 'pending'
-    },
-    {
-      id: 2,
-      timestamp: 268,
-      timeDisplay: '04:28',
-      event: 'Copy-Paste Event',
-      severity: 'medium',
-      module: 'Assessment',
-      evidence: 'Large text block pasted into answer field',
-      notes: '',
-      status: 'pending'
-    },
-    {
-      id: 3,
-      timestamp: 415,
-      timeDisplay: '06:55',
-      event: 'Suspicious Pause',
-      severity: 'medium',
-      module: 'AI Interview',
-      evidence: '30-second pause before answering technical question',
-      notes: '',
-      status: 'pending'
-    },
-    {
-      id: 4,
-      timestamp: 550,
-      timeDisplay: '09:10',
-      event: 'Background Noise',
-      severity: 'low',
-      module: 'AI Interview',
-      evidence: 'Multiple voices detected in background',
-      notes: '',
-      status: 'pending'
-    }
-  ];
+  // Fetch suspect review data from API
+  useEffect(() => {
+    const fetchSuspectReview = async () => {
+      try {
+        setLoading(true);
+        const data = await api.recruiter.getSuspectReview(candidateId);
+        setFlags(data.flags as FlagEvent[]);
+        setDuration(data.duration);
+        setFlagStatuses(
+          data.flags.reduce((acc, flag) => ({ ...acc, [flag.id]: flag.status }), {})
+        );
+      } catch (error) {
+        console.error('Failed to fetch suspect review:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const [flagStatuses, setFlagStatuses] = useState<Record<number, 'pending' | 'cleared' | 'escalated'>>(
-    flags.reduce((acc, flag) => ({ ...acc, [flag.id]: flag.status }), {})
-  );
+    fetchSuspectReview();
+  }, [candidateId]);
 
   const handleSeekToFlag = (timestamp: number) => {
     setCurrentTime(timestamp);
@@ -151,7 +125,7 @@ export function SuspectReviewPage({
           <ChevronLeft size={16} />
           Back to {groupName}
         </button>
-        
+
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -234,13 +208,12 @@ export function SuspectReviewPage({
                           handleSeekToFlag(flag.timestamp);
                           setSelectedFlag(flag.id);
                         }}
-                        className={`absolute w-[3px] h-[32px] rounded-full transition-all hover:w-[6px] ${
-                          flag.severity === 'high'
+                        className={`absolute w-[3px] h-[32px] rounded-full transition-all hover:w-[6px] ${flag.severity === 'high'
                             ? 'bg-[#ef4444]'
                             : flag.severity === 'medium'
-                            ? 'bg-[#f59e0b]'
-                            : 'bg-[#3b82f6]'
-                        } ${selectedFlag === flag.id ? 'ring-2 ring-white w-[6px]' : ''}`}
+                              ? 'bg-[#f59e0b]'
+                              : 'bg-[#3b82f6]'
+                          } ${selectedFlag === flag.id ? 'ring-2 ring-white w-[6px]' : ''}`}
                         style={{ left: `${(flag.timestamp / duration) * 100}%` }}
                         title={`${flag.timeDisplay} - ${flag.event}`}
                       />
@@ -280,11 +253,10 @@ export function SuspectReviewPage({
                     {['0.5x', '1x', '1.5x', '2x'].map((speed) => (
                       <button
                         key={speed}
-                        className={`h-[28px] px-[10px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${
-                          speed === '1x'
+                        className={`h-[28px] px-[10px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] transition-colors ${speed === '1x'
                             ? 'bg-[#6366f1] text-white'
                             : 'border border-[#e5e7eb] text-[#6b7280] hover:bg-[#f9fafb]'
-                        }`}
+                          }`}
                       >
                         {speed}
                       </button>
@@ -310,9 +282,8 @@ export function SuspectReviewPage({
                     <div className="flex-1">
                       <div className="w-full h-[8px] bg-[#e5e7eb] rounded-full overflow-hidden">
                         <div
-                          className={`h-full transition-all ${
-                            item.status === 'completed' ? 'bg-[#10b981]' : 'bg-[#6366f1]'
-                          }`}
+                          className={`h-full transition-all ${item.status === 'completed' ? 'bg-[#10b981]' : 'bg-[#6366f1]'
+                            }`}
                           style={{ width: `${item.progress}%` }}
                         />
                       </div>
@@ -352,11 +323,10 @@ export function SuspectReviewPage({
                     <motion.div
                       key={flag.id}
                       layout
-                      className={`border rounded-[12px] p-4 transition-all ${
-                        selectedFlag === flag.id
+                      className={`border rounded-[12px] p-4 transition-all ${selectedFlag === flag.id
                           ? 'ring-2 ring-[#6366f1] border-[#6366f1]'
                           : 'border-[#e5e7eb]'
-                      }`}
+                        }`}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex-1">

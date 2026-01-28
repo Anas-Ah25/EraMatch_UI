@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { AlertCircle, ChevronLeft, ChevronRight, Clock, CheckCircle2, Code2, Flag, Play } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Clock, CheckCircle2, Code2, Flag, Play, Loader2 } from 'lucide-react';
 import logo from '../assets/image-eramatch.png';
+import { api } from '../services/api';
 
 interface AssessmentSessionProps {
   onSignOut: () => void;
@@ -32,6 +33,8 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [codeOutput, setCodeOutput] = useState<Record<number, string>>({});
   const [showSubmitConfirmation, setShowSubmitConfirmation] = useState(false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Programming languages
@@ -50,113 +53,32 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
     { value: 'rust', label: 'Rust', extension: '.rs' }
   ];
 
-  const questions: Question[] = [
-    {
-      id: 1,
-      type: 'essay',
-      question: 'Explain the difference between SQL and NoSQL databases. When would you choose one over the other?',
-      points: 10
-    },
-    {
-      id: 2,
-      type: 'mcq',
-      question: 'Which of the following is NOT a valid HTTP method?',
-      options: ['GET', 'POST', 'FETCH', 'DELETE'],
-      correctAnswer: 2,
-      points: 5
-    },
-    {
-      id: 3,
-      type: 'coding',
-      question: 'Write a function that returns the factorial of a given number n. Handle edge cases.',
-      starterCode: 'function factorial(n) {\n  // Your code here\n}',
-      points: 15
-    },
-    {
-      id: 4,
-      type: 'mcq',
-      question: 'What does the acronym "REST" stand for in web services?',
-      options: ['Remote Execution State Transfer', 'Representational State Transfer', 'Rapid Execution Service Technology', 'Resource Exchange State Transfer'],
-      correctAnswer: 1,
-      points: 5
-    },
-    {
-      id: 5,
-      type: 'essay',
-      question: 'Describe the concept of "Big O" notation and explain why it is important in algorithm analysis.',
-      points: 10
-    },
-    {
-      id: 6,
-      type: 'coding',
-      question: 'Implement a function to reverse a string without using built-in reverse methods.',
-      starterCode: 'function reverseString(str) {\n  // Your code here\n}',
-      points: 10
-    },
-    {
-      id: 7,
-      type: 'mcq',
-      question: 'Which data structure uses LIFO (Last In First Out) principle?',
-      options: ['Queue', 'Stack', 'Array', 'Linked List'],
-      correctAnswer: 1,
-      points: 5
-    },
-    {
-      id: 8,
-      type: 'essay',
-      question: 'What are the main principles of Object-Oriented Programming? Explain each briefly.',
-      points: 10
-    },
-    {
-      id: 9,
-      type: 'coding',
-      question: 'Write a function to check if a given string is a palindrome (reads the same forwards and backwards).',
-      starterCode: 'function isPalindrome(str) {\n  // Your code here\n}',
-      points: 15
-    },
-    {
-      id: 10,
-      type: 'mcq',
-      question: 'What is the time complexity of binary search?',
-      options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
-      correctAnswer: 1,
-      points: 5
-    },
-    {
-      id: 11,
-      type: 'essay',
-      question: 'Explain what a RESTful API is and describe the key constraints that make an API RESTful.',
-      points: 10
-    },
-    {
-      id: 12,
-      type: 'coding',
-      question: 'Create a function that finds the maximum number in an array without using Math.max().',
-      starterCode: 'function findMax(arr) {\n  // Your code here\n}',
-      points: 10
-    },
-    {
-      id: 13,
-      type: 'mcq',
-      question: 'Which of the following is a JavaScript framework?',
-      options: ['Django', 'Flask', 'React', 'Laravel'],
-      correctAnswer: 2,
-      points: 5
-    },
-    {
-      id: 14,
-      type: 'essay',
-      question: 'What is the difference between synchronous and asynchronous programming? Provide examples of when each is appropriate.',
-      points: 10
-    },
-    {
-      id: 15,
-      type: 'coding',
-      question: 'Write a function that removes duplicate values from an array and returns a new array with unique values only.',
-      starterCode: 'function removeDuplicates(arr) {\n  // Your code here\n}',
-      points: 15
-    }
-  ];
+  // Fetch assessment questions from API
+  useEffect(() => {
+    const fetchAssessmentSession = async () => {
+      try {
+        setIsLoading(true);
+        const sessionData = await api.recruiter.getAssessmentSession('session-123');
+        // Map API data to component format
+        const mappedQuestions: Question[] = sessionData.questions.map((q: any) => ({
+          id: q.id,
+          type: q.type as 'essay' | 'mcq' | 'coding',
+          question: q.question, // Use q.question as defined in API mock
+          options: q.options,
+          correctAnswer: q.correctAnswer,
+          starterCode: q.starterCode,
+          points: q.points || 10
+        }));
+        setQuestions(mappedQuestions);
+      } catch (error) {
+        console.error('Failed to fetch assessment session:', error);
+        setQuestions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAssessmentSession();
+  }, []);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -382,15 +304,17 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
               <Button
                 className="rounded-full px-6 transition-colors duration-200 border"
                 style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444', minWidth: '120px' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#EF4444';
-                  e.currentTarget.style.color = '#FFFFFF';
-                  e.currentTarget.style.borderColor = '#EF4444';
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  const target = e.currentTarget;
+                  target.style.backgroundColor = '#EF4444';
+                  target.style.color = '#FFFFFF';
+                  target.style.borderColor = '#EF4444';
                 }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#EDF0F8';
-                  e.currentTarget.style.color = '#EF4444';
-                  e.currentTarget.style.borderColor = '#EF4444';
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  const target = e.currentTarget;
+                  target.style.backgroundColor = '#EDF0F8';
+                  target.style.color = '#EF4444';
+                  target.style.borderColor = '#EF4444';
                 }}
                 onClick={onSignOut}
               >
@@ -476,15 +400,17 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
             <Button
               className="rounded-full px-6 transition-colors duration-200 border"
               style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#EF4444';
-                e.currentTarget.style.color = '#FFFFFF';
-                e.currentTarget.style.borderColor = '#EF4444';
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
+                const target = e.currentTarget;
+                target.style.backgroundColor = '#EF4444';
+                target.style.color = '#FFFFFF';
+                target.style.borderColor = '#EF4444';
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#EDF0F8';
-                e.currentTarget.style.color = '#EF4444';
-                e.currentTarget.style.borderColor = '#EF4444';
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
+                const target = e.currentTarget;
+                target.style.backgroundColor = '#EDF0F8';
+                target.style.color = '#EF4444';
+                target.style.borderColor = '#EF4444';
               }}
               onClick={onSignOut}
             >
@@ -605,8 +531,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
             <div className="pt-4">
               {currentQuestion.type === 'essay' && (
                 <textarea
-                  className="w-full min-h-64 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 resize-y"
-                  style={{ focusRingColor: '#6366F1' }}
+                  className="w-full min-h-64 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-2 resize-y"
                   placeholder="Type your answer here..."
                   value={(answers[currentQuestion.id] as string) || ''}
                   onChange={(e) => handleAnswerChange(e.target.value)}
@@ -647,9 +572,8 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                     <div className="flex items-center gap-2">
                       <Code2 size={16} className="text-gray-500" />
                       <select
-                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1 cursor-pointer"
+                        className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-1 cursor-pointer"
                         style={{
-                          focusRingColor: '#6366F1',
                           backgroundColor: '#FFFFFF',
                           color: '#374151'
                         }}
@@ -671,9 +595,8 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                     </div>
                   </div>
                   <textarea
-                    className="w-full min-h-80 p-4 border border-gray-300 rounded-b-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 resize-y"
+                    className="w-full min-h-80 p-4 border border-gray-300 rounded-b-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1] focus:ring-offset-2 resize-y"
                     style={{
-                      focusRingColor: '#6366F1',
                       backgroundColor: '#1E293B',
                       color: '#E2E8F0'
                     }}

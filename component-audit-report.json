@@ -1,0 +1,1485 @@
+{
+  "summary": {
+    "total": 131,
+    "apiFetching": 11,
+    "hardcoded": 18,
+    "mixed": 3,
+    "noData": 40,
+    "uiOnly": 59
+  },
+  "components": [
+    {
+      "file": "AdminClosedPositions.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.admin.getClosedPositions"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.admin.getClosedPositions"
+    },
+    {
+      "file": "AdminDashboard.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.admin.getDashboardStats",
+        "api.admin.getGroupAnalytics"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.admin.getDashboardStats, api.admin.getGroupAnalytics"
+    },
+    {
+      "file": "AdminLoginPage.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AdminOrganizationMembers.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.admin.getMembers"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.admin.getMembers"
+    },
+    {
+      "file": "AdminPendingRequests.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "AdminRecruiterDelegation.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.admin.getRecruiterDelegation"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.admin.getRecruiterDelegation"
+    },
+    {
+      "file": "AdminSettings.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AdminSidebar.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "AdminSubscriptionManagement.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "AdvancedFilterDrawer.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AdvancedFiltersPanel.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AIGeneratorModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AIInterviewSetupLive.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "AIInterviewSetupRecorded.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AIQuestionPreview.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AIVariantMaker.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "AlertsNotifications.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "ApprovedCandidatesList.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "ArchiveProjectModal.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "AssessmentSession.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "AssessmentSettings.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "BulkProgressionModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CandidateDashboard.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.candidate.getAssessments"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.candidate.getAssessments"
+    },
+    {
+      "file": "CandidateHomePage.tsx",
+      "status": "MIXED",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.candidate.getHome"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Uses API (api.candidate.getHome) but also has hardcoded data"
+    },
+    {
+      "file": "CandidateLoginPage.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CandidateProfile.tsx",
+      "status": "MIXED",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.candidate.getProfile"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Uses API (api.candidate.getProfile) but also has hardcoded data"
+    },
+    {
+      "file": "CandidateProfileModal.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "CandidatesPage.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getCandidates"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.recruiter.getCandidates"
+    },
+    {
+      "file": "ClosePositionModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CodeEditor.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CompleteProjectModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CreateAdvancedAssessment.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CreateAIInterview.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "CreateAssessmentPage.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "Dashboard.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getDashboardAnalytics",
+        "api.recruiter.getProjects"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.recruiter.getDashboardAnalytics, api.recruiter.getProjects"
+    },
+    {
+      "file": "EdgeCaseOverlays.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "EditAccessPrivilegesModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "EnhancedAIInterviewReport.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "EnhancedAssessmentReport.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "EnhancedGroupCreationModal.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "EnhancedGroupOverview.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "EnhancedGroupOverviewV2.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "ErrorPage.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "EssayEditor.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "ImageWithFallback.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "FiltrationFlowConfigModal.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "FinalDecisionModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "GroupCreationModal.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "GroupCreationPage.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "GroupOverview.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getGroupDetails"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.recruiter.getGroupDetails"
+    },
+    {
+      "file": "Header.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "KnowledgeGraph.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "LandingPage.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "LiveInterviewFlow.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "LiveInterviewTranscript.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "MCQEditor.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "MiniKGPopover.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "MiniKGTreePopover.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "ModuleDetailAIInterview.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "ModuleDetailAssessment.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "ModuleMonitoringDashboard.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "Notifications.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "PaymentGatewayPage.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "PositionDashboard.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getCandidates",
+        "api.recruiter.getProjectGroups"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.recruiter.getCandidates, api.recruiter.getProjectGroups"
+    },
+    {
+      "file": "PositionDetailView.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "ProjectCard.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "ProjectDetailPage.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "ProjectDetailView.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "ProjectsPage.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getProjects",
+        "api.recruiter.getClosedProjects"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.recruiter.getProjects, api.recruiter.getClosedProjects"
+    },
+    {
+      "file": "QuestionBankModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "QuestionBankPage.tsx",
+      "status": "MIXED",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getQuestionBank"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Uses API (api.recruiter.getQuestionBank) but also has hardcoded data"
+    },
+    {
+      "file": "RecordedInterviewFlow.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "RecordedInterviewQuestionSetup.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "RecruiterLoginPage.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "SectionEditor.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "SemanticSearchModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "Sidebar.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "SimpleGroupCreationModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "SkillClusteringWorkflow.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "StageResultsDashboard.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "StartStageModal.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "StatCard.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "SuspectReviewPage.tsx",
+      "status": "API_FETCHING",
+      "hasApiImport": true,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [
+        "api.recruiter.getSuspectReview"
+      ],
+      "hardcodedPatterns": [],
+      "notes": "Fetches data via api.recruiter.getSuspectReview"
+    },
+    {
+      "file": "TechnicalAssessmentFlow.tsx",
+      "status": "HARDCODED",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": true,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Contains hardcoded data arrays"
+    },
+    {
+      "file": "TextRefiner.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "accordion.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "alert-dialog.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "alert.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "aspect-ratio.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "avatar.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "badge.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "breadcrumb.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "button.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "calendar.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "card.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "carousel.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "chart.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "checkbox.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "collapsible.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "command.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "context-menu.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "dialog.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "drawer.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "dropdown-menu.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "form.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "hover-card.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "input-otp.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "input.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "label.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "menubar.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "navigation-menu.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "pagination.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "popover.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "progress.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "radio-group.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "resizable.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "scroll-area.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "select.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "separator.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "sheet.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "sidebar.tsx",
+      "status": "NO_DATA",
+      "hasApiImport": false,
+      "hasUseEffect": true,
+      "hasHardcodedArrays": false,
+      "hasUseState": true,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Has state but no significant data patterns detected"
+    },
+    {
+      "file": "skeleton.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "slider.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "sonner.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "switch.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "table.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "tabs.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "textarea.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "toggle-group.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "toggle.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    },
+    {
+      "file": "tooltip.tsx",
+      "status": "UI_ONLY",
+      "hasApiImport": false,
+      "hasUseEffect": false,
+      "hasHardcodedArrays": false,
+      "hasUseState": false,
+      "apiCalls": [],
+      "hardcodedPatterns": [],
+      "notes": "Pure UI component (no state/effects)"
+    }
+  ]
+}

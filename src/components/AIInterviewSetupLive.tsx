@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { ChevronLeft, GripVertical, Plus, Trash2, Calendar } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, GripVertical, Plus, Trash2, Calendar, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface AIInterviewSetupLiveProps {
   groupName: string;
@@ -17,18 +18,45 @@ export function AIInterviewSetupLive({ groupName, onBack }: AIInterviewSetupLive
   const [systemPrompt, setSystemPrompt] = useState('You are a professional AI interviewer conducting a technical interview. Be thorough, encouraging, and professional.');
   const [duration, setDuration] = useState(30);
   const [includeCandidateHistory, setIncludeCandidateHistory] = useState(false);
-  const [sections, setSections] = useState<InterviewSection[]>([
-    { id: '1', title: 'Introduction & Background', duration: 5 },
-    { id: '2', title: 'Technical Skills Assessment', duration: 10 },
-    { id: '3', title: 'Problem Solving', duration: 10 },
-    { id: '4', title: 'Closing Questions', duration: 5 }
-  ]);
+  const [sections, setSections] = useState<InterviewSection[]>([]);
+  const [toneOptions, setToneOptions] = useState<Array<{ value: string; label: string; description: string }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const toneOptions = [
-    { value: 'friendly', label: 'Friendly', description: 'Warm and conversational' },
-    { value: 'neutral', label: 'Neutral', description: 'Professional and balanced' },
-    { value: 'formal', label: 'Formal', description: 'Structured and business-like' }
-  ];
+  // Fetch AI interview configuration from API
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        setIsLoading(true);
+        const config = await api.recruiter.getAIInterviewConfig();
+        // Map API data to component format
+        if (config && typeof config === 'object') {
+          const apiConfig = config as any;
+          setSections(apiConfig.defaultSections || apiConfig.sections || []);
+          setToneOptions(apiConfig.toneOptions || []);
+          if (apiConfig.defaultSystemPrompt || apiConfig.systemPrompt) {
+            setSystemPrompt(apiConfig.defaultSystemPrompt || apiConfig.systemPrompt);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI interview config:', error);
+        // Fallback to defaults
+        setSections([
+          { id: '1', title: 'Introduction & Background', duration: 5 },
+          { id: '2', title: 'Technical Skills Assessment', duration: 10 },
+          { id: '3', title: 'Problem Solving', duration: 10 },
+          { id: '4', title: 'Closing Questions', duration: 5 }
+        ]);
+        setToneOptions([
+          { value: 'friendly', label: 'Friendly', description: 'Warm and conversational' },
+          { value: 'neutral', label: 'Neutral', description: 'Professional and balanced' },
+          { value: 'formal', label: 'Formal', description: 'Structured and business-like' }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchConfig();
+  }, []);
 
   const handleAddSection = () => {
     const newSection: InterviewSection = {
@@ -44,7 +72,7 @@ export function AIInterviewSetupLive({ groupName, onBack }: AIInterviewSetupLive
   };
 
   const handleSectionChange = (id: string, field: 'title' | 'duration', value: string | number) => {
-    setSections(sections.map(s => 
+    setSections(sections.map(s =>
       s.id === id ? { ...s, [field]: value } : s
     ));
   };
@@ -81,11 +109,10 @@ export function AIInterviewSetupLive({ groupName, onBack }: AIInterviewSetupLive
                 <button
                   key={option.value}
                   onClick={() => setTone(option.value)}
-                  className={`p-4 rounded-[8px] border-2 transition-all text-left ${
-                    tone === option.value
-                      ? 'border-[#6366f1] bg-[#ede9fe]'
-                      : 'border-[#e5e7eb] hover:border-[#d1d5db]'
-                  }`}
+                  className={`p-4 rounded-[8px] border-2 transition-all text-left ${tone === option.value
+                    ? 'border-[#6366f1] bg-[#ede9fe]'
+                    : 'border-[#e5e7eb] hover:border-[#d1d5db]'
+                    }`}
                 >
                   <div className="font-['Arimo',sans-serif] text-[14px] text-[#111827] mb-1">
                     {option.label}

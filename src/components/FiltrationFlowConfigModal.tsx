@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { X, FileText, Video, MessageSquare, GripVertical, CheckCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, FileText, Video, MessageSquare, GripVertical, CheckCircle, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface FiltrationModule {
   id: string;
@@ -21,11 +22,38 @@ export function FiltrationFlowConfigModal({
   onClose,
   onSave
 }: FiltrationFlowConfigModalProps) {
-  const [filtrationModules, setFiltrationModules] = useState<FiltrationModule[]>([
-    { id: 'assessment', type: 'assessment', name: 'Technical Assessment', icon: FileText, enabled: true, order: 0 },
-    { id: 'ai-interview', type: 'ai-interview', name: 'AI Video Interview', icon: Video, enabled: true, order: 1 },
-    { id: 'live-interview', type: 'live-interview', name: 'Live Interview', icon: MessageSquare, enabled: false, order: 2 }
-  ]);
+  const [filtrationModules, setFiltrationModules] = useState<FiltrationModule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        setIsLoading(true);
+        const modulesData = await api.recruiter.getPipelineModules();
+
+        // Map icons to modules
+        const iconMap: Record<string, any> = {
+          'assessment': FileText,
+          'ai-interview': Video,
+          'live-interview': MessageSquare
+        };
+
+        const mappedModules = modulesData.map((m: any, index: number) => ({
+          ...m,
+          icon: iconMap[m.type] || FileText,
+          order: index
+        }));
+
+        setFiltrationModules(mappedModules);
+      } catch (error) {
+        console.error('Failed to fetch pipeline modules:', error);
+      } finally {
+        setIsLoading(true); // Wait, should be false! Fixing in next block
+        setIsLoading(false);
+      }
+    };
+    fetchModules();
+  }, []);
 
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
 
@@ -64,11 +92,24 @@ export function FiltrationFlowConfigModal({
       .filter(m => m.enabled)
       .sort((a, b) => a.order - b.order)
       .map(m => m.type);
-    
+
     onSave(enabledFlow);
   };
 
   const enabledCount = filtrationModules.filter(m => m.enabled).length;
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-[16px] w-full max-w-[600px] h-[300px] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 text-[#6366f1] animate-spin" />
+            <p className="text-[#6b7280] font-medium font-['Arimo',sans-serif]">Loading flow modules...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -103,19 +144,17 @@ export function FiltrationFlowConfigModal({
                 onDragStart={() => handleDragStart(module.id)}
                 onDragOver={(e) => handleDragOver(e, module.id)}
                 onDragEnd={handleDragEnd}
-                className={`flex items-center gap-4 p-4 rounded-[12px] border-2 transition-all ${
-                  module.enabled
-                    ? 'border-[#6366f1] bg-[#eef2ff] cursor-move'
-                    : 'border-[#e5e7eb] bg-white'
-                } ${draggedModule === module.id ? 'opacity-50' : ''}`}
+                className={`flex items-center gap-4 p-4 rounded-[12px] border-2 transition-all ${module.enabled
+                  ? 'border-[#6366f1] bg-[#eef2ff] cursor-move'
+                  : 'border-[#e5e7eb] bg-white'
+                  } ${draggedModule === module.id ? 'opacity-50' : ''}`}
               >
                 {module.enabled && (
                   <GripVertical size={20} className="text-[#6b7280]" />
                 )}
-                
-                <div className={`flex items-center justify-center w-[40px] h-[40px] rounded-[8px] ${
-                  module.enabled ? 'bg-[#6366f1]' : 'bg-[#e5e7eb]'
-                }`}>
+
+                <div className={`flex items-center justify-center w-[40px] h-[40px] rounded-[8px] ${module.enabled ? 'bg-[#6366f1]' : 'bg-[#e5e7eb]'
+                  }`}>
                   <module.icon size={20} className={module.enabled ? 'text-white' : 'text-[#6b7280]'} />
                 </div>
 
@@ -132,11 +171,10 @@ export function FiltrationFlowConfigModal({
 
                 <button
                   onClick={() => toggleModule(module.id)}
-                  className={`flex items-center justify-center w-[24px] h-[24px] rounded-[6px] border-2 transition-all ${
-                    module.enabled
-                      ? 'bg-[#6366f1] border-[#6366f1]'
-                      : 'bg-white border-[#d1d5db]'
-                  }`}
+                  className={`flex items-center justify-center w-[24px] h-[24px] rounded-[6px] border-2 transition-all ${module.enabled
+                    ? 'bg-[#6366f1] border-[#6366f1]'
+                    : 'bg-white border-[#d1d5db]'
+                    }`}
                 >
                   {module.enabled && <CheckCircle size={16} className="text-white" />}
                 </button>

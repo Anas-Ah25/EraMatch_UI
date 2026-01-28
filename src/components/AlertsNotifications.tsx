@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Bell, AlertTriangle, CheckCircle, UserPlus, FileCheck, Video, Github, Clock, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bell, AlertTriangle, CheckCircle, UserPlus, FileCheck, Video, Github, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface AlertsNotificationsProps {
   onViewCandidate: (candidateId: number) => void;
@@ -17,80 +18,38 @@ interface Notification {
 }
 
 export function AlertsNotifications({ onViewCandidate }: AlertsNotificationsProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'match',
-      title: 'New High Match Candidate',
-      description: '95% match for Senior React Developer position',
-      candidateId: 1,
-      candidateName: 'John Smith',
-      timestamp: '2 hours ago',
-      read: false
-    },
-    {
-      id: '2',
-      type: 'flag',
-      title: 'Suspicious Activity Detected',
-      description: 'Anti-cheating flag raised during technical assessment',
-      candidateId: 3,
-      candidateName: 'Michael Chen',
-      timestamp: '3 hours ago',
-      read: false
-    },
-    {
-      id: '3',
-      type: 'assessment',
-      title: 'Assessment Completed',
-      description: 'Technical assessment completed with score: 88/100',
-      candidateId: 2,
-      candidateName: 'Sarah Johnson',
-      timestamp: '5 hours ago',
-      read: false
-    },
-    {
-      id: '4',
-      type: 'interview',
-      title: 'AI Interview Completed',
-      description: 'Live AI interview finished - score: 92/100',
-      candidateId: 1,
-      candidateName: 'John Smith',
-      timestamp: '1 day ago',
-      read: true
-    },
-    {
-      id: '5',
-      type: 'github',
-      title: 'New GitHub Activity',
-      description: 'Pushed 15 commits to react-dashboard repository',
-      candidateId: 1,
-      candidateName: 'John Smith',
-      timestamp: '1 day ago',
-      read: true
-    },
-    {
-      id: '6',
-      type: 'assessment',
-      title: 'Assessment Completed',
-      description: 'Technical assessment completed with score: 79/100',
-      candidateId: 4,
-      candidateName: 'Emily Davis',
-      timestamp: '2 days ago',
-      read: true
-    },
-    {
-      id: '7',
-      type: 'match',
-      title: 'New Match Found',
-      description: '82% match for Full Stack Engineer position',
-      candidateId: 5,
-      candidateName: 'David Wilson',
-      timestamp: '2 days ago',
-      read: true
-    }
-  ]);
-
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+
+  // Fetch alerts from API
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.admin.getAlerts();
+        // Map API data to component format - alerts API returns different structure
+        // For now, use empty array or create mock mapping
+        const mappedAlerts: Notification[] = data.map((alert: any, index: number) => ({
+          id: String(alert.id || index),
+          type: 'match' as const, // Default type, could be enhanced
+          title: alert.title,
+          description: alert.message,
+          candidateId: 1, // Would need to be provided by API
+          candidateName: 'Unknown', // Would need to be provided by API
+          timestamp: alert.timestamp,
+          read: false
+        }));
+        setNotifications(mappedAlerts);
+      } catch (error) {
+        console.error('Failed to fetch alerts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAlerts();
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -164,21 +123,19 @@ export function AlertsNotifications({ onViewCandidate }: AlertsNotificationsProp
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`h-[36px] px-[18px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${
-                  filter === 'all'
-                    ? 'bg-[#6366f1] text-white'
-                    : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
-                }`}
+                className={`h-[36px] px-[18px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${filter === 'all'
+                  ? 'bg-[#6366f1] text-white'
+                  : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
+                  }`}
               >
                 All ({notifications.length})
               </button>
               <button
                 onClick={() => setFilter('unread')}
-                className={`h-[36px] px-[18px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${
-                  filter === 'unread'
-                    ? 'bg-[#6366f1] text-white'
-                    : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
-                }`}
+                className={`h-[36px] px-[18px] rounded-[8px] font-['Arimo',sans-serif] text-[14px] transition-colors ${filter === 'unread'
+                  ? 'bg-[#6366f1] text-white'
+                  : 'bg-[#f3f4f6] text-[#374151] hover:bg-[#e5e7eb]'
+                  }`}
               >
                 Unread ({unreadCount})
               </button>
@@ -210,11 +167,10 @@ export function AlertsNotifications({ onViewCandidate }: AlertsNotificationsProp
             filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`bg-white rounded-[12px] border transition-all hover:shadow-md cursor-pointer ${
-                  notification.read
-                    ? 'border-[#e5e7eb]'
-                    : 'border-[#6366f1] shadow-sm'
-                }`}
+                className={`bg-white rounded-[12px] border transition-all hover:shadow-md cursor-pointer ${notification.read
+                  ? 'border-[#e5e7eb]'
+                  : 'border-[#6366f1] shadow-sm'
+                  }`}
                 onClick={() => {
                   markAsRead(notification.id);
                   onViewCandidate(notification.candidateId);

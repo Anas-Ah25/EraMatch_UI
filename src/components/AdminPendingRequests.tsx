@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { Users, FileText, Briefcase, Search, Filter, Eye, ChevronDown, Check, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, FileText, Briefcase, Search, Filter, Eye, ChevronDown, Check, X, Loader2 } from 'lucide-react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { CandidateProfileModal } from './CandidateProfileModal';
 import { toast } from 'sonner';
+import { api } from '../services/api';
 
 interface JoinRequest {
   id: number;
@@ -28,44 +29,36 @@ export function AdminPendingRequests({ onSignOut, onBack }: AdminPendingRequests
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showPositionDropdown, setShowPositionDropdown] = useState(false);
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-  const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([
-    {
-      id: 1,
-      name: 'Alex Thompson',
-      email: 'alex.thompson@email.com',
-      appliedPosition: 'Senior Technical Recruiter',
-      experience: '5 years in software development',
-      skills: ['React', 'TypeScript', 'Node.js'],
-      requestDate: '2 days ago'
-    },
-    {
-      id: 2,
-      name: 'Maria Garcia',
-      email: 'maria.garcia@email.com',
-      appliedPosition: 'HR Coordinator',
-      experience: '3 years in human resources with talent acquisition',
-      skills: ['Recruiting', 'Employee Onboarding', 'HRIS Systems'],
-      requestDate: '3 days ago'
-    },
-    {
-      id: 3,
-      name: 'James Wilson',
-      email: 'james.wilson@email.com',
-      appliedPosition: 'IT Specialist',
-      experience: '7 years in IT infrastructure and employee relations',
-      skills: ['IT Support', 'Data Migration', 'Performance Management'],
-      requestDate: 'Yesterday'
-    },
-    {
-      id: 4,
-      name: 'Sophia Anderson',
-      email: 'sophia.anderson@email.com',
-      appliedPosition: 'HR Data Intern',
-      experience: 'Fresh graduate with data science and workforce planning',
-      skills: ['Data Analytics', 'Excel', 'Statistical Analysis'],
-      requestDate: 'Today'
-    }
-  ]);
+  const [pendingRequests, setPendingRequests] = useState<JoinRequest[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch pending requests from API
+  useEffect(() => {
+    const fetchPendingRequests = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.admin.getPendingRequests();
+        // Map API data to component format
+        const mappedRequests: JoinRequest[] = data.map((req: any) => ({
+          id: req.id,
+          name: req.requesterName,
+          email: req.requesterEmail,
+          appliedPosition: req.requestedRole,
+          experience: req.message || 'No experience details provided',
+          skills: [], // API doesn't provide skills, could be enhanced
+          requestDate: req.requestedAt
+        }));
+        setPendingRequests(mappedRequests);
+      } catch (error) {
+        console.error('Failed to fetch pending requests:', error);
+        toast.error('Failed to load pending requests');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPendingRequests();
+  }, []);
 
   const handleViewProfile = (request: JoinRequest) => {
     setSelectedCandidate(request);
@@ -89,15 +82,23 @@ export function AdminPendingRequests({ onSignOut, onBack }: AdminPendingRequests
     // Search filter
     const matchesSearch = request.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     // Position filter
     const matchesPosition = positionFilter === 'all' || request.appliedPosition === positionFilter;
-    
+
     // Role filter (in this case, role and position are the same)
     const matchesRole = roleFilter === 'all' || request.appliedPosition === roleFilter;
-    
+
     return matchesSearch && matchesPosition && matchesRole;
   });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-12 py-8">
@@ -115,7 +116,7 @@ export function AdminPendingRequests({ onSignOut, onBack }: AdminPendingRequests
 
         <div className="bg-white rounded-3xl px-8 py-9 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="text-5xl text-gray-900">4</span>
+            <span className="text-5xl text-gray-900">{pendingRequests.length}</span>
             <div className="flex-1">
               <div className="text-gray-900 mb-1">Pending Requests</div>
               <div className="text-gray-400 text-sm">awaiting approval</div>

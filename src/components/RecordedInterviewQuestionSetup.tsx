@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { ChevronLeft, Plus, Trash2, GripVertical, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ChevronLeft, Plus, Trash2, GripVertical, Eye, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface RecordedInterviewQuestionSetupProps {
   groupName: string;
@@ -13,17 +14,42 @@ interface Question {
   duration: number;
 }
 
-export function RecordedInterviewQuestionSetup({ 
-  groupName, 
+export function RecordedInterviewQuestionSetup({
+  groupName,
   onBack,
   onContinue
 }: RecordedInterviewQuestionSetupProps) {
-  const [questions, setQuestions] = useState<Question[]>([
-    { id: '1', text: 'Tell me about your professional background and key accomplishments.', duration: 120 },
-    { id: '2', text: 'Describe a challenging technical problem you solved recently.', duration: 180 },
-    { id: '3', text: 'What interests you most about this role?', duration: 120 }
-  ]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch recorded interview questions from API
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.recruiter.getRecordedInterviewQuestions();
+        // Map API data to component format
+        const mappedQuestions: Question[] = data.map((q: any) => ({
+          id: String(q.id),
+          text: q.question || q.text,
+          duration: q.recordingTime || q.duration || 120
+        }));
+        setQuestions(mappedQuestions);
+      } catch (error) {
+        console.error('Failed to fetch recorded interview questions:', error);
+        // Fallback to default questions
+        setQuestions([
+          { id: '1', text: 'Tell me about your professional background and key accomplishments.', duration: 120 },
+          { id: '2', text: 'Describe a challenging technical problem you solved recently.', duration: 180 },
+          { id: '3', text: 'What interests you most about this role?', duration: 120 }
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchQuestions();
+  }, []);
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
@@ -41,7 +67,7 @@ export function RecordedInterviewQuestionSetup({
   };
 
   const handleQuestionChange = (id: string, field: 'text' | 'duration', value: string | number) => {
-    setQuestions(questions.map(q => 
+    setQuestions(questions.map(q =>
       q.id === id ? { ...q, [field]: value } : q
     ));
   };
@@ -148,7 +174,7 @@ export function RecordedInterviewQuestionSetup({
 
             <div className="mt-4 p-3 bg-[#f9fafb] rounded-[8px] border border-[#e5e7eb]">
               <p className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
-                <strong>Tip:</strong> Questions will be presented to candidates in this order. 
+                <strong>Tip:</strong> Questions will be presented to candidates in this order.
                 Drag to reorder, and ensure questions are clear and specific.
               </p>
             </div>

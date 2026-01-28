@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Sparkles, Video, Clock, User, Camera, Mic, Play, Info, Scan, CheckCircle2, Copy, X, AlertTriangle, Users, Volume2 } from 'lucide-react';
+import { Sparkles, Video, Clock, User, Camera, Mic, Play, Info, Scan, CheckCircle2, Copy, X, AlertTriangle, Users, Volume2, Loader2 } from 'lucide-react';
 import logo from '../assets/image-eramatch.png';
+import { api } from '../services/api';
 
 interface LiveInterviewFlowProps {
   onSignOut: () => void;
@@ -36,17 +37,35 @@ export function LiveInterviewFlow({ onSignOut, onExit, onCompletion }: LiveInter
   const [showUploadProgress, setShowUploadProgress] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [conversationTurns, setConversationTurns] = useState(0);
-  const maxTurns = 10; // 5 AI questions + 5 candidate responses = 10 turns
+  const [isLoading, setIsLoading] = useState(true);
+  const [questions, setQuestions] = useState<string[]>([]);
 
-  const totalQuestions = 5;
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.recruiter.getLiveInterviewQuestions('demo-interview-id');
+        setQuestions(data.map(q => q.question));
+      } catch (error) {
+        console.error('Failed to fetch live interview questions:', error);
+        // Fallback to default questions if API fails
+        setQuestions([
+          "Describe your most challenging project and how you overcame the obstacles you faced.",
+          "Tell us about a time when you had to work with a difficult team member. How did you handle the situation?",
+          "What motivates you in your professional career, and how do you stay productive during challenging times?",
+          "Describe a situation where you had to learn a new technology or skill quickly. How did you approach it?",
+          "Where do you see yourself in 5 years, and how does this position align with your career goals?"
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const questions = [
-    "Describe your most challenging project and how you overcame the obstacles you faced.",
-    "Tell us about a time when you had to work with a difficult team member. How did you handle the situation?",
-    "What motivates you in your professional career, and how do you stay productive during challenging times?",
-    "Describe a situation where you had to learn a new technology or skill quickly. How did you approach it?",
-    "Where do you see yourself in 5 years, and how does this position align with your career goals?"
-  ];
+    fetchQuestions();
+  }, []);
+
+  const totalQuestions = questions.length || 5;
+  const maxTurns = totalQuestions * 2; // AI question + Candidate response for each question
 
   const steps = [
     { number: 1, label: 'Welcome' },

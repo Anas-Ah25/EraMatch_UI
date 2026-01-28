@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, X, CheckCheck } from 'lucide-react';
+import { Bell, X, CheckCheck, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface Notification {
   id: number;
@@ -12,61 +13,40 @@ interface Notification {
 
 export function Notifications() {
   const [showDropdown, setShowDropdown] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      title: 'New Application Received',
-      message: 'Sarah Johnson applied for Senior Technical Recruiter position',
-      time: '5 minutes ago',
-      type: 'info',
-      read: false
-    },
-    {
-      id: 2,
-      title: 'Interview Scheduled',
-      message: 'Interview with Michael Chen scheduled for tomorrow at 2:00 PM',
-      time: '1 hour ago',
-      type: 'success',
-      read: false
-    },
-    {
-      id: 3,
-      title: 'Assessment Completed',
-      message: 'Emily Rodriguez completed the technical assessment',
-      time: '2 hours ago',
-      type: 'success',
-      read: false
-    },
-    {
-      id: 4,
-      title: 'Suspicious Activity Detected',
-      message: 'Potential cheating detected in David Kim\'s assessment',
-      time: '3 hours ago',
-      type: 'warning',
-      read: true
-    },
-    {
-      id: 5,
-      title: 'Position Closed',
-      message: 'Summer Internship position has reached maximum applicants',
-      time: '5 hours ago',
-      type: 'info',
-      read: true
-    },
-    {
-      id: 6,
-      title: 'New Join Request',
-      message: 'Amanda Lee requested to join your organization',
-      time: '1 day ago',
-      type: 'alert',
-      read: true
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Fetch notifications from API when dropdown opens
+  useEffect(() => {
+    if (showDropdown && notifications.length === 0) {
+      const fetchNotifications = async () => {
+        try {
+          setIsLoading(true);
+          const data = await api.admin.getNotifications();
+          // Map API data to component format
+          const mappedNotifications: Notification[] = data.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            message: n.message,
+            time: n.timestamp,
+            type: n.type as 'info' | 'success' | 'warning' | 'alert',
+            read: n.read
+          }));
+          setNotifications(mappedNotifications);
+        } catch (error) {
+          console.error('Failed to fetch notifications:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchNotifications();
+    }
+  }, [showDropdown]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -87,7 +67,7 @@ export function Notifications() {
   }, []);
 
   const markAsRead = (id: number) => {
-    setNotifications(notifications.map(n => 
+    setNotifications(notifications.map(n =>
       n.id === id ? { ...n, read: true } : n
     ));
   };
@@ -122,7 +102,7 @@ export function Notifications() {
       >
         <Bell size={20} />
         {unreadCount > 0 && (
-          <span 
+          <span
             className="absolute top-[-4px] right-[-4px] w-4 h-4 rounded-full text-white text-[10px] flex items-center justify-center"
             style={{ backgroundColor: '#EF4444' }}
           >
@@ -155,7 +135,11 @@ export function Notifications() {
 
           {/* Notifications List */}
           <div className="overflow-y-auto flex-1">
-            {notifications.length === 0 ? (
+            {isLoading ? (
+              <div className="p-8 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+              </div>
+            ) : notifications.length === 0 ? (
               <div className="p-8 text-center">
                 <Bell size={48} className="mx-auto mb-3 text-gray-300" />
                 <p className="text-gray-500 text-sm">No notifications</p>
@@ -164,9 +148,8 @@ export function Notifications() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    !notification.read ? 'bg-indigo-50/30' : ''
-                  }`}
+                  className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${!notification.read ? 'bg-indigo-50/30' : ''
+                    }`}
                   onClick={() => markAsRead(notification.id)}
                 >
                   <div className="flex items-start gap-3">

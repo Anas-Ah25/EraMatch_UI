@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Sparkles, Video, Clock, User, Camera, Mic, Play, Info, Scan, CheckCircle2, Target, Copy, X, AlertTriangle, Users } from 'lucide-react';
+import { Sparkles, Video, Clock, User, Camera, Mic, Play, Info, Scan, CheckCircle2, Target, Copy, X, AlertTriangle, Users, Loader2 } from 'lucide-react';
 import logo from '../assets/image-eramatch.png';
+import { api } from '../services/api';
 
 interface RecordedInterviewFlowProps {
   onSignOut: () => void;
@@ -38,16 +39,34 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
   const [retries, setRetries] = useState(0);
   const [showUploadProgress, setShowUploadProgress] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [questions, setQuestions] = useState<string[]>([]);
 
-  const totalQuestions = 5;
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.recruiter.getRecordedInterviewQuestions('demo-interview-id');
+        setQuestions(data.map(q => q.question));
+      } catch (error) {
+        console.error('Failed to fetch recorded interview questions:', error);
+        // Fallback to default questions if API fails
+        setQuestions([
+          "Describe your most challenging project and how you overcame the obstacles you faced.",
+          "Tell us about a time when you had to work with a difficult team member. How did you handle the situation?",
+          "What motivates you in your professional career, and how do you stay productive during challenging times?",
+          "Describe a situation where you had to learn a new technology or skill quickly. How did you approach it?",
+          "Where do you see yourself in 5 years, and how does this position align with your career goals?"
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const questions = [
-    "Describe your most challenging project and how you overcame the obstacles you faced.",
-    "Tell us about a time when you had to work with a difficult team member. How did you handle the situation?",
-    "What motivates you in your professional career, and how do you stay productive during challenging times?",
-    "Describe a situation where you had to learn a new technology or skill quickly. How did you approach it?",
-    "Where do you see yourself in 5 years, and how does this position align with your career goals?"
-  ];
+    fetchQuestions();
+  }, []);
+
+  const totalQuestions = questions.length || 5;
 
   const steps = [
     { number: 1, label: 'Welcome' },
@@ -1059,10 +1078,10 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                   <div key={step.number} className="flex flex-col items-center w-20">
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center text-white transition-all ${currentStep > step.number
+                        ? 'bg-gradient-to-br'
+                        : currentStep === step.number
                           ? 'bg-gradient-to-br'
-                          : currentStep === step.number
-                            ? 'bg-gradient-to-br'
-                            : 'bg-gray-300'
+                          : 'bg-gray-300'
                         }`}
                       style={currentStep >= step.number ? { backgroundColor: '#6366F1' } : {}}
                     >
