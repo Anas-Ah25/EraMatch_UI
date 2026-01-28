@@ -241,11 +241,11 @@ def get_group_details(group_id: str):
                 "score": 95,
                 "antiCheating": False,
                 "pipelineStatus": {
-                    "assessment": 'completed',
-                    "aiInterview": 'completed',
-                    "liveInterview": 'completed',
-                    "review": 'pending',
-                    "offer": 'not-started'
+                    "groupAssignment": { "status": 'completed', "completedAt": '2025-01-15 09:00' },
+                    "assessment": { "status": 'completed', "completedAt": '2025-01-16 14:30' },
+                    "aiInterview": { "status": 'completed', "completedAt": '2025-01-18 10:15' },
+                    "liveInterview": { "status": 'completed', "completedAt": '2025-01-20 15:45' },
+                    "finalDecision": { "status": 'pending', "completedAt": None }
                 },
                 "assessmentScore": 92,
                 "aiInterviewScore": 88,
@@ -262,11 +262,11 @@ def get_group_details(group_id: str):
                 "score": 88,
                 "antiCheating": False,
                 "pipelineStatus": {
-                    "assessment": 'completed',
-                    "aiInterview": 'completed',
-                    "liveInterview": 'pending',
-                    "review": 'not-started',
-                    "offer": 'not-started'
+                    "groupAssignment": { "status": 'completed', "completedAt": '2025-01-15 09:30' },
+                    "assessment": { "status": 'completed', "completedAt": '2025-01-16 16:20' },
+                    "aiInterview": { "status": 'completed', "completedAt": '2025-01-18 11:45' },
+                    "liveInterview": { "status": 'pending', "completedAt": None },
+                    "finalDecision": { "status": 'not-started', "completedAt": None }
                 },
                 "assessmentScore": 85,
                 "aiInterviewScore": 82,
@@ -283,11 +283,11 @@ def get_group_details(group_id: str):
                 "score": 82,
                 "antiCheating": True,
                 "pipelineStatus": {
-                    "assessment": 'completed',
-                    "aiInterview": 'pending',
-                    "liveInterview": 'not-started',
-                    "review": 'not-started',
-                    "offer": 'not-started'
+                    "groupAssignment": { "status": 'completed', "completedAt": '2025-01-15 10:00' },
+                    "assessment": { "status": 'completed', "completedAt": '2025-01-17 09:15' },
+                    "aiInterview": { "status": 'pending', "completedAt": None },
+                    "liveInterview": { "status": 'not-started', "completedAt": None },
+                    "finalDecision": { "status": 'not-started', "completedAt": None }
                 },
                 "assessmentScore": 82,
                 "aiInterviewScore": 0,
@@ -622,11 +622,9 @@ def get_knowledge_graph(candidate_id: int):
             { "id": 'skill-2', "type": 'skill', "label": 'TypeScript', "data": { "yearsExp": 5 }, "verified": True, "level": 'Expert', "score": 98, "x": 0, "y": 0 },
             { "id": 'skill-3', "type": 'skill', "label": 'Node.js', "data": { "yearsExp": 7 }, "verified": True, "level": 'Advanced', "score": 92, "x": 0, "y": 0 },
             { "id": 'skill-4', "type": 'skill', "label": 'AWS', "data": { "yearsExp": 4 }, "verified": True, "level": 'Advanced', "score": 88, "x": 0, "y": 0 },
-            # ... abbreviated for brevity, can expand if needed
         ],
         "edges": [
             { "id": 'e1', "source": 'candidate-1', "target": 'skill-1', "type": 'related' },
-             # ... abbreviated
         ]
     }
 
