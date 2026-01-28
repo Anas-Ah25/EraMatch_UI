@@ -21,8 +21,9 @@ import { AlertsNotifications } from './components/common/AlertsNotifications';
 import { CandidateHomePage } from './components/candidate/CandidateHomePage';
 import { CandidateDashboard } from './components/candidate/CandidateDashboard';
 import { EnhancedGroupOverviewV2 } from './components/recruiter/EnhancedGroupOverviewV2';
-import { mockPositionGroups } from './data/mockData';
 import { useParams } from 'react-router-dom';
+import React from 'react';
+import { api, PositionGroup } from './services/api';
 
 // Layout Wrappers
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
@@ -109,8 +110,26 @@ const CandidateHomePageWrapper = () => {
 const GroupOverviewWrapper = () => {
     const { groupId } = useParams();
     const navigate = useNavigate();
-    const group = mockPositionGroups.find(g => g.id.toString() === groupId);
+    const [group, setGroup] = React.useState<PositionGroup | null>(null);
+    const [loading, setLoading] = React.useState(true);
 
+    React.useEffect(() => {
+        const loadGroup = async () => {
+            if (!groupId) return;
+            try {
+                const groups = await api.recruiter.getProjectGroups('1'); // Temporary: get all groups to find match, or update API to get single group
+                const found = groups.find(g => g.id.toString() === groupId);
+                if (found) setGroup(found);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadGroup();
+    }, [groupId]);
+
+    if (loading) return <div>Loading group...</div>;
     if (!group) return <div>Group not found</div>;
 
     // Construct filtration flow based on flags

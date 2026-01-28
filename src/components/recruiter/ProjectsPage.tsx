@@ -322,7 +322,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                       <Checkbox
                         id="filter-open"
                         checked={filterIsOpen}
-                        onCheckedChange={(checked) => setFilterIsOpen(checked as boolean)}
+                        onCheckedChange={(checked: boolean | 'indeterminate') => setFilterIsOpen(checked === true)}
                         className="data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
                       />
                       <label htmlFor="filter-open" className="text-[14px] font-['Arimo',sans-serif] text-black cursor-pointer">
@@ -334,7 +334,7 @@ export function ProjectsPage({ onViewProject, initialProjectTitle, onBackToDashb
                       <Checkbox
                         id="filter-closed"
                         checked={filterIsClosed}
-                        onCheckedChange={(checked) => setFilterIsClosed(checked as boolean)}
+                        onCheckedChange={(checked: boolean | 'indeterminate') => setFilterIsClosed(checked === true)}
                         className="data-[state=checked]:bg-[#10b981] data-[state=checked]:border-[#10b981]"
                       />
                       <label htmlFor="filter-closed" className="text-[14px] font-['Arimo',sans-serif] text-black cursor-pointer">
