@@ -34,19 +34,34 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
   const [isLoading, setIsLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
 
+  const [openRolesCount, setOpenRolesCount] = useState(0);
+  const [activeRecruitersCount, setActiveRecruitersCount] = useState(0);
+
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await api.admin.getMembers();
-        setMembers(data);
+        const [membersData, statsData] = await Promise.all([
+          api.admin.getMembers(),
+          api.admin.getDashboardStats()
+        ]);
+        setMembers(membersData);
+        // Calculate open roles from jobPositions if available, or use a default/mock
+        if (statsData.jobPositions) {
+          setOpenRolesCount(statsData.jobPositions.filter((p: any) => p.status === 'Open').length);
+        } else {
+          setOpenRolesCount(0);
+        }
+        if (statsData.activeRecruiters) {
+          setActiveRecruitersCount(statsData.activeRecruiters);
+        }
       } catch (error) {
-        toast.error('Failed to load members');
+        toast.error('Failed to load organization data');
       } finally {
         setIsLoading(false);
       }
     };
-    fetchMembers();
+    fetchData();
   }, []);
 
   if (isLoading) {
@@ -62,18 +77,36 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
     setShowEditModal(true);
   };
 
-  const handleRegisterEmployee = () => {
+  const handleRegisterEmployee = async () => {
     if (!employeeEmail || !employeePassword || !employeeFirstName || !employeeLastName) {
       toast.error('Please fill in all employee fields');
       return;
     }
-    toast.success(`Employee registered successfully as ${employeeTitle}!`);
-    // Reset form
-    setEmployeeEmail('');
-    setEmployeePassword('');
-    setEmployeeFirstName('');
-    setEmployeeLastName('');
-    setEmployeeTitle('HR Member');
+
+    try {
+      await api.admin.registerEmployee({
+        email: employeeEmail,
+        password: employeePassword,
+        firstName: employeeFirstName,
+        lastName: employeeLastName,
+        title: employeeTitle
+      });
+      toast.success(`Employee registered successfully as ${employeeTitle}!`);
+
+      // Reset form
+      setEmployeeEmail('');
+      setEmployeePassword('');
+      setEmployeeFirstName('');
+      setEmployeeLastName('');
+      setEmployeeTitle('HR Member');
+
+      // Refresh members list
+      const updatedMembers = await api.admin.getMembers();
+      setMembers(updatedMembers);
+
+    } catch (error) {
+      toast.error('Failed to register employee');
+    }
   };
 
   // Get unique positions and roles
@@ -97,10 +130,10 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
   return (
     <div className="px-12 py-8">
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-6 mb-12">
+      <div className="grid grid-cols-3 gap-6 mb-12">
         <div className="bg-white rounded-3xl px-8 py-9 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="text-5xl text-gray-900">7</span>
+            <span className="text-5xl text-gray-900">{members.length}</span>
             <div className="flex-1">
               <div className="text-gray-900 mb-1">Total Members</div>
               <div className="text-gray-400 text-sm">active in organization</div>
@@ -110,10 +143,20 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
 
         <div className="bg-white rounded-3xl px-8 py-9 shadow-sm">
           <div className="flex items-center gap-3">
-            <span className="text-5xl text-gray-900">12</span>
+            <span className="text-5xl text-gray-900">{openRolesCount}</span>
             <div className="flex-1">
               <div className="text-gray-900 mb-1">Open Roles</div>
               <div className="text-gray-400 text-sm">currently hiring</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-3xl px-8 py-9 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-5xl text-gray-900">{activeRecruitersCount}</span>
+            <div className="flex-1">
+              <div className="text-gray-900 mb-1">Active Recruiters</div>
+              <div className="text-gray-400 text-sm">hiring active</div>
             </div>
           </div>
         </div>
@@ -299,7 +342,7 @@ export function AdminOrganizationMembers({ onSignOut }: AdminOrganizationMembers
           </>
         ) : (
           /* Register Employee Tab Content */
-          <div className="max-w-3xl">
+          <div className="max-w-3xl mx-auto">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EEF2FF' }}>
                 <UserPlus className="w-5 h-5" style={{ color: '#6366F1' }} />

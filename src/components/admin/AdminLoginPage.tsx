@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import logo from '../../assets/image-eramatch.png';
+import { api } from '../../services/api';
 
 interface AdminLoginPageProps {
   onBack: () => void;
@@ -14,12 +15,12 @@ export function AdminLoginPage({ onBack, onSignIn }: AdminLoginPageProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Demo credentials check
-    if (email === 'admin@eramatch.com' && password === 'admin123') {
+    try {
+      await api.auth.login(email, password);
       onSignIn();
-    } else {
+    } catch (error) {
       alert('Invalid credentials. Please use:\nEmail: admin@eramatch.com\nPassword: admin123');
     }
   };

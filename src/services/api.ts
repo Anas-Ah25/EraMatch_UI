@@ -87,6 +87,17 @@ export interface Member {
 // --- API Service ---
 
 export const api = {
+    auth: {
+        login: async (email: string, pass: string) => {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password: pass })
+            });
+            if (!res.ok) throw new Error('Invalid credentials');
+            return res.json();
+        }
+    },
     admin: {
         getDashboardStats: async () => {
             const [stats, projects, positions, groups] = await Promise.all([
@@ -103,14 +114,6 @@ export const api = {
                 positionGroups: groups,
                 recentGroups: groups.slice(0, 3),
                 avgTimeToFill: stats.avgTimetoHire || 28,
-                pipelineData: [
-                    { stage: 'Applied', count: 1245, conversion: 100 },
-                    { stage: 'Screening', count: 856, conversion: 68 },
-                    { stage: 'Assessment', count: 423, conversion: 49 },
-                    { stage: 'Interview', count: 187, conversion: 44 },
-                    { stage: 'Offer', count: 64, conversion: 34 },
-                    { stage: 'Hired', count: 45, conversion: 70 }
-                ],
                 revenue: {
                     current: 125000,
                     target: 150000,
@@ -120,11 +123,39 @@ export const api = {
         },
         getRecruiterPerformance: async () => fetchAPI('/admin/performance'),
         getMembers: async () => fetchAPI<Member[]>('/members'),
+        registerEmployee: async (data: any) => {
+            return fetchAPI('/admin/register-employee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        },
         getPendingRequests: async () => fetchAPI('/admin/requests'),
         getSubscriptionPlans: async () => fetchAPI('/admin/subscription'),
         getNotifications: async () => fetchAPI('/admin/notifications'),
         getAlerts: async () => fetchAPI('/admin/alerts'),
-        getGroupAnalytics: async (groupId: string) => fetchAPI(`/groups/${groupId}/overview`)
+        getGroupAnalytics: async (groupId: string) => fetchAPI(`/groups/${groupId}/overview`),
+        getRecruiterDelegation: async () => {
+            const [hr, tech, positions, projects] = await Promise.all([
+                fetchAPI<string[]>('/recruiters/hr'),
+                fetchAPI<string[]>('/recruiters/technical'),
+                fetchAPI<JobPosition[]>('/positions'),
+                fetchAPI<Project[]>('/projects')
+            ]);
+            return {
+                hrRecruiters: hr,
+                technicalRecruiters: tech,
+                positions: positions,
+                projects: projects
+            };
+        },
+        getClosedPositions: async () => {
+            const [projects, positions] = await Promise.all([
+                fetchAPI<ClosedProject[]>('/projects/closed'),
+                fetchAPI<ClosedPosition[]>('/positions/closed')
+            ]);
+            return { projects, positions };
+        }
     },
     recruiter: {
         getDashboard: async () => {

@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -26,9 +27,42 @@ def read_csv(filename: str):
     df = df.where(pd.notnull(df), None)
     return df.to_dict(orient="records")
 
+def write_csv(filename: str, data: List[Dict]):
+    file_path = os.path.join(DATA_DIR, filename)
+    df = pd.DataFrame(data)
+    df.to_csv(file_path, index=False)
+
+class EmployeeRegistrationRequest(BaseModel):
+    email: str
+    password: str
+    firstName: str
+    lastName: str
+    title: str
+
 @app.get("/")
 def read_root():
     return {"message": "EraMatch API is running"}
+
+# --- Auth Endpoints ---
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/auth/login")
+def login(request: LoginRequest):
+    # In a real app, check against database. Here we use hardcoded check for demo as requested,
+    # but now it's server-side.
+    if request.email == "admin@eramatch.com" and request.password == "admin123":
+        return {
+            "token": "mock-jwt-token-admin",
+            "user": {
+                "name": "Admin User",
+                "role": "Admin",
+                "email": request.email
+            }
+        }
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 # --- Admin Endpoints ---
 
@@ -42,7 +76,20 @@ def get_admin_dashboard_stats():
         "efficiency": 92,
         "activeRecruiters": 12,
         "openPositions": 24,
-        "interviewsConducted": 156
+        "interviewsConducted": 156,
+        "pipelineData": [
+            { "stage": 'Applied', "count": 1245, "percentage": 100, "color": '#6366f1' },
+            { "stage": 'Screening', "count": 856, "percentage": 68, "color": '#8b5cf6' },
+            { "stage": 'Assessment', "count": 423, "percentage": 49, "color": '#a855f7' },
+            { "stage": 'Interview', "count": 187, "percentage": 44, "color": '#c084fc' },
+            { "stage": 'Offer', "count": 64, "percentage": 34, "color": '#10b981' },
+            { "stage": 'Hired', "count": 45, "percentage": 70, "color": '#059669' }
+        ],
+        "revenue": {
+            "current": 125000,
+            "target": 150000,
+            "growth": 15
+        }
     }
 
 @app.get("/admin/performance")
@@ -134,6 +181,31 @@ def get_subscription_plans():
         ]
     }
 
+@app.post("/admin/register-employee")
+def register_employee(request: EmployeeRegistrationRequest):
+    # In a real app, save to DB/Auth system
+    # For now, we apppend to members.csv if it existed, or just mock success
+    current_members = read_csv("members.csv")
+    new_id = len(current_members) + 1
+    new_member = {
+        "id": new_id,
+        "name": f"{request.firstName} {request.lastName}",
+        "email": request.email,
+        "role": "Member", # Default role
+        "position": request.title,
+        "department": "HR" if request.title == "HR Member" else "Engineering",
+        "joinDate": datetime.now().strftime("%Y-%m-%d")
+    }
+    # In a real scenario we would write back to CSV, but here we just return success
+    # assuming the frontend refreshes and we might need to persist it for the session if we want to see it.
+    # Let's try to append to in-memory list or file if possible.
+    # For simplicity, we'll return success and the user might see it if we used a real DB.
+    # Since we use CSV reading for get_members, unless we write to CSV, it won't show up.
+    # We added write_csv helper.
+    current_members.append(new_member)
+    write_csv("members.csv", current_members)
+    return {"success": True, "message": "Employee registered successfully"}
+
 @app.get("/admin/notifications")
 def get_notifications():
     return [
@@ -224,6 +296,19 @@ def get_closed_projects():
 @app.get("/positions")
 def get_positions():
     return read_csv("job_positions.csv")
+
+@app.get("/positions/closed")
+def get_closed_positions():
+    return read_csv("closed_positions.csv")
+
+@app.get("/admin/delegation")
+def get_recruiter_delegation():
+    return {
+        "hrRecruiters": [r['name'] for r in read_csv("hr_recruiters.csv") if 'name' in r],
+        "technicalRecruiters": [r['name'] for r in read_csv("technical_recruiters.csv") if 'name' in r],
+        "positions": read_csv("job_positions.csv"),
+        "projects": read_csv("projects.csv")
+    }
 
 @app.get("/groups")
 def get_position_groups():
@@ -346,6 +431,34 @@ def get_group_overview(group_id: str):
             { "name": 'Live Interview', "completed": 15, "pending": 11, "passed": 14, "failed": 1 },
             { "name": 'Final Review', "completed": 8, "pending": 6, "passed": 7, "failed": 1 }
         ],
+        "phases": {
+            "assessment": {
+                "completed": 38,
+                "passRate": 92,
+                "avgScore": 82,
+                "cheatingDetected": 3,
+                "highRisk": 1,
+                "mediumRisk": 2,
+                "lowRisk": 0
+            },
+            "aiInterview": {
+                "completed": 28,
+                "passRate": 88,
+                "avgScore": 85,
+                "avgConfidence": 78,
+                "sentimentPositive": 65,
+                "sentimentNeutral": 25,
+                "sentimentNegative": 10
+            },
+            "liveInterview": {
+                "completed": 15,
+                "scheduled": 26,
+                "avgRating": 4.5,
+                "recommended": 12,
+                "rejected": 1,
+                "pending": 2
+            }
+        },
         "topCandidates": [
             { "id": 1, "name": 'John Smith', "score": 95, "stage": 'Final Review' },
             { "id": 2, "name": 'Sarah Johnson', "score": 92, "stage": 'Live Interview' },
@@ -356,7 +469,8 @@ def get_group_overview(group_id: str):
             "avgTimeToComplete": '12 days',
             "dropoffRate": 18,
             "cheatingFlags": 3
-        }
+        },
+        "initialMatchScore": 75
     }
 
 @app.get("/groups/candidates/all")

@@ -33,74 +33,13 @@ export function AdminDashboard({ onSignOut }: AdminDashboardProps) {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // In a real app, these might be separate calls or a single aggregated call
-        // For now, we simulate fetching all needed data
         const stats = await api.admin.getDashboardStats();
 
-        // Populate state from response (api.admin.getDashboardStats currently returns a structure, 
-        // we might need to adjust or make separate calls for full lists if the dashboard stats doesn't return everything)
-        // Checking api.ts implementation: getDashboardStats returns { projects, recentGroups, overviewStats }
-        // We probably need a better API method for the full dashboard view or assume mockData availability for now
-        // To strictly follow "use API", let's assume we fetch lists. 
-        // For valid refactoring without breaking existing logic that relies on arrays:
-
-        // Since getDashboardStats returns a subset, for this refactor to work with current UI logic 
-        // that filters arrays locally, we should ideally fetch ALL data.
-        // Let's assume for this step we fetch the mock data via the service.
-        // NOTE: api.ts defined getDashboardStats returning { projects, ... }. 
-        // We will invoke it.
-
-        setProjects(stats.projects);
-        // For groups and positions, we might need to extend the API or just use the mocked response structure
-        // Let's assume stats includes what we need or we make parallel calls if we expanded api.ts
-        // Since api.ts was just created with a subset, I will rely on what is returned 
-        // and if it's missing, I might need to update api.ts. 
-        // Looking at api.ts content I wrote: it returns projects, recentGroups. It DOES mockJobPositions etc internally but 
-        // didn't expose them all in getDashboardStats. 
-        // FAST FIX: I will use the imported mock types but fetch the data. 
-        // Wait, I should update the component to use what's available or update API.
-
-        // Actually, to make this robust, I'll update the state with what we get. 
-        // If data is missing in the API response, I'll need to fix the API service. 
-        // For now, I'll use the mocked data from the API response which serves 'projects'.
-        // For 'jobPositions' and 'groups', I'll default to empty or mock if not in response.
-
-        // Let's assume specific API calls should exist or I should have added them.
-        // I will use a shortcut: I will update api.ts to return everything needed for the dashboard 
-        // OR I will just assume the API returns it (and I might need to edit api.ts in next step if it doesn't).
-        // EDIT: I will rely on logic I see in api.ts. It returns `projects` and `recentGroups`.
-        // It does NOT return `jobPositions` or full `positionGroups`.
-
-        // Improvised plan: I will fetch from API, but since api.ts is limited, 
-        // I will fetch what I can.
-
-        setPositionGroups(stats.recentGroups);
-        // For jobPositions, it's not in dashboard stats. I should probably add `getJobPositions` to API.
-        // I will assume it is available or I will fix api.ts. 
-        // Correct approach: Update api.ts to include `mockJobPositions` in the dashboard response or 
-        // separate call. 
-
-        // Proceeding with what I wrote in api.ts (projects, recentGroups). 
-        // I will set jobPositions to empty for now to satisfy TS, and maybe I'll miss some data in UI.
-        // This is a risk. 
-        // BETTER: I will import `api` and use it. 
-
-        // Fix: Use the jobPositions from the API response
-        if (stats.jobPositions) {
-          setJobPositions(stats.jobPositions);
-        } else {
-          // Fallback if API doesn't return it yet (though checks show it does)
-          setJobPositions([]);
-        }
-
-        if (stats.pipelineData) {
-          setPipelineData(stats.pipelineData);
-        }
-
-        if (stats.avgTimeToFill) {
-          setAvgTimeToFill(stats.avgTimeToFill);
-        }
-
+        setProjects(stats.projects || []);
+        setPositionGroups(stats.positionGroups || []);
+        setJobPositions(stats.jobPositions || []);
+        setPipelineData(stats.pipelineData || []);
+        setAvgTimeToFill(stats.avgTimeToFill || 0);
 
       } catch (error) {
         toast.error('Failed to load dashboard data');
@@ -236,33 +175,36 @@ Hired,${Math.floor(position.candidatesCount * 0.16)},16%`;
             </div>
             <div className="text-5xl text-indigo-900 mb-1">
               {(() => {
-                // Calculate initial match vs evaluated performance
-                const avgInitialMatch = 82; // Simulated initial AI match score when candidates applied
+                // Calculate initial match vs evaluated performance from API data
+                const avgInitialMatch = groupAnalytics?.initialMatchScore || 0;
                 const avgEvaluated = assessmentData && aiInterviewData
                   ? (assessmentData.avgScore + aiInterviewData.avgScore) / 2
                   : assessmentData ? assessmentData.avgScore : aiInterviewData ? aiInterviewData.avgScore : avgInitialMatch;
+
+                if (avgInitialMatch === 0 && avgEvaluated === 0) return '0%';
+
                 const accuracy = 100 - Math.abs(avgInitialMatch - avgEvaluated);
-                return Math.round(accuracy);
-              })()}%
+                return Math.round(accuracy) + '%';
+              })()}
             </div>
             <div className="text-xs text-indigo-600 mb-2">
-              Initial: 82% → Actual: {assessmentData && aiInterviewData
+              Initial: {groupAnalytics?.initialMatchScore || 0}% → Actual: {assessmentData && aiInterviewData
                 ? Math.round((assessmentData.avgScore + aiInterviewData.avgScore) / 2)
-                : assessmentData ? Math.round(assessmentData.avgScore) : aiInterviewData ? Math.round(aiInterviewData.avgScore) : 82}%
+                : assessmentData ? Math.round(assessmentData.avgScore) : aiInterviewData ? Math.round(aiInterviewData.avgScore) : 0}%
             </div>
             <div className="flex items-center gap-1 text-xs text-emerald-700 font-medium">
               {(() => {
-                const avgInitialMatch = 82;
+                const avgInitialMatch = groupAnalytics?.initialMatchScore || 0;
                 const avgEvaluated = assessmentData && aiInterviewData
                   ? (assessmentData.avgScore + aiInterviewData.avgScore) / 2
-                  : assessmentData ? assessmentData.avgScore : 82;
+                  : assessmentData ? assessmentData.avgScore : 0;
                 return avgEvaluated >= avgInitialMatch ? <TrendingUp size={12} /> : <TrendingDown size={12} />;
               })()}
               <span>{(() => {
-                const avgInitialMatch = 82;
+                const avgInitialMatch = groupAnalytics?.initialMatchScore || 0;
                 const avgEvaluated = assessmentData && aiInterviewData
                   ? (assessmentData.avgScore + aiInterviewData.avgScore) / 2
-                  : assessmentData ? assessmentData.avgScore : 82;
+                  : assessmentData ? assessmentData.avgScore : 0;
                 const delta = Math.abs(avgEvaluated - avgInitialMatch);
                 return avgEvaluated >= avgInitialMatch ? `+${delta.toFixed(1)} pts better` : `${delta.toFixed(1)} pts lower`;
               })()}</span>
