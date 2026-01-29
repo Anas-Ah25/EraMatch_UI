@@ -314,6 +314,54 @@ def get_recruiter_delegation():
 def get_position_groups():
     return read_csv("position_groups.csv")
 
+@app.get("/recruiter/analytics")
+def get_recruiter_analytics():
+    projects = read_csv("projects.csv")
+    positions = read_csv("job_positions.csv")
+    groups = read_csv("position_groups.csv")
+
+    return {
+        "overview": {
+            "totalProjects": len(projects),
+            "totalPositions": len(positions),
+            "totalGroups": len(groups),
+            "totalCandidates": 156
+        },
+        "topStats": {
+            "applicantsCount": 30,
+            "perfectMatchCount": 3,
+            "suspiciousCount": 1
+        },
+        "groupsByStatus": [
+            { "status": 'Live', "count": 12, "color": '#10b981' },
+            { "status": 'Paused', "count": 4, "color": '#f59e0b' },
+            { "status": 'Completed', "count": 2, "color": '#6366f1' }
+        ],
+        "candidatesByStage": [
+            { "stage": 'Assessment', "count": 68, "color": '#6366f1' },
+            { "stage": 'AI Interview', "count": 52, "color": '#8b5cf6' },
+            { "stage": 'Live Interview', "count": 24, "color": '#10b981' },
+            { "stage": 'Approved', "count": 12, "color": '#059669' }
+        ],
+        "projectPerformance": [
+            {
+                "project": p.get("projectName"),
+                "groups": p.get("subGroupsCount", 0),
+                "candidates": p.get("applicantsCount", 0)
+            } for p in projects
+        ],
+        "recentActivity": [],
+        "weeklyTrend": []
+    }
+
+@app.get("/recruiter/pipeline-modules")
+def get_pipeline_modules():
+    return [
+        { "id": 'assessment', "type": 'assessment', "name": 'Technical Assessment', "description": 'Technical skills evaluation', "enabled": True },
+        { "id": 'ai-interview', "type": 'ai-interview', "name": 'AI Video Interview', "description": 'AI-powered video screening', "enabled": True },
+        { "id": 'live-interview', "type": 'live-interview', "name": 'Live Interview', "description": 'Real-time interview session', "enabled": False }
+    ]
+
 @app.get("/groups/{group_id}/details")
 def get_group_details(group_id: str):
     # Mock return for any group ID

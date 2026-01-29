@@ -114,10 +114,10 @@ export const api = {
                 positionGroups: groups,
                 recentGroups: groups.slice(0, 3),
                 avgTimeToFill: stats.avgTimetoHire || 28,
-                revenue: {
-                    current: 125000,
-                    target: 150000,
-                    growth: 15
+                revenue: stats.revenue || {
+                    current: 0,
+                    target: 0,
+                    growth: 0
                 }
             };
         },
@@ -177,44 +177,7 @@ export const api = {
         getCandidates: async () => fetchAPI('/groups/candidates/all'),
         getClosedProjects: async () => fetchAPI<ClosedProject[]>('/projects/closed'),
         getProjectGroups: async (projectId: string) => fetchAPI<PositionGroup[]>('/groups'),
-        getDashboardAnalytics: async () => {
-            const [projects, positions, groups] = await Promise.all([
-                fetchAPI<Project[]>('/projects'),
-                fetchAPI<JobPosition[]>('/positions'),
-                fetchAPI<PositionGroup[]>('/groups')
-            ]);
-            return {
-                overview: {
-                    totalProjects: projects.length,
-                    totalPositions: positions.length,
-                    totalGroups: groups.length,
-                    totalCandidates: 156
-                },
-                topStats: {
-                    applicantsCount: 30,
-                    perfectMatchCount: 3,
-                    suspiciousCount: 1
-                },
-                groupsByStatus: [
-                    { status: 'Live', count: 12, color: '#10b981' },
-                    { status: 'Paused', count: 4, color: '#f59e0b' },
-                    { status: 'Completed', count: 2, color: '#6366f1' }
-                ],
-                candidatesByStage: [
-                    { stage: 'Assessment', count: 68, color: '#6366f1' },
-                    { stage: 'AI Interview', count: 52, color: '#8b5cf6' },
-                    { stage: 'Live Interview', count: 24, color: '#10b981' },
-                    { stage: 'Approved', count: 12, color: '#059669' }
-                ],
-                projectPerformance: projects.map(p => ({
-                    project: p.projectName,
-                    groups: p.subGroupsCount,
-                    candidates: p.applicantsCount
-                })),
-                recentActivity: [],
-                weeklyTrend: []
-            };
-        },
+        getDashboardAnalytics: async () => fetchAPI<any>('/recruiter/analytics'),
         getRecruiters: async () => {
             const [hr, tech] = await Promise.all([
                 fetchAPI<string[]>('/recruiters/hr'),
@@ -223,13 +186,7 @@ export const api = {
             const mapToObj = (names: string[], role: string) => names.map((n, i) => ({ id: `${role}-${i}`, name: n, role }));
             return [...mapToObj(hr, 'HR Recruiter'), ...mapToObj(tech, 'Technical Recruiter')];
         },
-        getPipelineModules: async () => {
-            return [
-                { id: 'assessment', type: 'assessment', name: 'Technical Assessment', description: 'Technical skills evaluation', enabled: true },
-                { id: 'ai-interview', type: 'ai-interview', name: 'AI Video Interview', description: 'AI-powered video screening', enabled: true },
-                { id: 'live-interview', type: 'live-interview', name: 'Live Interview', description: 'Real-time interview session', enabled: false }
-            ];
-        },
+        getPipelineModules: async () => fetchAPI<any[]>('/recruiter/pipeline-modules'),
         getGroupDetails: async (groupId: string) => fetchAPI(`/groups/${groupId}/details`),
         getPositionDetails: async (positionId: string) => fetchAPI(`/positions/${positionId}/details`),
         getPositionInsights: async (positionId: string) => fetchAPI(`/positions/${positionId}/insights`),
