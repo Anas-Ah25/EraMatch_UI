@@ -1,5 +1,5 @@
 import { X, Users, Sparkles } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 
 interface GroupCreationModalProps {
@@ -20,29 +20,45 @@ export function GroupCreationModal({ selectedCount, onClose, onCreate }: GroupCr
     bulkSemanticEval: false
   });
   const [recruiters, setRecruiters] = useState<{ id: string, name: string, role: string }[]>([]);
+  const [pipelineTemplates, setPipelineTemplates] = useState<any[]>([]); // Dynamic templates
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRecruiters = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await api.recruiter.getRecruiters();
-        setRecruiters(data);
+        const [recruitersData, templatesData] = await Promise.all([
+          api.recruiter.getRecruiters(),
+          api.recruiter.getPipelineTemplates() // Fetch dynamic templates
+        ]);
+        setRecruiters(recruitersData);
+        // Fallback if API returns empty or format is different (mocking behavior adaptation)
+        if (templatesData && templatesData.length > 0) {
+          setPipelineTemplates(templatesData);
+        } else {
+          // Fallback to defaults if API is empty/not ready during dev
+          setPipelineTemplates([
+            { value: 'standard', label: 'Standard Pipeline', description: 'Assessment → Interview → Review → Offer' },
+            { value: 'technical', label: 'Technical Pipeline', description: 'Technical Assessment → Technical Interview → Team Interview → Offer' },
+            { value: 'fast-track', label: 'Fast Track', description: 'Quick Assessment → Interview → Offer' },
+            { value: 'custom', label: 'Custom Pipeline', description: 'Define your own stages' }
+          ]);
+        }
       } catch (error) {
-        console.error('Failed to fetch recruiters:', error);
+        console.error('Failed to fetch group creation data:', error);
+        // Fallback on error
+        setPipelineTemplates([
+          { value: 'standard', label: 'Standard Pipeline', description: 'Assessment → Interview → Review → Offer' },
+          { value: 'technical', label: 'Technical Pipeline', description: 'Technical Assessment → Technical Interview → Team Interview → Offer' },
+          { value: 'fast-track', label: 'Fast Track', description: 'Quick Assessment → Interview → Offer' },
+          { value: 'custom', label: 'Custom Pipeline', description: 'Define your own stages' }
+        ]);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchRecruiters();
+    fetchData();
   }, []);
-
-  const pipelineTemplates = [
-    { value: 'standard', label: 'Standard Pipeline', description: 'Assessment → Interview → Review → Offer' },
-    { value: 'technical', label: 'Technical Pipeline', description: 'Technical Assessment → Technical Interview → Team Interview → Offer' },
-    { value: 'fast-track', label: 'Fast Track', description: 'Quick Assessment → Interview → Offer' },
-    { value: 'custom', label: 'Custom Pipeline', description: 'Define your own stages' }
-  ];
 
   const handleCreate = () => {
     if (!groupName.trim()) return;

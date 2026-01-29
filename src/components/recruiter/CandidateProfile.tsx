@@ -687,54 +687,25 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-4">Most Used Languages</h4>
                   <div className="space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-[#3178c6]" />
-                          <span className="text-sm text-[#111827]">TypeScript</span>
+                    {candidate.githubStats?.languages?.map((lang: any, i: number) => (
+                      <div key={i}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: lang.color || '#6b7280' }} />
+                            <span className="text-sm text-[#111827]">{lang.name}</span>
+                          </div>
+                          <span className="text-sm text-[#6b7280]">{lang.percentage}%</span>
                         </div>
-                        <span className="text-sm text-[#6b7280]">42.3%</span>
-                      </div>
-                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#3178c6] rounded-full" style={{ width: '42.3%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-[#61dafb]" />
-                          <span className="text-sm text-[#111827]">JavaScript</span>
+                        <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${lang.percentage}%`, backgroundColor: lang.color || '#6b7280' }}
+                          />
                         </div>
-                        <span className="text-sm text-[#6b7280]">31.7%</span>
                       </div>
-                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#61dafb] rounded-full" style={{ width: '31.7%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-[#3776ab]" />
-                          <span className="text-sm text-[#111827]">Python</span>
-                        </div>
-                        <span className="text-sm text-[#6b7280]">14.2%</span>
-                      </div>
-                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#3776ab] rounded-full" style={{ width: '14.2%' }} />
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-[#e34c26]" />
-                          <span className="text-sm text-[#111827]">HTML/CSS</span>
-                        </div>
-                        <span className="text-sm text-[#6b7280]">11.8%</span>
-                      </div>
-                      <div className="w-full h-2 bg-[#f3f4f6] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#e34c26] rounded-full" style={{ width: '11.8%' }} />
-                      </div>
-                    </div>
+                    )) || (
+                        <div className="text-sm text-[#6b7280]">No language data available</div>
+                      )}
                   </div>
                 </div>
 
@@ -742,125 +713,38 @@ export function CandidateProfile({ candidateId, onBack, onViewKnowledgeGraph, sh
                 <div className="bg-white border border-[#e5e7eb] rounded-lg p-6">
                   <h4 className="text-[#111827] text-sm font-medium mb-4">Top Repositories</h4>
                   <div className="space-y-4">
-                    {/* Repo 1 */}
-                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Github className="w-4 h-4 text-[#6366f1]" />
-                            <h5 className="text-sm font-medium text-[#6366f1]">react-microservices-boilerplate</h5>
-                          </div>
-                          <p className="text-xs text-[#6b7280] mb-3">
-                            Production-ready microservices architecture with React, TypeScript, and Docker. Includes API gateway, service mesh, and monitoring.
-                          </p>
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full bg-[#3178c6]" />
-                              <span className="text-xs text-[#6b7280]">TypeScript</span>
+                    {candidate.githubStats?.topRepos?.map((repo: any, i: number) => (
+                      <div key={i} className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Github className="w-4 h-4 text-[#6366f1]" />
+                              <h5 className="text-sm font-medium text-[#6366f1]">{repo.name}</h5>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Activity className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">487 stars</span>
+                            <p className="text-xs text-[#6b7280] mb-3">
+                              {repo.description}
+                            </p>
+                            <div className="flex items-center gap-4 flex-wrap">
+                              <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: repo.languageColor || '#3178c6' }} />
+                                <span className="text-xs text-[#6b7280]">{repo.language}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Activity className="w-3 h-3 text-[#6b7280]" />
+                                <span className="text-xs text-[#6b7280]">{repo.stars} stars</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Eye className="w-3 h-3 text-[#6b7280]" />
+                                <span className="text-xs text-[#6b7280]">{repo.forks} forks</span>
+                              </div>
+                              <span className="text-xs text-[#6b7280]">{repo.updatedAt}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">124 forks</span>
-                            </div>
-                            <span className="text-xs text-[#6b7280]">Updated 2 days ago</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Repo 2 */}
-                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Github className="w-4 h-4 text-[#6366f1]" />
-                            <h5 className="text-sm font-medium text-[#6366f1]">next-auth-rbac</h5>
-                          </div>
-                          <p className="text-xs text-[#6b7280] mb-3">
-                            Role-based access control library for Next.js applications. Supports multiple auth providers and fine-grained permissions.
-                          </p>
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full bg-[#61dafb]" />
-                              <span className="text-xs text-[#6b7280]">JavaScript</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Activity className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">312 stars</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">78 forks</span>
-                            </div>
-                            <span className="text-xs text-[#6b7280]">Updated 1 week ago</span>
                           </div>
                         </div>
                       </div>
-                    </div>
-
-                    {/* Repo 3 */}
-                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Github className="w-4 h-4 text-[#6366f1]" />
-                            <h5 className="text-sm font-medium text-[#6366f1]">graphql-query-optimizer</h5>
-                          </div>
-                          <p className="text-xs text-[#6b7280] mb-3">
-                            Automatic query optimization and batching for GraphQL APIs. Reduces N+1 queries and improves performance by up to 80%.
-                          </p>
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full bg-[#3178c6]" />
-                              <span className="text-xs text-[#6b7280]">TypeScript</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Activity className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">256 stars</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">45 forks</span>
-                            </div>
-                            <span className="text-xs text-[#6b7280]">Updated 3 weeks ago</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Repo 4 */}
-                    <div className="border border-[#e5e7eb] rounded-lg p-4 hover:border-[#6366f1] transition-colors">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Github className="w-4 h-4 text-[#6366f1]" />
-                            <h5 className="text-sm font-medium text-[#6366f1]">aws-cdk-patterns</h5>
-                          </div>
-                          <p className="text-xs text-[#6b7280] mb-3">
-                            Collection of AWS CDK patterns for common cloud architectures. Includes serverless, containerized, and event-driven patterns.
-                          </p>
-                          <div className="flex items-center gap-4 flex-wrap">
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full bg-[#3776ab]" />
-                              <span className="text-xs text-[#6b7280]">Python</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Activity className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">188 stars</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="w-3 h-3 text-[#6b7280]" />
-                              <span className="text-xs text-[#6b7280]">32 forks</span>
-                            </div>
-                            <span className="text-xs text-[#6b7280]">Updated 2 months ago</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                    )) || (
+                        <div className="text-sm text-[#6b7280]">No repositories available</div>
+                      )}
                   </div>
                 </div>
 

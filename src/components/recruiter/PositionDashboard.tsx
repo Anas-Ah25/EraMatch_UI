@@ -60,8 +60,8 @@ export function PositionDashboard({
         // Since api.ts currently returns [], let's populate it with the mock data if empty (for demo purposes) 
         // OR better: I will update api.ts to return the rich mock data. 
         // For this file, I expect 'data' to be the array.
-        setCandidates(data);
-        setFilteredCandidates(data);
+        setCandidates(data as Candidate[]);
+        setFilteredCandidates(data as Candidate[]);
       } catch (error) {
         console.error("Failed to fetch candidates", error);
       } finally {
@@ -69,26 +69,28 @@ export function PositionDashboard({
       }
     };
     fetchCandidates();
-    fetchCandidates();
   }, []);
 
-  // Fetch groups
+  // Fetch groups based on project title lookup
   const [recentGroups, setRecentGroups] = useState<any[]>([]);
+
   useEffect(() => {
-    const fetchGroups = async () => {
+    const fetchProjectAndGroups = async () => {
       try {
-        // Mock project ID since we don't have it in props (or stick to mock behavior)
-        const groups = await api.recruiter.getProjectGroups('1');
-        // Map to UI specific format if needed, or use as is if API matches
-        // API returns PositionGroup[], UI expects specific fields. 
-        // Let's assume API returns compatible data or map it.
-        // The mockPositionGroups in api.ts has: id, groupName, candidatesCount, status...
-        // UI expects: id, name, candidates, recruiter, progress, status
+        // 1. Get project ID from title
+        const projects = await api.recruiter.getProjects();
+        const project = projects.find(p => p.projectName === projectTitle);
+        const projectId = project ? project.id.toString() : '1';
+
+        // 2. Fetch groups for this project
+        const groups = await api.recruiter.getProjectGroups(projectId);
+
+        // Map to UI specific format
         const mappedGroups = groups.map((g: any) => ({
           id: g.id.toString(),
-          name: g.groupName, // api has groupName
+          name: g.groupName,
           candidates: g.candidatesCount,
-          recruiter: g.recruiter || 'Admin', // api has recruiter? mockPositionGroups has recruiter
+          recruiter: g.recruiter || 'Admin',
           progress: 50, // mock progress
           status: g.status
         }));
@@ -97,8 +99,9 @@ export function PositionDashboard({
         console.error("Failed to fetch groups");
       }
     };
-    fetchGroups();
-  }, []);
+
+    fetchProjectAndGroups();
+  }, [projectTitle]);
 
   const [selectedCandidates, setSelectedCandidates] = useState<number[]>([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);

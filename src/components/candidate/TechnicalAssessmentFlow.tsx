@@ -19,6 +19,13 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Device test states
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecorded, setHasRecorded] = useState(false);
 
@@ -33,7 +40,7 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   const [fireflies, setFireflies] = useState<Array<{ x: number; y: number; id: number; isCalibration: boolean }>>([]);
   const [score, setScore] = useState(0);
   const [targetsCaught, setTargetsCaught] = useState(0);
-  const [totalTargets] = useState(20);
+  const [totalTargets] = useState(5);
   const calibrationRef = useRef<HTMLDivElement>(null);
 
   // Copy/Paste states
@@ -42,6 +49,49 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   // Mock Question states
   const [mockRecording, setMockRecording] = useState(false);
   const [mockRecorded, setMockRecorded] = useState(false);
+
+  // Start camera
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setStream(mediaStream);
+      setCameraError(null);
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      setCameraError('Unable to access camera. Please ensure permissions are granted.');
+    }
+  };
+
+  // Stop camera
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+  };
+
+  // Attach stream to video element
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, currentStep]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
+  // Activate camera for specific steps
+  useEffect(() => {
+    if ([2, 4].includes(currentStep)) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }, [currentStep]);
   const [mockTimer, setMockTimer] = useState(60);
 
   // Assessment session states
@@ -87,15 +137,73 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
   };
 
   const handleRecordTestClip = () => {
+    if (!stream) return;
+
+    // If currently playing, stop playback
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+
+    // Clear previous recording
+    if (recordedUrl) {
+      URL.revokeObjectURL(recordedUrl);
+      setRecordedUrl(null);
+    }
+
     setIsRecording(true);
-    setTimeout(() => {
-      setIsRecording(false);
-      setHasRecorded(true);
-    }, 2000);
+    chunksRef.current = [];
+
+    try {
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        setHasRecorded(true);
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(url);
+        console.log('Recorded blob size:', blob.size);
+      };
+
+      mediaRecorder.start();
+
+      setTimeout(() => {
+        if (mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          setIsRecording(false);
+        }
+      }, 4000); // 4 seconds
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      // Fallback
+      try {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+        mediaRecorder.onstop = () => {
+          setHasRecorded(true);
+          const blob = new Blob(chunksRef.current);
+          const url = URL.createObjectURL(blob);
+          setRecordedUrl(url);
+        };
+        mediaRecorder.start();
+        setTimeout(() => { if (mediaRecorder.state === 'recording') { mediaRecorder.stop(); setIsRecording(false); } }, 4000);
+      } catch (e2) {
+        console.error("Fallback recording failed", e2);
+      }
+    }
   };
 
   const handlePlayClip = () => {
-    console.log('Playing recorded clip');
+    if (recordedUrl) {
+      setIsPlaying(true);
+    }
   };
 
   const handleStartFaceDetection = () => {
@@ -272,9 +380,27 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                 Let's verify that your camera and microphone are working correctly. Record a short test clip to ensure everything is functioning properly.
               </p>
 
-              <div className="bg-slate-800 rounded-lg h-80 flex flex-col items-center justify-center">
-                <Camera className="w-16 h-16 text-slate-600 mb-4" />
-                <p className="text-slate-500">Camera not available</p>
+              <div className="bg-slate-800 rounded-lg h-80 flex flex-col items-center justify-center overflow-hidden relative">
+                {stream ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                ) : (
+                  <>
+                    <Camera className="w-16 h-16 text-slate-600 mb-4" />
+                    <p className="text-slate-500">{cameraError || 'Camera not available'}</p>
+                    {cameraError && (
+                      <Button variant="outline" size="sm" onClick={startCamera} className="mt-4">
+                        Retry Camera
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="flex items-center gap-2 text-gray-600">
@@ -434,15 +560,28 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-slate-900 rounded-lg h-80 flex flex-col items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  {stream ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                  ) : (
+                    <>
+                      <Camera className="w-16 h-16 text-slate-600 mb-2 relative z-10" />
+                      <p className="text-slate-500 text-sm relative z-10">Camera not available</p>
+                      <p className="text-slate-600 text-xs mt-1 relative z-10">Demo mode active</p>
+                    </>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div
                       className="w-64 h-64 rounded-full border-2 opacity-30"
                       style={{ borderColor: '#6366F1' }}
                     />
                   </div>
-                  <Camera className="w-16 h-16 text-slate-600 mb-2 relative z-10" />
-                  <p className="text-slate-500 text-sm relative z-10">Camera not available</p>
-                  <p className="text-slate-600 text-xs mt-1 relative z-10">Demo mode active</p>
                 </div>
 
                 <div className="rounded-lg h-80 flex items-center justify-center" style={{ backgroundColor: '#F3E8FF' }}>
@@ -1009,12 +1148,12 @@ export function TechnicalAssessmentFlow({ onSignOut, onExit, onCompletion }: Tec
                 <Button
                   className="rounded-full px-6 transition-colors duration-200 border"
                   style={{ backgroundColor: '#EDF0F8', color: '#EF4444', borderColor: '#EF4444' }}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.currentTarget.style.backgroundColor = '#EF4444';
                     e.currentTarget.style.color = '#FFFFFF';
                     e.currentTarget.style.borderColor = '#EF4444';
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                     e.currentTarget.style.backgroundColor = '#EDF0F8';
                     e.currentTarget.style.color = '#EF4444';
                     e.currentTarget.style.borderColor = '#EF4444';

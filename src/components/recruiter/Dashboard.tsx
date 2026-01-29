@@ -45,7 +45,6 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
   }
 
   // Use fetched analytics data
-  const mockAnalytics = analytics; // Alias for minimal refactor of render logic
 
   return (
     <div className="h-full w-full">
@@ -88,19 +87,19 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
             {/* Stats Grid */}
             <div className="gap-[24px] grid grid-cols-[repeat(3,_minmax(0px,_1fr))] grid-rows-[repeat(1,_minmax(0px,_1fr))] h-[172px] w-full">
               <StatCard
-                value={mockAnalytics.topStats?.applicantsCount || 0}
+                value={analytics.topStats?.applicantsCount || 0}
                 title="Applicants"
                 subtitle="in the last 30 days"
                 trend="down"
               />
               <StatCard
-                value={mockAnalytics.topStats?.perfectMatchCount || 0}
+                value={analytics.topStats?.perfectMatchCount || 0}
                 title="Perfect Match"
                 subtitle="on the last 24 hours"
                 trend="up"
               />
               <StatCard
-                value={mockAnalytics.topStats?.suspiciousCount || 0}
+                value={analytics.topStats?.suspiciousCount || 0}
                 title="Suspicious assessment"
                 subtitle="awaiting review"
                 hasLink
@@ -162,7 +161,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                   <FolderOpen size={20} className="text-[#6366f1]" />
                 </div>
                 <p className="font-['Arimo',sans-serif] text-[32px] text-black">
-                  {mockAnalytics.overview.totalProjects}
+                  {analytics.overview.totalProjects}
                 </p>
                 <p className="font-['Arimo',sans-serif] text-[12px] text-[#10b981] mt-1">
                   All active
@@ -177,7 +176,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                   <Briefcase size={20} className="text-[#8b5cf6]" />
                 </div>
                 <p className="font-['Arimo',sans-serif] text-[32px] text-black">
-                  {mockAnalytics.overview.totalPositions}
+                  {analytics.overview.totalPositions}
                 </p>
                 <p className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mt-1">
                   Across all projects
@@ -192,7 +191,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                   <Users size={20} className="text-[#10b981]" />
                 </div>
                 <p className="font-['Arimo',sans-serif] text-[32px] text-black">
-                  {mockAnalytics.overview.totalGroups}
+                  {analytics.overview.totalGroups}
                 </p>
                 <p className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mt-1">
                   Created from positions
@@ -207,7 +206,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                   <Users size={20} className="text-[#f59e0b]" />
                 </div>
                 <p className="font-['Arimo',sans-serif] text-[32px] text-black">
-                  {mockAnalytics.overview.totalCandidates}
+                  {analytics.overview.totalCandidates}
                 </p>
                 <p className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280] mt-1">
                   In all groups
@@ -226,7 +225,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                   <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
                       <Pie
-                        data={mockAnalytics.groupsByStatus}
+                        data={analytics.groupsByStatus}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -234,7 +233,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                         paddingAngle={2}
                         dataKey="count"
                       >
-                        {mockAnalytics.groupsByStatus.map((entry, index) => (
+                        {analytics.groupsByStatus.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -252,7 +251,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                   </ResponsiveContainer>
                 </div>
                 <div className="flex items-center justify-center gap-4 mt-4">
-                  {mockAnalytics.groupsByStatus.map((item, index) => (
+                  {analytics.groupsByStatus.map((item, index) => (
                     <div key={index} className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
                       <span className="font-['Arimo',sans-serif] text-[13px] text-[#6b7280]">
@@ -270,7 +269,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                 </h3>
                 <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={mockAnalytics.candidatesByStage} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
+                    <BarChart data={analytics.candidatesByStage} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                       <XAxis
                         dataKey="stage"
@@ -294,7 +293,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                         }}
                       />
                       <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={60}>
-                        {mockAnalytics.candidatesByStage.map((entry, index) => (
+                        {analytics.candidatesByStage.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Bar>
@@ -311,7 +310,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
               </h3>
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={mockAnalytics.projectPerformance} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+                  <BarChart data={analytics.projectPerformance} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis
                       dataKey="project"
@@ -351,7 +350,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
               </h3>
               <div className="h-[280px]">
                 <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={mockAnalytics.weeklyTrend} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+                  <LineChart data={analytics.weeklyTrend} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis
                       dataKey="day"
@@ -393,7 +392,7 @@ export function Dashboard({ onViewAllProjects, onViewProject }: DashboardProps) 
                 Recent Group Activity
               </h3>
               <div className="space-y-3">
-                {mockAnalytics.recentActivity.map((activity, index) => (
+                {analytics.recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-center justify-between p-4 rounded-[8px] bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="w-[4px] h-[44px] rounded-full bg-[#6366f1]"></div>

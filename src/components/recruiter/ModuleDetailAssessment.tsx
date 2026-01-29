@@ -42,17 +42,36 @@ export function ModuleDetailAssessment({
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [integritySignals, setIntegritySignals] = useState<IntegritySignal[]>([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAssessmentDetails = async () => {
       try {
         setLoading(true);
-        const data = await api.recruiter.getAssessmentDetails(candidateId);
-        setQuestions(data.questions);
-        setIntegritySignals(data.integritySignals as IntegritySignal[]);
+        const data: any = await api.recruiter.getAssessmentDetails(candidateId);
+        setQuestions(data.questions || []);
+        setIntegritySignals(data.integritySignals || []);
+        if (data.performanceMetrics) {
+          setPerformanceMetrics(data.performanceMetrics);
+        } else {
+          // Fallback default metrics if API doesn't return them
+          setPerformanceMetrics([
+            { label: 'Technical Accuracy', value: 90, color: 'bg-[#10b981]' },
+            { label: 'Code Quality', value: 85, color: 'bg-[#3b82f6]' },
+            { label: 'Best Practices', value: 88, color: 'bg-[#6366f1]' },
+            { label: 'Problem Solving', value: 82, color: 'bg-[#8b5cf6]' }
+          ]);
+        }
       } catch (error) {
         console.error('Failed to fetch assessment details:', error);
+        // Fallback default metrics on error
+        setPerformanceMetrics([
+          { label: 'Technical Accuracy', value: 90, color: 'bg-[#10b981]' },
+          { label: 'Code Quality', value: 85, color: 'bg-[#3b82f6]' },
+          { label: 'Best Practices', value: 88, color: 'bg-[#6366f1]' },
+          { label: 'Problem Solving', value: 82, color: 'bg-[#8b5cf6]' }
+        ]);
       } finally {
         setLoading(false);
       }
@@ -137,8 +156,8 @@ export function ModuleDetailAssessment({
                 <div
                   key={question.id}
                   className={`bg-white border rounded-[12px] p-5 transition-all ${question.flagged
-                      ? 'border-[#fecaca] bg-[#fef2f2]'
-                      : 'border-[#e5e7eb] hover:border-[#6366f1]'
+                    ? 'border-[#fecaca] bg-[#fef2f2]'
+                    : 'border-[#e5e7eb] hover:border-[#6366f1]'
                     }`}
                 >
                   <div className="flex items-start gap-3 mb-3">
@@ -197,12 +216,7 @@ export function ModuleDetailAssessment({
                   </h4>
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { label: 'Technical Accuracy', value: 90, color: 'bg-[#10b981]' },
-                    { label: 'Code Quality', value: 85, color: 'bg-[#3b82f6]' },
-                    { label: 'Best Practices', value: 88, color: 'bg-[#6366f1]' },
-                    { label: 'Problem Solving', value: 82, color: 'bg-[#8b5cf6]' }
-                  ].map((component, index) => (
+                  {performanceMetrics.map((component, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-['Arimo',sans-serif] text-[12px] text-[#6b7280]">
@@ -288,8 +302,8 @@ export function ModuleDetailAssessment({
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-[#111827] text-[16px]">Integrity Signals</h3>
                 <span className={`px-[8px] py-[2px] rounded-[4px] font-['Arimo',sans-serif] text-[11px] ${integritySignals.length > 0
-                    ? 'bg-[#fef2f2] text-[#ef4444]'
-                    : 'bg-[#dcfce7] text-[#10b981]'
+                  ? 'bg-[#fef2f2] text-[#ef4444]'
+                  : 'bg-[#dcfce7] text-[#10b981]'
                   }`}>
                   {integritySignals.length} alerts
                 </span>

@@ -3,14 +3,18 @@ import { AlertTriangle, RefreshCw, X, CheckCircle } from 'lucide-react';
 interface EmptyStateProps {
   onBroadenFilters: () => void;
   onLoadSavedFilter: (filterName: string) => void;
+  suggestedFilters?: string[];
 }
 
-export function EmptyFilterResults({ onBroadenFilters, onLoadSavedFilter }: EmptyStateProps) {
-  const suggestedFilters = [
+export function EmptyFilterResults({
+  onBroadenFilters,
+  onLoadSavedFilter,
+  suggestedFilters = [
     'Senior Developers (Remote)',
     'Mid-Level Engineers',
     'All Active Candidates'
-  ];
+  ]
+}: EmptyStateProps) {
 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-8">
@@ -31,7 +35,7 @@ export function EmptyFilterResults({ onBroadenFilters, onLoadSavedFilter }: Empt
           Broaden Filters
         </button>
         <button
-          onClick={() => {}}
+          onClick={() => { }}
           className="h-[44px] px-[24px] rounded-[8px] border border-[#e5e7eb] bg-white hover:bg-[#f9fafb] text-[#374151] font-['Arimo',sans-serif] text-[14px] transition-colors"
         >
           Clear All Filters

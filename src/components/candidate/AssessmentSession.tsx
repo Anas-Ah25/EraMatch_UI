@@ -58,7 +58,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
     const fetchAssessmentSession = async () => {
       try {
         setIsLoading(true);
-        const sessionData = await api.recruiter.getAssessmentSession('session-123');
+        const sessionData = await api.recruiter.getAssessmentSession('session-123') as any;
         // Map API data to component format
         const mappedQuestions: Question[] = sessionData.questions.map((q: any) => ({
           id: q.id,
@@ -252,6 +252,32 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
   };
 
   const answeredCount = Object.keys(answers).length;
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F8' }}>
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 animate-spin mx-auto mb-4" style={{ color: '#6366F1' }} />
+          <p className="text-gray-600">Loading assessment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Safety check for questions
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#EDF0F8' }}>
+        <Card className="max-w-md p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-gray-900 font-medium mb-2">Failed to load assessment</h3>
+          <p className="text-gray-600 mb-6">Unable to load questions. Please try again later.</p>
+          <Button onClick={onSignOut} variant="outline">Back to Home</Button>
+        </Card>
+      </div>
+    );
+  }
 
   // If assessment is complete, show completion screen
   if (assessmentComplete) {
@@ -684,7 +710,7 @@ export function AssessmentSession({ onSignOut, onComplete }: AssessmentSessionPr
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center gap-4">
                   <Button
                     className="text-white rounded-full px-6"
                     style={{ backgroundColor: '#10B981', minWidth: '140px' }}

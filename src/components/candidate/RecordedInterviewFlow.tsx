@@ -23,12 +23,21 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
   const [fireflies, setFireflies] = useState<Array<{ x: number; y: number; id: number; isCalibration: boolean }>>([]);
   const [score, setScore] = useState(0);
   const [targetsCaught, setTargetsCaught] = useState(0);
-  const [totalTargets] = useState(2);
+  const [totalTargets] = useState(5);
   const calibrationRef = useRef<HTMLDivElement>(null);
   const [copyPasteUnderstood, setCopyPasteUnderstood] = useState(false);
   const [mockRecording, setMockRecording] = useState(false);
   const [mockRecorded, setMockRecorded] = useState(false);
   const [mockTimer, setMockTimer] = useState(60);
+
+  // Camera handling
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Interview session states
   const [inInterviewSession, setInInterviewSession] = useState(false);
@@ -66,6 +75,15 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
     fetchQuestions();
   }, []);
 
+  // Activate camera for specific steps
+  useEffect(() => {
+    if ([2, 4, 8].includes(currentStep) || inInterviewSession) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }, [currentStep, inInterviewSession]);
+
   const totalQuestions = questions.length || 5;
 
   const steps = [
@@ -80,17 +98,109 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
     { number: 9, label: 'Ready' }
   ];
 
+  // Start camera
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setStream(mediaStream);
+      setCameraError(null);
+    } catch (err) {
+      console.error('Error accessing camera:', err);
+      setCameraError('Unable to access camera. Please ensure permissions are granted.');
+    }
+  };
+
+  // Stop camera
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+  };
+
+  // Attach stream to video element
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream, currentStep]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      stopCamera();
+    };
+  }, []);
+
   const handleRecordTestClip = () => {
+    if (!stream) return;
+
+    // If currently playing, stop playback
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+
+    // Clear previous recording
+    if (recordedUrl) {
+      URL.revokeObjectURL(recordedUrl);
+      setRecordedUrl(null);
+    }
+
     setIsRecording(true);
-    // Simulate recording
-    setTimeout(() => {
-      setIsRecording(false);
-      setHasRecorded(true);
-    }, 2000);
+    chunksRef.current = [];
+
+    try {
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); // simple webm
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        setHasRecorded(true);
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setRecordedUrl(url);
+        console.log('Recorded blob size:', blob.size, 'URL created:', url);
+      };
+
+      mediaRecorder.start();
+
+      // Record for 4 seconds
+      setTimeout(() => {
+        if (mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          setIsRecording(false);
+        }
+      }, 4000);
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      // Fallback if webm not supported
+      try {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+        mediaRecorder.onstop = () => {
+          setHasRecorded(true);
+          const blob = new Blob(chunksRef.current);
+          const url = URL.createObjectURL(blob);
+          setRecordedUrl(url);
+        };
+        mediaRecorder.start();
+        setTimeout(() => { if (mediaRecorder.state === 'recording') { mediaRecorder.stop(); setIsRecording(false); } }, 4000);
+      } catch (e2) {
+        console.error("Fallback recording failed", e2);
+      }
+    }
   };
 
   const handlePlayClip = () => {
-    console.log('Playing recorded clip');
+    if (recordedUrl) {
+      setIsPlaying(true);
+    }
   };
 
   const handleStartFaceDetection = () => {
@@ -184,22 +294,22 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
     setFireflies(prev => prev.filter(f => f.id !== firefly.id));
     setScore(prev => prev + 1);
 
-    if (firefly.isCalibration) {
-      const newTargetsCaught = targetsCaught + 1;
-      setTargetsCaught(newTargetsCaught);
-      // Log calibration data
-      console.log('Calibration point clicked:', firefly.x, firefly.y);
+    // Increment targets caught for all fireflies
+    const newTargetsCaught = targetsCaught + 1;
+    setTargetsCaught(newTargetsCaught);
 
-      // Check if all 5 calibration targets have been caught
-      if (newTargetsCaught >= 5) {
-        setTimeout(() => {
-          setCalibrationComplete(true);
-          setIsCalibrating(false);
-          if (document.fullscreenElement) {
-            document.exitFullscreen();
-          }
-        }, 500); // Close game shortly after hitting the target
-      }
+    // Log click
+    console.log('Firefly clicked:', firefly.x, firefly.y, 'isCalibration:', firefly.isCalibration);
+
+    // Check if enough targets have been caught (5 targets)
+    if (newTargetsCaught >= 5) {
+      setTimeout(() => {
+        setCalibrationComplete(true);
+        setIsCalibrating(false);
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+      }, 500); // Close game shortly after hitting the target
     }
   };
 
@@ -299,7 +409,7 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
 
       case 2:
         return (
-          <Card className="max-w-5xl mx-auto p-8">
+          <Card className="max-w-5xl mx-auto p-8 transition-all duration-500 ease-in-out">
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#6366F1' }}>
@@ -312,38 +422,81 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
                 Let's verify that your camera and microphone are working correctly. Record a short test clip to ensure everything is functioning properly.
               </p>
 
-              <div className="bg-slate-800 rounded-lg h-80 flex flex-col items-center justify-center">
-                <Camera className="w-16 h-16 text-slate-600 mb-4" />
-                <p className="text-slate-500">Camera not available</p>
+              {/* Video Container - Expanded View */}
+              <div className="rounded-lg overflow-hidden relative shadow-lg bg-black transition-all duration-500 ease-in-out" style={{ aspectRatio: '16/9', width: '100%', maxHeight: '600px' }}>
+                {isPlaying ? (
+                  <video
+                    src={recordedUrl || ''}
+                    controls
+                    autoPlay
+                    className="w-full h-full object-contain"
+                  />
+                ) : stream ? (
+                  <div className="relative w-full h-full group">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover transition-transform duration-700"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                    {isRecording && (
+                      <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500/80 text-white px-3 py-1 rounded-full animate-pulse">
+                        <div className="w-3 h-3 bg-white rounded-full" />
+                        <span className="text-xs font-medium">Recording...</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-800">
+                    <Camera className="w-16 h-16 text-slate-600 mb-4" />
+                    <p className="text-slate-500">{cameraError || 'Camera not available'}</p>
+                    {cameraError && (
+                      <Button variant="outline" size="sm" onClick={startCamera} className="mt-4">
+                        Retry Camera
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-2 text-gray-600">
                 <Mic className="w-4 h-4" />
                 <span className="text-sm">Microphone level</span>
+                <div className="h-1 bg-gray-200 w-32 rounded-full overflow-hidden ml-2">
+                  <div className="h-full bg-emerald-500 animate-pulse w-2/3" />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <Button
-                  className="text-white rounded-full"
+                  className={`text-white rounded-full transition-all duration-300 ${isRecording ? 'animate-pulse' : ''}`}
                   style={{ backgroundColor: isRecording ? '#EF4444' : '#6366F1' }}
                   onClick={handleRecordTestClip}
-                  disabled={isRecording}
+                  disabled={isRecording || isPlaying}
                 >
-                  {isRecording ? 'Recording...' : 'Record Test Clip'}
+                  {isRecording ? 'Recording...' : hasRecorded ? 'Record Again' : 'Record Test Clip'}
                 </Button>
                 <Button
                   variant="outline"
                   className="rounded-full"
                   onClick={handlePlayClip}
-                  disabled={!hasRecorded}
+                  disabled={!hasRecorded || isRecording}
                 >
-                  <Play className="w-4 h-4 mr-2" />
-                  Play Clip
+                  {isPlaying ? (
+                    'Playing...'
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Play Clip
+                    </>
+                  )}
                 </Button>
               </div>
 
               <p className="text-center text-gray-500 text-xs">
-                Ensure your device seek prompts before proceeding
+                Ensure your device permissions are enabled before proceeding
               </p>
 
               <div className="flex justify-end pt-4">
@@ -478,15 +631,28 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
               <div className="grid grid-cols-2 gap-6">
                 {/* Camera Feed */}
                 <div className="bg-slate-900 rounded-lg h-80 flex flex-col items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  {stream ? (
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                  ) : (
+                    <>
+                      <Camera className="w-16 h-16 text-slate-600 mb-2 relative z-10" />
+                      <p className="text-slate-500 text-sm relative z-10">Camera not available</p>
+                      <p className="text-slate-600 text-xs mt-1 relative z-10">Demo mode active</p>
+                    </>
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div
                       className="w-64 h-64 rounded-full border-2 opacity-30"
                       style={{ borderColor: '#6366F1' }}
                     />
                   </div>
-                  <Camera className="w-16 h-16 text-slate-600 mb-2 relative z-10" />
-                  <p className="text-slate-500 text-sm relative z-10">Camera not available</p>
-                  <p className="text-slate-600 text-xs mt-1 relative z-10">Demo mode active</p>
                 </div>
 
                 {/* Face Mesh Visualization */}
@@ -919,9 +1085,22 @@ export function RecordedInterviewFlow({ onSignOut, onExit, onCompletion }: Recor
               </div>
 
               {/* Camera Preview */}
-              <div className="bg-slate-900 rounded-lg h-96 flex flex-col items-center justify-center relative">
-                <Camera className="w-16 h-16 text-slate-600 mb-2" />
-                <p className="text-slate-500 text-sm">Camera not available</p>
+              <div className="bg-slate-900 rounded-lg h-96 flex flex-col items-center justify-center relative overflow-hidden">
+                {stream ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                    style={{ transform: 'scaleX(-1)' }}
+                  />
+                ) : (
+                  <>
+                    <Camera className="w-16 h-16 text-slate-600 mb-2" />
+                    <p className="text-slate-500 text-sm">Camera not available</p>
+                  </>
+                )}
               </div>
 
               {/* Timer */}

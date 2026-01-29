@@ -186,12 +186,14 @@ export const api = {
             const mapToObj = (names: string[], role: string) => names.map((n, i) => ({ id: `${role}-${i}`, name: n, role }));
             return [...mapToObj(hr, 'HR Recruiter'), ...mapToObj(tech, 'Technical Recruiter')];
         },
+        getPipelineTemplates: async () => fetchAPI<any[]>('/recruiter/pipeline-templates'),
         getPipelineModules: async () => fetchAPI<any[]>('/recruiter/pipeline-modules'),
         getGroupDetails: async (groupId: string) => fetchAPI(`/groups/${groupId}/details`),
         getPositionDetails: async (positionId: string) => fetchAPI(`/positions/${positionId}/details`),
         getPositionInsights: async (positionId: string) => fetchAPI(`/positions/${positionId}/insights`),
         getSuspectReview: async (candidateId: number) => fetchAPI(`/candidates/${candidateId}/suspect-review`),
         getKnowledgeGraphData: async (candidateId: number) => fetchAPI(`/candidates/${candidateId}/knowledge-graph`),
+        getAIInterviewResult: async (candidateId: number) => fetchAPI(`/candidates/${candidateId}/ai-interview-result`),
         getCandidateSkills: async (candidateIds: number[]) => {
             const res = await fetch(`${API_URL}/candidates/skills`, {
                 method: 'POST',

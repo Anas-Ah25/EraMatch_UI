@@ -27,7 +27,7 @@ export function Notifications() {
       const fetchNotifications = async () => {
         try {
           setIsLoading(true);
-          const data = await api.admin.getNotifications();
+          const data = await api.admin.getNotifications() as any[];
           // Map API data to component format
           const mappedNotifications: Notification[] = data.map((n: any) => ({
             id: n.id,

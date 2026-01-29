@@ -35,18 +35,18 @@ export function CandidatesPage({ onBack }: CandidatesPageProps) {
     const fetchCandidates = async () => {
       try {
         setLoading(true);
-        const data = await api.recruiter.getCandidates();
+        const data = (await api.recruiter.getCandidates()) as any[];
         // Map API data to include status and additional fields
-        const mappedCandidates: Candidate[] = data.map(c => ({
+        const mappedCandidates: Candidate[] = data.map((c: any) => ({
           id: c.id,
           name: c.name,
           email: c.email,
           position: c.seniority || 'Not specified',
-          project: 'General Pool', // In real app, would come from API
+          project: c.project || 'General Pool',
           status: 'active',
           score: c.match,
-          hiringRound: 'Q1 2025',
-          source: 'LinkedIn',
+          hiringRound: c.hiringRound || 'Q1 2025',
+          source: c.source || 'LinkedIn',
           seniority: c.seniority,
           location: c.location
         }));

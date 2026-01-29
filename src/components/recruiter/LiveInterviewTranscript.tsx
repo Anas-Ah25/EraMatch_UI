@@ -13,6 +13,8 @@ interface LiveInterviewTranscriptProps {
   overallScore: number;
   transcript: TranscriptEntry[];
   notes: string;
+  strengths?: string[];
+  areasToExplore?: string[];
 }
 
 export function LiveInterviewTranscript({
@@ -21,7 +23,17 @@ export function LiveInterviewTranscript({
   interviewer,
   overallScore,
   transcript,
-  notes
+  notes,
+  strengths = [
+    'Clear and articulate communication',
+    'Strong technical depth in discussed topics',
+    'Good cultural fit and team collaboration mindset'
+  ],
+  areasToExplore = [
+    'Leadership experience in larger teams',
+    'Conflict resolution scenarios',
+    'Long-term career goals alignment'
+  ]
 }: LiveInterviewTranscriptProps) {
   return (
     <div className="space-y-6">
@@ -88,32 +100,28 @@ export function LiveInterviewTranscript({
           {transcript.map((entry, index) => (
             <div
               key={index}
-              className={`flex gap-4 ${
-                entry.speaker === 'Interviewer' ? 'justify-start' : 'justify-end'
-              }`}
+              className={`flex gap-4 ${entry.speaker === 'Interviewer' ? 'justify-start' : 'justify-end'
+                }`}
             >
               <div
-                className={`max-w-[80%] ${
-                  entry.speaker === 'Interviewer'
+                className={`max-w-[80%] ${entry.speaker === 'Interviewer'
                     ? 'bg-blue-50 border-blue-200'
                     : 'bg-purple-50 border-purple-200'
-                } border rounded-[12px] p-4`}
+                  } border rounded-[12px] p-4`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                      entry.speaker === 'Interviewer'
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${entry.speaker === 'Interviewer'
                         ? 'bg-blue-200 text-blue-700'
                         : 'bg-purple-200 text-purple-700'
-                    }`}
+                      }`}
                   >
                     {entry.speaker === 'Interviewer' ? 'I' : 'C'}
                   </div>
                   <div>
                     <div
-                      className={`font-semibold text-[13px] ${
-                        entry.speaker === 'Interviewer' ? 'text-blue-900' : 'text-purple-900'
-                      }`}
+                      className={`font-semibold text-[13px] ${entry.speaker === 'Interviewer' ? 'text-blue-900' : 'text-purple-900'
+                        }`}
                     >
                       {entry.speaker}
                     </div>
@@ -121,9 +129,8 @@ export function LiveInterviewTranscript({
                   </div>
                 </div>
                 <p
-                  className={`text-[14px] leading-relaxed ${
-                    entry.speaker === 'Interviewer' ? 'text-blue-900' : 'text-purple-900'
-                  }`}
+                  className={`text-[14px] leading-relaxed ${entry.speaker === 'Interviewer' ? 'text-blue-900' : 'text-purple-900'
+                    }`}
                 >
                   {entry.text}
                 </p>
@@ -150,18 +157,12 @@ export function LiveInterviewTranscript({
             Key Strengths
           </h5>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-[13px] text-[#374151]">
-              <span className="text-emerald-600 mt-0.5">•</span>
-              <span>Clear and articulate communication</span>
-            </li>
-            <li className="flex items-start gap-2 text-[13px] text-[#374151]">
-              <span className="text-emerald-600 mt-0.5">•</span>
-              <span>Strong technical depth in discussed topics</span>
-            </li>
-            <li className="flex items-start gap-2 text-[13px] text-[#374151]">
-              <span className="text-emerald-600 mt-0.5">•</span>
-              <span>Good cultural fit and team collaboration mindset</span>
-            </li>
+            {strengths.map((point, index) => (
+              <li key={index} className="flex items-start gap-2 text-[13px] text-[#374151]">
+                <span className="text-emerald-600 mt-0.5">•</span>
+                <span>{point}</span>
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -171,18 +172,12 @@ export function LiveInterviewTranscript({
             Areas to Explore Further
           </h5>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-[13px] text-[#374151]">
-              <span className="text-amber-600 mt-0.5">•</span>
-              <span>Leadership experience in larger teams</span>
-            </li>
-            <li className="flex items-start gap-2 text-[13px] text-[#374151]">
-              <span className="text-amber-600 mt-0.5">•</span>
-              <span>Conflict resolution scenarios</span>
-            </li>
-            <li className="flex items-start gap-2 text-[13px] text-[#374151]">
-              <span className="text-amber-600 mt-0.5">•</span>
-              <span>Long-term career goals alignment</span>
-            </li>
+            {areasToExplore.map((point, index) => (
+              <li key={index} className="flex items-start gap-2 text-[13px] text-[#374151]">
+                <span className="text-amber-600 mt-0.5">•</span>
+                <span>{point}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

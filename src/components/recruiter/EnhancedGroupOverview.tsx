@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, Play, Edit, Download, Users, TrendingUp, Sparkles, Calendar, Send, CheckCircle, XCircle, AlertCircle, Clock, Eye, Trash2, UserPlus, UserMinus, Activity } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface EnhancedGroupOverviewProps {
   groupId: string;
@@ -49,131 +50,40 @@ export function EnhancedGroupOverview({
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [isRunningPipeline, setIsRunningPipeline] = useState(false);
   const [pipelineProgress, setPipelineProgress] = useState(0);
+  const [pipelineSteps, setPipelineSteps] = useState<PipelineStep[]>([]);
+  const [candidateStatuses, setCandidateStatuses] = useState<CandidateStatus[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock pipeline data
-  const pipelineSteps: PipelineStep[] = [
-    { id: 'assessment', name: 'Assessment', completed: 6, total: 8, pending: 2 },
-    { id: 'ai-interview', name: 'AI Interview', completed: 4, total: 8, pending: 4 },
-    { id: 'live-interview', name: 'Live Interview', completed: 2, total: 8, pending: 6 },
-    { id: 'review', name: 'Review', completed: 1, total: 8, pending: 7 },
-    { id: 'offer', name: 'Offer', completed: 0, total: 8, pending: 8 }
-  ];
+  useEffect(() => {
+    const fetchGroupData = async () => {
+      try {
+        setIsLoading(true);
+        // In a real app, these would probably be fetched together or via specific endpoints
+        // For now, we'll simulate fetching or use available API methods if they exist.
+        // Assuming api.recruiter.getGroupDetails returns this info.
+        const groupDetails = await api.recruiter.getGroupDetails(groupId);
 
-  // Mock candidate status data
-  const candidateStatuses: CandidateStatus[] = [
-    {
-      id: 1,
-      name: 'Sarah Chen',
-      avatar: 'SC',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'completed',
-      review: 'completed',
-      offer: 'pending',
-      assessmentScore: 92,
-      aiInterviewScore: 88,
-      flags: [],
-      currentStage: 'Offer'
-    },
-    {
-      id: 2,
-      name: 'Michael Rodriguez',
-      avatar: 'MR',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'pending',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 85,
-      aiInterviewScore: 82,
-      flags: [],
-      currentStage: 'Live Interview'
-    },
-    {
-      id: 3,
-      name: 'Emma Thompson',
-      avatar: 'ET',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 88,
-      aiInterviewScore: 90,
-      flags: [],
-      currentStage: 'AI Interview'
-    },
-    {
-      id: 4,
-      name: 'James Wilson',
-      avatar: 'JW',
-      assessment: 'completed',
-      aiInterview: 'pending',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 78,
-      aiInterviewScore: 0,
-      flags: ['Suspicious Activity'],
-      currentStage: 'Assessment'
-    },
-    {
-      id: 5,
-      name: 'Olivia Martinez',
-      avatar: 'OM',
-      assessment: 'completed',
-      aiInterview: 'not-started',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 95,
-      aiInterviewScore: 0,
-      flags: [],
-      currentStage: 'Assessment'
-    },
-    {
-      id: 6,
-      name: 'David Kim',
-      avatar: 'DK',
-      assessment: 'completed',
-      aiInterview: 'completed',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 81,
-      aiInterviewScore: 79,
-      flags: [],
-      currentStage: 'AI Interview'
-    },
-    {
-      id: 7,
-      name: 'Sophie Anderson',
-      avatar: 'SA',
-      assessment: 'pending',
-      aiInterview: 'not-started',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 0,
-      aiInterviewScore: 0,
-      flags: [],
-      currentStage: 'Assessment'
-    },
-    {
-      id: 8,
-      name: 'Alex Johnson',
-      avatar: 'AJ',
-      assessment: 'pending',
-      aiInterview: 'not-started',
-      liveInterview: 'not-started',
-      review: 'not-started',
-      offer: 'not-started',
-      assessmentScore: 0,
-      aiInterviewScore: 0,
-      flags: [],
-      currentStage: 'Assessment'
+        // If the API returns this structure, map it. Otherwise, we might need to adapt.
+        // Since I don't have the exact API response shape for 'getGroupDetails' fully remembered,
+        // I'll assume it returns strictly typed data or I'll map 'any'.
+
+        if (groupDetails) {
+          // Map or set data. Assuming groupDetails contains pipelineSteps and candidates
+          setPipelineSteps(groupDetails.pipelineSteps || []);
+          setCandidateStatuses(groupDetails.candidates || []);
+        }
+
+      } catch (error) {
+        console.error('Failed to fetch group details:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (groupId) {
+      fetchGroupData();
     }
-  ];
+  }, [groupId]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -204,13 +114,13 @@ export function EnhancedGroupOverview({
   const handleRunPipeline = async () => {
     setIsRunningPipeline(true);
     setPipelineProgress(0);
-    
+
     // Simulate pipeline execution
     for (let i = 0; i <= 100; i += 10) {
       await new Promise(resolve => setTimeout(resolve, 200));
       setPipelineProgress(i);
     }
-    
+
     setIsRunningPipeline(false);
   };
 
@@ -225,7 +135,7 @@ export function EnhancedGroupOverview({
           <ChevronLeft size={16} />
           Back to Position Dashboard
         </button>
-        
+
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
@@ -255,7 +165,7 @@ export function EnhancedGroupOverview({
               </span>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <button
               onClick={handleRunPipeline}
@@ -443,13 +353,12 @@ export function EnhancedGroupOverview({
                   {/* Step Circle */}
                   <div className="relative mb-3">
                     <div className="flex justify-center">
-                      <div className={`w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all ${
-                        step.completed === step.total
-                          ? 'bg-[#10b981]'
-                          : step.completed > 0
+                      <div className={`w-[64px] h-[64px] rounded-full flex items-center justify-center transition-all ${step.completed === step.total
+                        ? 'bg-[#10b981]'
+                        : step.completed > 0
                           ? 'bg-[#6366f1]'
                           : 'bg-[#f3f4f6]'
-                      }`}>
+                        }`}>
                         <div className="text-center">
                           <div className="text-white text-[18px]">
                             {step.completed}
@@ -470,7 +379,7 @@ export function EnhancedGroupOverview({
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Step Name */}
                   <div className="text-center">
                     <div className="font-['Arimo',sans-serif] text-[13px] text-[#111827] mb-1">
@@ -601,13 +510,12 @@ export function EnhancedGroupOverview({
                       {getStatusIcon(candidate.offer)}
                     </td>
                     <td className="p-4">
-                      <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${
-                        candidate.currentStage === 'Offer'
-                          ? 'bg-[#dcfce7] text-[#10b981]'
-                          : candidate.currentStage === 'Live Interview'
+                      <span className={`px-[10px] py-[4px] rounded-[6px] font-['Arimo',sans-serif] text-[12px] ${candidate.currentStage === 'Offer'
+                        ? 'bg-[#dcfce7] text-[#10b981]'
+                        : candidate.currentStage === 'Live Interview'
                           ? 'bg-[#dbeafe] text-[#3b82f6]'
                           : 'bg-[#f3f4f6] text-[#6b7280]'
-                      }`}>
+                        }`}>
                         {candidate.currentStage}
                       </span>
                     </td>

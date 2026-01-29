@@ -1,18 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Users, Send, Video, Calendar, TrendingUp, FileText } from 'lucide-react';
+import { api } from '../../services/api';
 
 interface SimpleGroupCreationModalProps {
   onClose: () => void;
   onCreate: (groupData: any) => void;
 }
 
-export function SimpleGroupCreationModal({ 
-  onClose, 
+export function SimpleGroupCreationModal({
+  onClose,
   onCreate
 }: SimpleGroupCreationModalProps) {
   const [groupName, setGroupName] = useState('');
   const [assignedRecruiter, setAssignedRecruiter] = useState('');
-  
+
   // Optional immediate actions
   const [sendAssessmentNow, setSendAssessmentNow] = useState(false);
   const [assignRecordedAI, setAssignRecordedAI] = useState(false);
@@ -20,13 +21,23 @@ export function SimpleGroupCreationModal({
   const [runSemanticRanking, setRunSemanticRanking] = useState(false);
   const [addNotes, setAddNotes] = useState(false);
   const [notes, setNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [recruiters, setRecruiters] = useState<{ id: string, name: string, role: string }[]>([]);
 
-  const recruiters = [
-    'John Doe - Senior Recruiter',
-    'Jane Smith - Technical Recruiter',
-    'Mike Johnson - Lead Recruiter',
-    'Sarah Williams - HR Manager'
-  ];
+  useEffect(() => {
+    const fetchRecruiters = async () => {
+      try {
+        setIsLoading(true);
+        const data = await api.recruiter.getRecruiters();
+        setRecruiters(data);
+      } catch (error) {
+        console.error('Failed to fetch recruiters:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRecruiters();
+  }, []);
 
   const handleCreate = () => {
     if (!groupName.trim()) return;
@@ -46,7 +57,7 @@ export function SimpleGroupCreationModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div 
+      <div
         className="bg-white rounded-[16px] w-full max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col"
       >
         {/* Header */}
@@ -94,12 +105,13 @@ export function SimpleGroupCreationModal({
             <select
               value={assignedRecruiter}
               onChange={(e) => setAssignedRecruiter(e.target.value)}
-              className="w-full h-[44px] px-[16px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent bg-white"
+              disabled={isLoading}
+              className="w-full h-[44px] px-[16px] rounded-[8px] border border-[#e5e7eb] font-['Arimo',sans-serif] text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent bg-white disabled:bg-gray-100"
             >
-              <option value="">Select a recruiter...</option>
+              <option value="">{isLoading ? 'Loading recruiters...' : 'Select a recruiter...'}</option>
               {recruiters.map((recruiter) => (
-                <option key={recruiter} value={recruiter}>
-                  {recruiter}
+                <option key={recruiter.id} value={recruiter.id}>
+                  {recruiter.name} - {recruiter.role}
                 </option>
               ))}
             </select>
